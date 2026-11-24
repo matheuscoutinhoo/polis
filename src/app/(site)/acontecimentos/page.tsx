@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EventTimeline } from "@/components/polis/events";
 import { EmptyState } from "@/components/ui/topic";
-import { Notice } from "@/components/ui/notice";
 import { eventContentSchema } from "@/modules/events/content";
 import { listPublishedEvents } from "@/modules/events/service";
 import { EVENT_THEMES, isEventTheme } from "@/modules/events/themes";
@@ -22,9 +21,6 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
         Fatos documentados em fontes oficiais, com contexto, situação atual, impactos e argumentos atribuídos a quem os defende. A seleção não é personalizada nem é uma cobertura
         em tempo real.
       </p>
-      <Notice tone="neutral" icon="document" className="mt-6 max-w-3xl">
-        Cada análise passa por revisão editorial antes da publicação. Algumas foram redigidas com apoio de IA a partir das fontes cadastradas; isso aparece indicado na página.
-      </Notice>
 
       <nav aria-label="Filtrar por tema" className="mt-8 flex flex-wrap gap-2">
         <Link href="/acontecimentos" className="chip" aria-current={!theme ? "true" : undefined}>
@@ -50,6 +46,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
                 statusLabel: event.statusLabel,
                 summary: content.success ? content.data.summary.text : "",
                 updatedAt: event.lastReviewedAt ?? event.updatedAt,
+                aiAssisted: event.aiAssisted,
               };
             })}
           />

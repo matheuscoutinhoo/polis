@@ -6,7 +6,7 @@ import { AskPanel } from "@/components/learning/ask-panel";
 import { FlagContent } from "@/components/learning/flag-content";
 import { ArgumentComparison } from "@/components/polis/argument-comparison";
 import { CitationLinks, EvidenceBlock } from "@/components/polis/evidence-block";
-import { ImpactMechanism, ProcessStages } from "@/components/polis/events";
+import { ImpactMechanism, ProcessStages, AiAssistedNote } from "@/components/polis/events";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
@@ -76,10 +76,7 @@ export default async function EventPage({ params }: { params: Params }) {
             <dd>{event.lastReviewedAt ? formatDate(event.lastReviewedAt) : formatDate(event.updatedAt)}</dd>
           </div>
         </dl>
-        <p className="mt-3 text-meta text-ink-soft">
-          {event.aiAssisted ? "Análise redigida com apoio de IA a partir das fontes cadastradas e revisada pela equipe editorial." : "Análise redigida e revisada pela equipe editorial."}{" "}
-          Origem: fontes oficiais listadas ao final.
-        </p>
+        <p className="mt-3 text-meta text-ink-soft">Análise revisada pela equipe editorial antes da publicação. Origem: fontes oficiais listadas ao final.</p>
 
         <Section id="o-que-aconteceu" number="01" title="O que aconteceu">
           <p className="text-reading">
@@ -302,9 +299,14 @@ export default async function EventPage({ params }: { params: Params }) {
 
         <AskPanel kind="event" targetId={event.id} path={path} signedIn={Boolean(user)} available={aiConfigured()} />
 
-        <div className="mt-10 border-t border-line pt-6">
+        <footer className="mt-10 flex flex-col gap-4 border-t border-line pt-6">
+          {event.aiAssisted ? (
+            <p>
+              <AiAssistedNote />
+            </p>
+          ) : null}
           <FlagContent targetType="EVENT" targetId={event.id} path={path} signedIn={Boolean(user)} />
-        </div>
+        </footer>
       </div>
     </article>
   );

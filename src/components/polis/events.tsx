@@ -2,10 +2,20 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
-import { formatDate, formatPartialDate } from "@/lib/format";
+import { cn, formatDate, formatPartialDate } from "@/lib/format";
 import { THEME_LABEL } from "@/modules/events/themes";
 
-type TimelineEvent = { slug: string; title: string; eventDate: Date; themes: string[]; statusLabel: string; summary: string; updatedAt: Date };
+type TimelineEvent = { slug: string; title: string; eventDate: Date; themes: string[]; statusLabel: string; summary: string; updatedAt: Date; aiAssisted: boolean };
+
+/** Discreet disclosure for analyses drafted with AI support, shown at the end of the content. */
+export function AiAssistedNote({ className }: { className?: string }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-meta text-ink-soft", className)}>
+      <Icon name="info" size={16} className="flex-none" />
+      Gerado com apoio de Inteligência Artificial
+    </span>
+  );
+}
 
 /** Editorial chronological list: dates on the rail, one entry per event. */
 export function EventTimeline({ events }: { events: TimelineEvent[] }) {
@@ -43,6 +53,7 @@ export function EventTimeline({ events }: { events: TimelineEvent[] }) {
                 Entender este acontecimento <Icon name="arrowRight" size={16} />
               </Link>
               <span className="text-ink-soft">Última atualização: {formatDate(event.updatedAt)}</span>
+              {event.aiAssisted ? <AiAssistedNote /> : null}
             </p>
           </article>
         </li>

@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AiAssistedNote } from "@/components/polis/events";
 import { LinkButton } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress";
 import { TopicCard, IconChip, SectionHeading } from "@/components/ui/topic";
-import { formatDate } from "@/lib/format";
+import { cn, formatDate } from "@/lib/format";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { getActiveResult } from "@/modules/diagnostic/service";
 import { eventContentSchema } from "@/modules/events/content";
@@ -24,6 +25,54 @@ function Illustration({ className }: { className?: string }) {
       sizes="(min-width: 1024px) 520px, 90vw"
       className={className}
     />
+  );
+}
+
+const HOW_IT_WORKS = [
+  { title: "Conta", text: "Crie uma conta com nome de exibição, e-mail e senha.", icon: "user", tone: "bg-mint text-mint-ink" },
+  { title: "Questionário opcional", text: "50 situações do cotidiano. O resultado é privado e só ordena seus estudos.", icon: "layers", tone: "bg-blue text-blue-ink", optional: true },
+  { title: "Trilha de lições", text: "Lições de 3 a 7 minutos, com exemplos, fontes e verificação de compreensão.", icon: "book", tone: "bg-lilac text-lilac-ink" },
+  { title: "Acontecimentos e fóruns", text: "Relacione conceitos a fatos documentados e participe das discussões.", icon: "event", tone: "bg-sand text-sand-ink" },
+] as const satisfies ReadonlyArray<{ title: string; text: string; icon: IconName; tone: string; optional?: boolean }>;
+
+/** Drawn flow: vertical on small screens, horizontal from lg. Connectors are decorative; the list gives the order. */
+function HowItWorks() {
+  return (
+    <section aria-labelledby="como-funciona" className="mt-12">
+      <SectionHeading id="como-funciona" title="Como funciona" />
+      <ol className="surface-card mt-5 grid gap-x-6 p-5 md:p-8 lg:grid-cols-4">
+        {HOW_IT_WORKS.map((step, index) => (
+          <li key={step.title} className="relative grid min-h-[7.5rem] grid-cols-[3.5rem_1fr] gap-x-4 pb-8 last:min-h-0 last:pb-0 lg:block lg:min-h-0 lg:pb-0">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "relative inline-flex h-14 w-14 items-center justify-center rounded-full",
+                step.tone,
+                "optional" in step && "outline-2 outline-offset-4 outline-blue-ink/50 outline-dashed",
+              )}
+            >
+              <Icon name={step.icon} size={26} />
+            </span>
+            {index < HOW_IT_WORKS.length - 1 ? (
+              <>
+                <span aria-hidden="true" className="absolute top-[4.25rem] bottom-1.5 left-7 flex -translate-x-1/2 flex-col items-center lg:hidden">
+                  <span className="w-0.5 flex-1 rounded-full bg-action/40" />
+                  <Icon name="chevronDown" size={18} className="-mt-2 text-action" />
+                </span>
+                <span aria-hidden="true" className="absolute top-7 -right-3 left-[4.75rem] hidden -translate-y-1/2 items-center lg:flex">
+                  <span className="h-0.5 flex-1 rounded-full bg-action/40" />
+                  <Icon name="chevronRight" size={18} className="-ml-2 text-action" />
+                </span>
+              </>
+            ) : null}
+            <div className="pt-3.5 lg:pt-5">
+              <h3 className="text-lead font-semibold">{step.title}</h3>
+              <p className="mt-1 text-body text-ink-soft">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -67,6 +116,11 @@ async function RecentEvents() {
               <Link href={`/acontecimentos/${event.slug}`} className="text-link mt-3 inline-flex items-center gap-1.5 text-meta">
                 Entender este acontecimento <Icon name="arrowRight" size={16} />
               </Link>
+              {event.aiAssisted ? (
+                <p className="mt-3 border-t border-line-soft pt-3">
+                  <AiAssistedNote />
+                </p>
+              ) : null}
             </li>
           );
         })}
@@ -101,23 +155,7 @@ function Landing() {
         <Illustration className="mx-auto h-auto w-full max-w-[520px]" />
       </section>
 
-      <section aria-labelledby="como-funciona" className="mt-12">
-        <SectionHeading id="como-funciona" title="Como funciona" />
-        <ol className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { n: "01", title: "Conta", text: "Crie uma conta com nome de exibição, e-mail e senha." },
-            { n: "02", title: "Questionário opcional", text: "50 situações do cotidiano. O resultado é privado e só ordena seus estudos." },
-            { n: "03", title: "Trilha de lições", text: "Lições de 3 a 7 minutos, com exemplos, fontes e verificação de compreensão." },
-            { n: "04", title: "Acontecimentos e fóruns", text: "Relacione conceitos a fatos documentados e participe das discussões." },
-          ].map((step) => (
-            <li key={step.n} className="surface-card p-5">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] bg-mint text-meta font-semibold text-action">{step.n}</span>
-              <h3 className="mt-3 text-lead font-semibold">{step.title}</h3>
-              <p className="mt-1 text-body text-ink-soft">{step.text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <HowItWorks />
 
       <ExploreByTopic />
 
