@@ -10,24 +10,15 @@ export type MailMessage = {
   html: string;
 };
 
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
-const SEND_TIMEOUT_MS = 15_000;
-
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
 /**
- * Resend (HTTPS API) takes precedence over SMTP: Railway only allows outbound
- * SMTP on Pro plans. Empty values count as unset, because Railway resolves
- * references to missing variables to empty strings.
+ * Transactional e-mail is sent over SMTP (Railway only allows outbound SMTP on
+ * Pro plans). Empty values count as unset, because Railway resolves references
+ * to missing variables to empty strings.
  */
-export function mailProvider(): "resend" | "smtp" | null {
-  if (process.env.RESEND_API_KEY) return "resend";
-  if (process.env.SMTP_HOST) return "smtp";
-  return null;
-}
-
 export function mailConfigured() {
-  return mailProvider() !== null;
+  return Boolean(process.env.SMTP_HOST);
 }
 
 function sender() {
@@ -51,36 +42,8 @@ function getTransporter() {
   return transporter;
 }
 
-async function sendWithResend(message: MailMessage) {
-  const response = await fetch(RESEND_ENDPOINT, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: sender(), to: [message.to], subject: message.subject, html: message.html, text: message.text }),
-    signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
-  });
-  if (!response.ok) {
-    // Error messages may quote account addresses, so only the status and error type are kept.
-    const payload: unknown = await response.json().catch(() => null);
-    const name = payload && typeof payload === "object" && "name" in payload ? payload.name : undefined;
-    const errorType = typeof name === "string" ? name.slice(0, 60) : "unknown";
-    logger.error("mail.provider_error", { provider: "resend", status: response.status, errorType });
-    throw new Error(`Falha no envio de e-mail pelo Resend (HTTP ${response.status}, ${errorType}).`);
-  }
-}
-
-/**
- * Sends transactional e-mail through Resend or SMTP. Without a provider in
- * development, messages are written to a local outbox file (.dev-mail) so
- * verification and recovery flows can be completed and tested locally.
- */
-export async function sendMail(message: MailMessage) {
-  const provider = mailProvider();
-  if (provider === "resend") {
-    await sendWithResend(message);
-    logger.info("mail.sent", { provider, subject: message.subject });
-    return;
-  }
-  if (provider === "smtp") {
+async function sendWithSmtp(message: MailMessage) {
+  try {
     await getTransporter().sendMail({
       from: sender(),
       to: message.to,
@@ -88,13 +51,31 @@ export async function sendMail(message: MailMessage) {
       text: message.text,
       html: message.html,
     });
-    logger.info("mail.sent", { provider, subject: message.subject });
+  } catch (error) {
+    // SMTP error messages may quote addresses, so only the error code and SMTP status are kept.
+    const details = (error ?? {}) as { code?: unknown; responseCode?: unknown };
+    const code = typeof details.code === "string" ? details.code.slice(0, 40) : "unknown";
+    const status = typeof details.responseCode === "number" ? details.responseCode : undefined;
+    logger.error("mail.provider_error", { provider: "smtp", code, status });
+    throw new Error(`Falha no envio de e-mail por SMTP (${status ? `${code}, ${status}` : code}).`);
+  }
+}
+
+/**
+ * Sends transactional e-mail over SMTP. Without SMTP_HOST in development,
+ * messages are written to a local outbox file (.dev-mail) so verification and
+ * recovery flows can be completed and tested locally.
+ */
+export async function sendMail(message: MailMessage) {
+  if (mailConfigured()) {
+    await sendWithSmtp(message);
+    logger.info("mail.sent", { provider: "smtp", subject: message.subject });
     return;
   }
 
   if (process.env.NODE_ENV === "production" && process.env.POLIS_ALLOW_DEV_MAIL !== "true") {
     logger.error("mail.not_configured", { subject: message.subject });
-    throw new Error("Envio de e-mail não configurado (defina RESEND_API_KEY ou SMTP_HOST).");
+    throw new Error("Envio de e-mail não configurado (defina SMTP_HOST).");
   }
 
   // Development outbox only; the ignore hints keep Next from tracing the whole project.

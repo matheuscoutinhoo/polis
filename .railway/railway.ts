@@ -30,8 +30,7 @@ export default defineRailway((ctx) => {
       BETTER_AUTH_SECRET: ctx.shared.BETTER_AUTH_SECRET,
       OPENAI_API_KEY: ctx.shared.OPENAI_API_KEY,
       OPENAI_MODEL: "gpt-6.2-sol",
-      // E-mail: Resend (HTTPS API) works on every plan; outbound SMTP only on Railway Pro.
-      RESEND_API_KEY: ctx.shared.RESEND_API_KEY,
+      // E-mail (SMTP): Railway only allows outbound SMTP on the Pro plan.
       MAIL_FROM: ctx.shared.MAIL_FROM,
       SMTP_HOST: ctx.shared.SMTP_HOST,
       SMTP_PORT: ctx.shared.SMTP_PORT,

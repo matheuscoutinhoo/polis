@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { ACTION_LABEL } from "@/modules/admin/labels";
 import { adminDashboardCounts, aiUsageLast24h, recentModerationLog } from "@/modules/admin/moderation";
 import { aiConfigured } from "@/modules/ai/provider";
-import { mailProvider } from "@/lib/mailer";
+import { mailConfigured } from "@/lib/mailer";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -60,11 +60,9 @@ export default async function AdminDashboardPage() {
           </li>
           <li>
             <span className="font-semibold">E-mail:</span>{" "}
-            {mailProvider() === "resend"
-              ? "configurado (Resend, via HTTPS)."
-              : mailProvider() === "smtp"
-                ? "configurado (SMTP)."
-                : "não configurado — em desenvolvimento, as mensagens vão para .dev-mail/outbox.jsonl; em produção, confirmação de e-mail e recuperação de senha não são enviadas."}
+            {mailConfigured()
+              ? "configurado (SMTP)."
+              : "não configurado — em desenvolvimento, as mensagens vão para .dev-mail/outbox.jsonl; em produção, confirmação de e-mail e recuperação de senha não são enviadas."}
           </li>
         </ul>
       </section>

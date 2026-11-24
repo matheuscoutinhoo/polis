@@ -70,7 +70,7 @@ npm run dev                     # http://localhost:3000
 
 - Já tem um PostgreSQL? Ajuste `DATABASE_URL` e pule `npm run db:local`. Os bancos precisam usar **UTF-8**.
 - Se um banco local antigo tiver sido criado com outra codificação, `npm run db:local -- --fix-encoding` o recria em UTF-8 (apaga os dados dele).
-- **E-mails em desenvolvimento**: sem `RESEND_API_KEY` nem `SMTP_HOST`, confirmação de conta e recuperação de senha são gravadas em `.dev-mail/outbox.jsonl`; copie o link de lá.
+- **E-mails em desenvolvimento**: sem `SMTP_HOST`, confirmação de conta e recuperação de senha são gravadas em `.dev-mail/outbox.jsonl`; copie o link de lá.
 - **Primeiro administrador**: crie a conta em `/criar-conta` e rode `npm run admin:promote -- seu@email.org` (`--revoke` remove o papel). Nenhuma credencial fica no código.
 - **IA**: sem `OPENAI_API_KEY`, perguntas e rascunhos com IA exibem uma mensagem clara de indisponibilidade; todo o resto funciona.
 
@@ -116,8 +116,8 @@ A configuração está em [`.railway/railway.ts`](.railway/railway.ts) (Infraest
 
 **Antes de começar**
 
-- Conta no Railway. No plano **Hobby** (ou Free/Trial), o Railway **bloqueia SMTP**; por isso o e-mail usa a **API HTTPS do [Resend](https://resend.com)** (recomendação do próprio Railway). SMTP só funciona no plano Pro.
-- Conta no Resend com uma chave de API. Para produção, verifique um domínio seu no Resend e use um remetente desse domínio. Para testar sem domínio, use `Polis <onboarding@resend.dev>`, que **só entrega para o e-mail da sua conta Resend**.
+- Conta no Railway. O e-mail transacional (confirmação de conta e recuperação de senha) é enviado por **SMTP**, e o Railway só libera SMTP de saída no plano **Pro**; nos planos Free, Trial e Hobby a conexão é bloqueada e esses e-mails não são enviados (o restante do site funciona).
+- Um servidor SMTP (host, porta, usuário e senha) e um remetente aceito por ele.
 - Railway CLI **5.45.2 ou superior** (`npm i -g @railway/cli`; confira com `railway --version`), Node.js 24, `npm install` já executado (instala o SDK `railway` usado pelo arquivo) e um cliente `ssh` com chave (`ssh-keygen -t ed25519`, se ainda não tiver).
 
 **Passo a passo** (na pasta do projeto)
@@ -125,9 +125,8 @@ A configuração está em [`.railway/railway.ts`](.railway/railway.ts) (Infraest
 1. Entre e crie o projeto: `railway login` e `railway init --name polis`.
 2. No painel do projeto, abra **Settings → Shared Variables**, escolha o ambiente `production` e crie:
    - `BETTER_AUTH_SECRET` (obrigatória, 32+ caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`
-   - `RESEND_API_KEY` e `MAIL_FROM` (ex.: `Polis <nao-responda@seu-dominio.org>`)
+   - `MAIL_FROM` (ex.: `Polis <nao-responda@seu-dominio.org>`), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` e `SMTP_PASSWORD` (o envio só funciona no plano Pro)
    - opcionais: `OPENAI_API_KEY` (sem ela a IA fica indisponível com aviso claro) e `CONTACT_EMAIL` (exibido na política de privacidade)
-   - no plano Pro, se preferir SMTP: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
 
    Variáveis não criadas chegam vazias ao app, que as trata como "não configuradas".
 3. Revise e aplique a configuração: `railway config plan` e `railway config apply`. Isso cria o PostgreSQL e o serviço `polis`.
@@ -146,7 +145,7 @@ Para atualizar, rode `railway up --service polis` de novo (ou faça push, se con
 **Problemas comuns**
 
 - *Healthcheck failed* no deploy: procure nos logs (`railway logs --service polis`) o evento `health.auth_misconfigured`. Ele indica qual variável está inválida (`BETTER_AUTH_URL` sem domínio gerado ou `BETTER_AUTH_SECRET` ausente/curta). Corrija e publique de novo; a versão anterior continua no ar.
-- E-mails não chegam: procure `mail.provider_error`. `403 validation_error` significa domínio não verificado no Resend ou, no modo de teste com `onboarding@resend.dev`, um destinatário diferente do e-mail da sua conta Resend.
+- E-mails não chegam: procure `mail.provider_error` nos logs. `ETIMEDOUT` ou `ECONNECTION` indicam SMTP bloqueado (planos sem SMTP de saída) ou host/porta incorretos; `EAUTH` indica usuário ou senha recusados pelo servidor SMTP.
 
 O healthcheck responde `200` com o estado do banco e se autenticação, IA e e-mail estão configurados (sem detalhes sensíveis). Responde `503` se o banco estiver indisponível ou se `BETTER_AUTH_URL`/`BETTER_AUTH_SECRET` forem inválidas. Os logs são JSON estruturado e ocultam campos como e-mail, senha, tokens, respostas e textos digitados.
 
@@ -232,7 +231,7 @@ Os **Termos de uso** (`/termos`) e a **Política de privacidade** (`/privacidade
 ## Limitações conhecidas e dependências externas
 
 - **OpenAI**: a integração está pronta (adaptador, instruções, verificações, limites e bateria de avaliação), mas **não foi executada contra a API real** neste ambiente, por falta de `OPENAI_API_KEY`. Os testes usam um provedor falso. Rode `npm run ai:eval` com a chave antes de abrir a função ao público.
-- **E-mail**: o envio pela API HTTPS do Resend e por SMTP está implementado, mas **não foi testado com um provedor real**. Os testes simulam a API do Resend; em desenvolvimento e nos testes, os e-mails vão para a caixa local.
+- **E-mail**: o envio por SMTP está implementado, mas **não foi testado com um servidor real**. Os testes simulam o transporte SMTP; em desenvolvimento e nos testes, os e-mails vão para a caixa local.
 - **Railway**: a configuração está pronta. O build de produção foi verificado sem acesso ao banco, como acontece no build do Railway, e o `.railway/railway.ts` foi avaliado com o mesmo script da CLI 5.75. Nenhum recurso foi criado nem houve deploy.
 - O modelo padrão `gpt-6.2-sol` pode ser trocado por `OPENAI_MODEL`; confira a disponibilidade na sua conta.
 - Fora do escopo do MVP: MFA, app nativo, pagamentos, mensagens privadas, chat em tempo real, notificações push, ranking público e coleta automática de notícias.

@@ -11,7 +11,6 @@ process.env.BETTER_AUTH_SECRET = "integration-tests-secret-0123456789abcdef01234
 process.env.DEV_MAIL_DIR = mkdtempSync(path.join(os.tmpdir(), "polis-mail-"));
 delete process.env.OPENAI_API_KEY;
 delete process.env.SMTP_HOST;
-delete process.env.RESEND_API_KEY;
 delete process.env.AUTH_RATE_LIMIT;
 
 afterAll(async () => {

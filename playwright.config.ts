@@ -39,7 +39,6 @@ export default defineConfig({
       DEV_MAIL_DIR: ".e2e-mail",
       OPENAI_API_KEY: "",
       SMTP_HOST: "",
-      RESEND_API_KEY: "",
     },
   },
 });
