@@ -1,0 +1,62 @@
+{
+  "name": "polis",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Polis — plataforma web de educação política (MVP).",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start -H 0.0.0.0",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "npm run build && playwright test",
+    "check:content": "tsx scripts/check-content.ts",
+    "check:catalog": "tsx scripts/check-catalog.ts",
+    "docs:catalog": "tsx scripts/generate-catalog-doc.ts",
+    "db:local": "node scripts/local-postgres.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "admin:promote": "tsx scripts/promote-admin.ts",
+    "ai:eval": "tsx scripts/ai-eval.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "better-auth": "1.7.27",
+    "dotenv": "18.0.10",
+    "next": "16.4.6",
+    "nodemailer": "10.6.1",
+    "openai": "7.62.0",
+    "pg": "8.23.1",
+    "prisma": "7.10.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/turbopack": "4.3.5",
+    "@types/node": "^24",
+    "@types/nodemailer": "8.0.2",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "embedded-postgres": "18.7.0-beta.19",
+    "eslint": "^10.15.0",
+    "eslint-config-next": "16.4.6",
+    "railway": "3.17.0",
+    "tailwindcss": "4.3.5",
+    "typescript": "6.0.3",
+    "vitest": "5.1.1"
+  }
+}

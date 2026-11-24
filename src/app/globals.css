@@ -1,0 +1,521 @@
+@import "tailwindcss";
+
+/*
+ * Polis design system — tokens (reference 1.2).
+ * Palette roles: action/teal, primary text, quiet page, white surface and four
+ * topic colors (learning/mint, institutions/blue, ideas/lilac, evidence/sand).
+ * Feedback colors are used only for functional system messages.
+ * Contrast measured against the quiet page (#F8FAF8):
+ * primary text 11.21:1 · secondary 5.91:1 · link 5.57:1 · control boundary 3.67:1.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-paper: #f8faf8;
+  --color-surface: #ffffff;
+  --color-ink: #263b42;
+  --color-ink-soft: #526469;
+  --color-line: #dce4e1;
+  --color-line-soft: #e8eeec;
+  --color-control: #748589;
+  --color-track: #d8e3e0;
+
+  --color-action: #246f73;
+  --color-action-hover: #1d5c60;
+  --color-action-press: #174a4d;
+  --color-selected: #e2f0eb;
+
+  --color-mint: #e8f4ee;
+  --color-mint-ink: #246f73;
+  --color-blue: #e9f2f7;
+  --color-blue-ink: #2e5f78;
+  --color-lilac: #f0eaf7;
+  --color-lilac-ink: #5f4b85;
+  --color-sand: #f8f0df;
+  --color-sand-ink: #7a5b1f;
+
+  --color-success: #245e3c;
+  --color-success-bg: #e6f3ea;
+  --color-warning: #7d5511;
+  --color-warning-bg: #fbf1dc;
+  --color-danger: #9b3431;
+  --color-danger-hover: #822b28;
+  --color-danger-bg: #f9e8e6;
+  --color-disabled: #eef2f1;
+  --color-disabled-ink: #6b7b80;
+
+  --font-sans: var(--font-source-sans), "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), "Source Serif 4", Georgia, serif;
+
+  --text-display: 3rem;
+  --text-display--line-height: 3.375rem;
+  --text-display-sm: 2.5rem;
+  --text-display-sm--line-height: 3rem;
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 2.125rem;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.75rem;
+  --text-reading: 1.1875rem;
+  --text-reading--line-height: 1.9375rem;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.75rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.25rem;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1rem;
+
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+
+  --shadow-lift: 0 6px 16px -6px rgb(38 59 66 / 0.18);
+
+  --ease-polis: cubic-bezier(0.2, 0, 0, 1);
+
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    min-width: 320px;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-selected);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 0;
+  }
+}
+
+@layer components {
+  /* Shared page frame: 16–20 px margins on small screens, 32 px medium, 40 px wide. */
+  .page-frame {
+    width: 100%;
+    max-width: calc(1280px + 80px);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 400px) {
+    .page-frame {
+      padding-inline: 1.25rem;
+    }
+  }
+  @media (min-width: 48rem) {
+    .page-frame {
+      padding-inline: 2rem;
+    }
+  }
+  @media (min-width: 80rem) {
+    .page-frame {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  .reading-measure {
+    max-width: 720px;
+  }
+
+  .eyebrow {
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-action);
+  }
+
+  .eyebrow-neutral {
+    color: var(--color-ink-soft);
+  }
+
+  /* Text links: clearly identifiable, focus thickens the underline (no detached ring). */
+  .text-link {
+    color: var(--color-action);
+    font-weight: 600;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    border-radius: 2px;
+    transition: color 140ms var(--ease-polis), text-decoration-thickness 140ms var(--ease-polis);
+  }
+  .text-link:hover {
+    color: var(--color-action-hover);
+    text-decoration-thickness: 2px;
+  }
+  .text-link:focus-visible {
+    outline: none;
+    background: var(--color-selected);
+    text-decoration-thickness: 3px;
+  }
+
+  /* Buttons: 44 px minimum target, 8 px radius, one visible boundary. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-control);
+    font-weight: 600;
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+    text-align: center;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 140ms var(--ease-polis),
+      color 140ms var(--ease-polis),
+      border-color 140ms var(--ease-polis),
+      box-shadow 140ms var(--ease-polis);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--color-action);
+  }
+  .btn-primary {
+    background: var(--color-action);
+    color: var(--color-white);
+  }
+  .btn-primary:hover {
+    background: var(--color-action-hover);
+  }
+  .btn-primary:active {
+    background: var(--color-action-press);
+  }
+  .btn-primary:focus-visible {
+    background: var(--color-surface);
+    color: var(--color-action);
+    border-color: var(--color-action);
+  }
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border-color: var(--color-control);
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-action);
+    color: var(--color-action-hover);
+  }
+  .btn-secondary:focus-visible {
+    border-color: var(--color-action);
+    color: var(--color-action);
+  }
+  .btn-text {
+    background: transparent;
+    color: var(--color-action);
+    padding-inline: 0.5rem;
+  }
+  .btn-text:hover {
+    color: var(--color-action-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .btn-danger {
+    background: var(--color-danger);
+    color: var(--color-white);
+  }
+  .btn-danger:hover {
+    background: var(--color-danger-hover);
+  }
+  .btn-danger:focus-visible {
+    background: var(--color-surface);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+    box-shadow: inset 0 0 0 2px var(--color-danger);
+  }
+  .btn[disabled],
+  .btn[aria-disabled="true"] {
+    background: var(--color-disabled);
+    color: var(--color-disabled-ink);
+    border-color: transparent;
+    cursor: not-allowed;
+  }
+  .btn[aria-busy="true"] {
+    cursor: progress;
+  }
+  .btn-primary[aria-busy="true"] {
+    background: var(--color-action);
+    color: var(--color-white);
+  }
+  .btn-sm {
+    min-height: 36px;
+    padding: 0.375rem 0.875rem;
+    font-size: var(--text-meta);
+  }
+  .btn-block {
+    width: 100%;
+  }
+
+  /* Inputs: errors stay next to fields; focus thickens the inset boundary. */
+  .field-input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-control);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: inherit;
+    transition: border-color 140ms var(--ease-polis), box-shadow 140ms var(--ease-polis);
+  }
+  .field-input::placeholder {
+    color: var(--color-ink-soft);
+    opacity: 0.85;
+  }
+  .field-input:hover {
+    border-color: var(--color-ink-soft);
+  }
+  .field-input:focus,
+  .field-input:focus-visible {
+    outline: none;
+    border-color: var(--color-action);
+    box-shadow: inset 0 0 0 1px var(--color-action);
+  }
+  .field-input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+  .field-input[aria-invalid="true"]:focus {
+    box-shadow: inset 0 0 0 1px var(--color-danger);
+  }
+  textarea.field-input {
+    min-height: 120px;
+    resize: vertical;
+    line-height: var(--text-body--line-height);
+  }
+  select.field-input {
+    appearance: none;
+    padding-right: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23526469' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+  }
+
+  /* Choice rows: native radios, whole row clickable, same selected color for every answer. */
+  .choice-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0.75rem 1rem 0.75rem 1.25rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-control);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: background-color 180ms var(--ease-polis), border-color 180ms var(--ease-polis), box-shadow 180ms var(--ease-polis);
+  }
+  .choice-row:hover {
+    border-color: var(--color-action);
+  }
+  .choice-row:has(input:checked) {
+    background: var(--color-selected);
+    border-color: var(--color-action);
+  }
+  .choice-row:has(input:focus-visible) {
+    box-shadow: inset 0 0 0 2px var(--color-action);
+    border-color: var(--color-action);
+  }
+  .choice-row:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .choice-row input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: inherit;
+  }
+  .choice-check {
+    margin-left: auto;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    color: var(--color-action);
+  }
+  .choice-check path {
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+    transition: stroke-dashoffset 180ms var(--ease-polis);
+  }
+  .choice-row:has(input:checked) .choice-check path {
+    stroke-dashoffset: 0;
+  }
+
+  /* Chips used as filters (links or buttons). */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-control);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: var(--text-body);
+    text-decoration: none;
+    transition: border-color 140ms var(--ease-polis), background-color 140ms var(--ease-polis);
+  }
+  .chip:hover {
+    border-color: var(--color-action);
+  }
+  .chip[aria-current="true"],
+  .chip[aria-current="page"],
+  .chip[aria-pressed="true"] {
+    background: var(--color-selected);
+    border-color: var(--color-action);
+    color: var(--color-action-press);
+  }
+  .chip:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--color-action);
+  }
+
+  .surface-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  .topic-card {
+    transition: transform 140ms var(--ease-polis), box-shadow 140ms var(--ease-polis), border-color 140ms var(--ease-polis);
+  }
+  @media (hover: hover) {
+    .topic-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  .topic-card:focus-within {
+    border-color: var(--color-action);
+  }
+
+  .progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-track);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-action);
+    transition: width 220ms var(--ease-polis);
+  }
+
+  .acknowledge {
+    animation: polis-acknowledge 280ms var(--ease-polis) both;
+  }
+
+  /* Long-form lesson reading. */
+  .reading {
+    font-size: var(--text-reading);
+    line-height: var(--text-reading--line-height);
+  }
+  .reading p + p {
+    margin-top: 1.25rem;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    color: var(--color-action);
+    border-radius: var(--radius-control);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 2px var(--color-action);
+  }
+  .skip-link:focus {
+    top: 0.75rem;
+  }
+
+  .details-summary {
+    list-style: none;
+    cursor: pointer;
+  }
+  .details-summary::-webkit-details-marker {
+    display: none;
+  }
+  details[open] > .details-summary .details-chevron {
+    transform: rotate(180deg);
+  }
+  .details-chevron {
+    transition: transform 160ms var(--ease-polis);
+  }
+}
+
+@keyframes polis-acknowledge {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .topic-card:hover {
+    transform: none;
+  }
+  .choice-check path {
+    transition: none;
+  }
+}

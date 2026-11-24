@@ -1,0 +1,684 @@
+// Polis — modelo de dados (PostgreSQL + Prisma 7).
+// Módulos: conta, diagnóstico (questionário), aprendizado, fontes e acontecimentos,
+// comunidade e administração/moderação.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Conta (Better Auth) — nomes de modelo e campos seguem o esquema da biblioteca.
+// ---------------------------------------------------------------------------
+
+model User {
+  id               String    @id
+  name             String
+  email            String    @unique
+  emailVerified    Boolean   @default(false)
+  image            String?
+  role             String    @default("USER")
+  suspendedUntil   DateTime?
+  suspensionReason String?
+  pathMode         PathMode  @default(GENERAL)
+  questionnaireDecision QuestionnaireDecision @default(UNDECIDED)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions       Session[]
+  accounts       Account[]
+  consents       ConsentRecord[]
+  attempts       QuestionnaireAttempt[]
+  lessonProgress LessonProgress[]
+  xpEvents       XpEvent[]
+  achievements   UserAchievement[]
+  forumsCreated  Forum[]          @relation("ForumCreator")
+  follows        ForumFollow[]
+  topics         Topic[]
+  comments       Comment[]
+  reports        Report[]         @relation("ReportAuthor")
+  flags          ContentFlag[]    @relation("FlagAuthor")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// Limite de requisições da biblioteca de autenticação (persistente).
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("auth_rate_limits")
+}
+
+enum PathMode {
+  GENERAL
+  AFFINITY
+}
+
+enum QuestionnaireDecision {
+  UNDECIDED
+  DEFERRED
+  DECLINED
+  ACCEPTED
+}
+
+enum ConsentKind {
+  TERMS
+  QUESTIONNAIRE
+}
+
+// Consentimentos separados: termos gerais e tratamento do questionário.
+model ConsentRecord {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      ConsentKind
+  version   String
+  purpose   String
+  grantedAt DateTime    @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, kind])
+  @@map("consent_records")
+}
+
+// Limite de requisições da aplicação (publicações, IA, sinalizações).
+model RateLimitBucket {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart])
+  @@map("rate_limit_buckets")
+}
+
+// ---------------------------------------------------------------------------
+// Diagnóstico: questionário (dados sensíveis, privados e apagáveis).
+// O banco de perguntas é versionado no código (src/modules/diagnostic).
+// ---------------------------------------------------------------------------
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AnswerChoice {
+  STRONGLY_DISAGREE
+  DISAGREE
+  NEUTRAL
+  AGREE
+  STRONGLY_AGREE
+  UNKNOWN
+}
+
+model QuestionnaireAttempt {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankVersion    String
+  status         AttemptStatus @default(IN_PROGRESS)
+  startedAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  completedAt    DateTime?
+  scoringVersion String?
+  result         Json?
+  answers        QuestionnaireAnswer[]
+
+  // No máximo uma tentativa em andamento e um resultado ativo por pessoa.
+  @@unique([userId, status])
+  @@map("questionnaire_attempts")
+}
+
+model QuestionnaireAnswer {
+  attemptId  String
+  attempt    QuestionnaireAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  choice     AnswerChoice
+  answeredAt DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@id([attemptId, questionId])
+  @@map("questionnaire_answers")
+}
+
+// ---------------------------------------------------------------------------
+// Fontes oficiais e curadoria.
+// ---------------------------------------------------------------------------
+
+enum MaterialType {
+  ATO_REGISTRO
+  DADO_ESTATISTICO
+  DECLARACAO
+  ESTUDO
+  CONTEUDO_DIDATICO
+}
+
+enum ReuseKind {
+  OFFICIAL_ACT
+  OPEN_LICENSE
+  PUBLIC_DOMAIN
+  REFERENCE_ONLY
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Órgão ou editor aprovado, com a lista explícita de hostnames aceitos.
+model Publisher {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  acronym   String?
+  category  String
+  hostnames String[]
+  // Optional path restriction for shared hosts such as www.gov.br (e.g. "/mec/").
+  pathPrefixes String[] @default([])
+  approved  Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sources   Source[]
+
+  @@map("publishers")
+}
+
+model Source {
+  id              String       @id @default(cuid())
+  key             String       @unique
+  publisherId     String
+  publisher       Publisher    @relation(fields: [publisherId], references: [id])
+  title           String
+  url             String
+  author          String?
+  publishedOn     String?
+  sourceUpdatedOn String?
+  accessedAt      DateTime
+  locator         String?
+  materialType    MaterialType
+  reuseKind       ReuseKind
+  reuseCondition  String
+  scopeNote       String
+  reviewStatus    ReviewStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  excerpts      SourceExcerpt[]
+  lessonSources LessonSource[]
+  eventSources  EventSource[]
+
+  @@index([reviewStatus])
+  @@map("sources")
+}
+
+model SourceExcerpt {
+  id        String   @id @default(cuid())
+  sourceId  String
+  source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  locator   String
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceId])
+  @@map("source_excerpts")
+}
+
+// ---------------------------------------------------------------------------
+// Aprendizado.
+// ---------------------------------------------------------------------------
+
+enum TopicArea {
+  FUNDAMENTOS
+  INSTITUICOES
+  IDEIAS
+  LEITURA_CRITICA
+}
+
+enum PathStage {
+  FOUNDATIONS
+  PERSPECTIVES
+  CONTEXT
+}
+
+enum PublicationStatus {
+  PUBLISHED
+  DOCUMENTARY_GAP
+  DRAFT
+}
+
+model Module {
+  id        String            @id @default(cuid())
+  slug      String            @unique
+  number    Int               @unique
+  title     String
+  summary   String
+  area      TopicArea
+  stage     PathStage
+  status    PublicationStatus @default(PUBLISHED)
+  gapNote   String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  lessons   Lesson[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id          String            @id @default(cuid())
+  moduleId    String
+  module      Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  slug        String
+  number      Int
+  title       String
+  objective   String
+  minutes     Int
+  // Correntes de referência tratadas na lição (ordenação da trilha por afinidade).
+  currentKeys String[]
+  content     Json
+  quiz        Json
+  status      PublicationStatus @default(PUBLISHED)
+  reviewedOn  String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  sources  LessonSource[]
+  progress LessonProgress[]
+  events   EventLesson[]
+
+  @@unique([moduleId, slug])
+  @@unique([moduleId, number])
+  @@map("lessons")
+}
+
+model LessonSource {
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  sourceId String
+  source   Source @relation(fields: [sourceId], references: [id])
+  position Int    @default(0)
+  supports String
+
+  @@id([lessonId, sourceId])
+  @@map("lesson_sources")
+}
+
+model LessonProgress {
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  startedAt    DateTime  @default(now())
+  readAt       DateTime?
+  understoodAt DateTime?
+  completedAt  DateTime?
+  attempts     Int       @default(0)
+
+  @@id([userId, lessonId])
+  @@map("lesson_progress")
+}
+
+enum XpKind {
+  LESSON_READ
+  LESSON_UNDERSTOOD
+  MODULE_COMPLETED
+}
+
+// A restrição única garante XP uma única vez por atividade (idempotência).
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      XpKind
+  refId     String
+  amount    Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, kind, refId])
+  @@map("xp_events")
+}
+
+model UserAchievement {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String
+  awardedAt DateTime @default(now())
+
+  @@id([userId, key])
+  @@map("user_achievements")
+}
+
+// ---------------------------------------------------------------------------
+// Acontecimentos.
+// ---------------------------------------------------------------------------
+
+enum EventStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  title          String
+  status         EventStatus @default(DRAFT)
+  isDemo         Boolean     @default(false)
+  eventDate      DateTime
+  themes         String[]
+  statusLabel    String
+  content        Json
+  aiAssisted     Boolean     @default(false)
+  aiReport       Json?
+  editorNotes    String?
+  publishedAt    DateTime?
+  lastReviewedAt DateTime?
+  reviewedBy     String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  sources EventSource[]
+  lessons EventLesson[]
+  forums  Forum[]
+  topics  Topic[]
+
+  @@index([status, eventDate])
+  @@map("events")
+}
+
+model EventSource {
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sourceId String
+  source   Source @relation(fields: [sourceId], references: [id])
+
+  @@id([eventId, sourceId])
+  @@map("event_sources")
+}
+
+model EventLesson {
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  relation String
+
+  @@id([eventId, lessonId])
+  @@map("event_lessons")
+}
+
+model AiGeneration {
+  id           String   @id @default(cuid())
+  purpose      String
+  model        String
+  status       String
+  inputTokens  Int?
+  outputTokens Int?
+  durationMs   Int?
+  errorCode    String?
+  eventId      String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("ai_generations")
+}
+
+enum FlagTarget {
+  EVENT
+  LESSON
+}
+
+enum FlagReason {
+  FACTUAL_ERROR
+  INADEQUATE_SOURCE
+  LEADING_LANGUAGE
+  OTHER
+}
+
+enum CaseStatus {
+  OPEN
+  ACTION_TAKEN
+  DISMISSED
+}
+
+// Sinalização de problemas em conteúdo editorial (lições e acontecimentos).
+model ContentFlag {
+  id             String     @id @default(cuid())
+  targetType     FlagTarget
+  targetId       String
+  reason         FlagReason
+  details        String?
+  reporterId     String?
+  reporter       User?      @relation("FlagAuthor", fields: [reporterId], references: [id], onDelete: SetNull)
+  status         CaseStatus @default(OPEN)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  createdAt      DateTime   @default(now())
+
+  @@index([status, createdAt])
+  @@map("content_flags")
+}
+
+// ---------------------------------------------------------------------------
+// Comunidade.
+// ---------------------------------------------------------------------------
+
+enum ForumCategory {
+  CORRENTES
+  IDEIAS
+  ACONTECIMENTOS
+  INSTITUICOES
+  APRENDIZADO
+}
+
+enum ContentStatus {
+  VISIBLE
+  REMOVED
+  DELETED
+}
+
+model Forum {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  title         String
+  description   String
+  category      ForumCategory
+  rules         String
+  isOfficial    Boolean       @default(false)
+  status        ContentStatus @default(VISIBLE)
+  removedReason String?
+  creatorId     String?
+  creator       User?         @relation("ForumCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  eventId       String?
+  event         Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  topics    Topic[]
+  followers ForumFollow[]
+
+  @@index([category])
+  @@map("forums")
+}
+
+model ForumFollow {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  forumId   String
+  forum     Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, forumId])
+  @@index([forumId])
+  @@map("forum_follows")
+}
+
+model Topic {
+  id             String        @id @default(cuid())
+  forumId        String
+  forum          Forum         @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  title          String
+  body           String
+  status         ContentStatus @default(VISIBLE)
+  removedReason  String?
+  closedAt       DateTime?
+  closedReason   String?
+  lessonId       String?
+  eventId        String?
+  event          Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  commentCount   Int           @default(0)
+  lastActivityAt DateTime      @default(now())
+  editedAt       DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  comments Comment[]
+
+  @@index([forumId, lastActivityAt])
+  @@index([eventId])
+  @@index([lessonId])
+  @@map("topics")
+}
+
+model Comment {
+  id            String        @id @default(cuid())
+  topicId       String
+  topic         Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  authorId      String?
+  author        User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body          String
+  status        ContentStatus @default(VISIBLE)
+  removedReason String?
+  editedAt      DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([topicId, createdAt])
+  @@map("comments")
+}
+
+enum ReportTarget {
+  FORUM
+  TOPIC
+  COMMENT
+}
+
+enum ReportReason {
+  THREAT
+  HARASSMENT
+  PERSONAL_DATA
+  HATE_SPEECH
+  SPAM
+  OTHER
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  targetType     ReportTarget
+  targetId       String
+  reason         ReportReason
+  details        String?
+  reporterId     String?
+  reporter       User?        @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: SetNull)
+  status         CaseStatus   @default(OPEN)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  createdAt      DateTime     @default(now())
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+enum ModerationActionKind {
+  REMOVE_CONTENT
+  CLOSE_TOPIC
+  REOPEN_TOPIC
+  SUSPEND_USER
+  LIFT_SUSPENSION
+  DISMISS_REPORT
+  RESOLVE_FLAG
+  DISMISS_FLAG
+  PUBLISH_EVENT
+  UNPUBLISH_EVENT
+  APPROVE_SOURCE
+  REJECT_SOURCE
+}
+
+// Registro de decisões de moderação e editoriais, sempre com motivo.
+model ModerationAction {
+  id         String               @id @default(cuid())
+  actorId    String?
+  action     ModerationActionKind
+  targetType String
+  targetId   String
+  reason     String
+  reportId   String?
+  createdAt  DateTime             @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("moderation_actions")
+}
