@@ -4,14 +4,14 @@ import { AiAssistedNote } from "@/components/polis/events";
 import { LinkButton } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress";
-import { TopicCard, IconChip, SectionHeading } from "@/components/ui/topic";
+import { TopicTile, IconChip, SectionHeading, areaMeta, type Area } from "@/components/ui/topic";
 import { cn, formatDate } from "@/lib/format";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { getActiveResult } from "@/modules/diagnostic/service";
 import { eventContentSchema } from "@/modules/events/content";
 import { listPublishedEvents } from "@/modules/events/service";
 import { recentFromFollowed } from "@/modules/community/service";
-import { getLearningPath } from "@/modules/learning/catalog";
+import { getCatalog, getLearningPath } from "@/modules/learning/catalog";
 import { ACHIEVEMENTS, getLearnerSummary } from "@/modules/learning/progress";
 
 function Illustration({ className }: { className?: string }) {
@@ -35,40 +35,46 @@ const HOW_IT_WORKS = [
   { title: "Acontecimentos e fóruns", text: "Relacione conceitos a fatos documentados e participe das discussões.", icon: "event", tone: "bg-sand text-sand-ink" },
 ] as const satisfies ReadonlyArray<{ title: string; text: string; icon: IconName; tone: string; optional?: boolean }>;
 
-/** Drawn flow: vertical on small screens, horizontal from lg. Connectors are decorative; the list gives the order. */
+/**
+ * Drawn flow, centered on each step: vertical on small screens, horizontal from lg.
+ * Connectors and step numbers are decorative; the ordered list gives the order.
+ */
 function HowItWorks() {
   return (
     <section aria-labelledby="como-funciona" className="mt-12">
       <SectionHeading id="como-funciona" title="Como funciona" />
-      <ol className="surface-card mt-5 grid gap-x-6 p-5 md:p-8 lg:grid-cols-4">
+      <ol className="surface-card mt-5 flex flex-col items-center px-5 py-8 md:px-8 md:py-10 lg:grid lg:grid-cols-4 lg:items-start lg:gap-x-6">
         {HOW_IT_WORKS.map((step, index) => (
-          <li key={step.title} className="relative grid min-h-[7.5rem] grid-cols-[3.5rem_1fr] gap-x-4 pb-8 last:min-h-0 last:pb-0 lg:block lg:min-h-0 lg:pb-0">
-            <span
-              aria-hidden="true"
-              className={cn(
-                "relative inline-flex h-14 w-14 items-center justify-center rounded-full",
-                step.tone,
-                "optional" in step && "outline-2 outline-offset-4 outline-blue-ink/50 outline-dashed",
-              )}
-            >
-              <Icon name={step.icon} size={26} />
+          <li key={step.title} className="relative flex w-full max-w-sm flex-col items-center text-center lg:max-w-none">
+            <span aria-hidden="true" className="relative">
+              <span
+                className={cn(
+                  "inline-flex h-16 w-16 items-center justify-center rounded-full",
+                  step.tone,
+                  "optional" in step && "outline-2 outline-offset-4 outline-blue-ink/50 outline-dashed",
+                )}
+              >
+                <Icon name={step.icon} size={28} />
+              </span>
+              <span className="absolute -top-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-action text-label font-semibold text-white ring-2 ring-surface">
+                {index + 1}
+              </span>
             </span>
+            <h3 className="mt-4 text-lead font-semibold">{step.title}</h3>
+            <p className="mt-1 text-body text-ink-soft">{step.text}</p>
             {index < HOW_IT_WORKS.length - 1 ? (
               <>
-                <span aria-hidden="true" className="absolute top-[4.25rem] bottom-1.5 left-7 flex -translate-x-1/2 flex-col items-center lg:hidden">
+                <span aria-hidden="true" className="my-4 flex h-10 flex-col items-center lg:hidden">
                   <span className="w-0.5 flex-1 rounded-full bg-action/40" />
                   <Icon name="chevronDown" size={18} className="-mt-2 text-action" />
                 </span>
-                <span aria-hidden="true" className="absolute top-7 -right-3 left-[4.75rem] hidden -translate-y-1/2 items-center lg:flex">
+                {/* From 44 px right of this icon's center to 44 px left of the next one (columns are 1.5rem apart). */}
+                <span aria-hidden="true" className="absolute top-8 right-[calc(-50%_+_1.25rem)] left-[calc(50%_+_2.75rem)] hidden -translate-y-1/2 items-center lg:flex">
                   <span className="h-0.5 flex-1 rounded-full bg-action/40" />
                   <Icon name="chevronRight" size={18} className="-ml-2 text-action" />
                 </span>
               </>
             ) : null}
-            <div className="pt-3.5 lg:pt-5">
-              <h3 className="text-lead font-semibold">{step.title}</h3>
-              <p className="mt-1 text-body text-ink-soft">{step.text}</p>
-            </div>
           </li>
         ))}
       </ol>
@@ -76,15 +82,62 @@ function HowItWorks() {
   );
 }
 
-function ExploreByTopic() {
+const PRINCIPLES = [
+  { icon: "scale", title: "Explicar, não conduzir", text: "Argumentos, críticas e limites de cada perspectiva, com os mesmos critérios de evidência." },
+  { icon: "document", title: "Fontes oficiais", text: "Cada explicação indica órgão, documento, data e alcance da fonte usada." },
+  { icon: "lock", title: "Dados sob seu controle", text: "Respostas do questionário são privadas; você pode exportar ou apagar seus dados." },
+] as const satisfies ReadonlyArray<{ icon: IconName; title: string; text: string }>;
+
+/** Editorial commitments in one calm, non-interactive panel, so they never read as clickable topic tiles. */
+function Principles() {
+  return (
+    <section aria-labelledby="principios" className="mt-12 overflow-hidden rounded-panel border border-line bg-surface xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)]">
+      <div className="bg-mint p-6 md:p-8">
+        <p className="eyebrow">Princípios</p>
+        <h2 id="principios" className="mt-2 text-h2 font-semibold">
+          O que orienta cada explicação
+        </h2>
+        <p className="mt-2 text-body text-ink-soft">Compromissos que valem para todas as lições, acontecimentos e perspectivas.</p>
+      </div>
+      <ul className="divide-y divide-line-soft md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
+        {PRINCIPLES.map((item, index) => (
+          <li key={item.title} className="p-6 md:p-8">
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-selected text-action">
+                <Icon name={item.icon} size={22} />
+              </span>
+              <span className="text-label font-semibold tracking-wider text-ink-soft">{String(index + 1).padStart(2, "0")}</span>
+            </div>
+            <h3 className="mt-4 text-lead font-semibold">{item.title}</h3>
+            <p className="mt-1 text-body text-ink-soft">{item.text}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+async function ExploreByTopic() {
+  const catalog = await getCatalog();
+  // A single-module area lists its lessons, so the tile never just repeats the topic name.
+  const tileProps = (area: Area) => {
+    const modules = catalog.filter((mod) => mod.area === area && mod.status === "PUBLISHED" && mod.lessons.length > 0);
+    return {
+      area,
+      href: `/aprender?tema=${areaMeta[area].slug}`,
+      highlights: modules.length === 1 ? modules[0].lessons.map((lesson) => lesson.title) : modules.map((mod) => mod.title),
+      moduleCount: modules.length,
+      lessonCount: modules.reduce((sum, mod) => sum + mod.lessons.length, 0),
+    };
+  };
   return (
     <section aria-labelledby="explorar" className="mt-12">
       <SectionHeading id="explorar" title="Explore por tema" description="Escolha um ponto de partida e amplie sua compreensão." />
-      <div className="mt-5 grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <TopicCard area="FUNDAMENTOS" href="/aprender?tema=fundamentos" />
-        <TopicCard area="INSTITUICOES" href="/aprender?tema=instituicoes" />
-        <TopicCard area="IDEIAS" href="/aprender?tema=ideias" />
-        <TopicCard area="LEITURA_CRITICA" href="/aprender?tema=leitura-critica" />
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <TopicTile {...tileProps("FUNDAMENTOS")} featured className="sm:col-span-2 lg:col-span-3" />
+        <TopicTile {...tileProps("INSTITUICOES")} />
+        <TopicTile {...tileProps("IDEIAS")} />
+        <TopicTile {...tileProps("LEITURA_CRITICA")} className="sm:col-span-2 lg:col-span-1" />
       </div>
     </section>
   );
@@ -159,22 +212,7 @@ function Landing() {
 
       <ExploreByTopic />
 
-      <section aria-labelledby="principios" className="mt-12 grid gap-4 md:grid-cols-3">
-        <h2 id="principios" className="sr-only">
-          Princípios
-        </h2>
-        {[
-          { tone: "mint" as const, icon: "scale" as const, title: "Explicar, não conduzir", text: "Argumentos, críticas e limites de cada perspectiva, com os mesmos critérios de evidência." },
-          { tone: "sand" as const, icon: "document" as const, title: "Fontes oficiais", text: "Cada explicação indica órgão, documento, data e alcance da fonte usada." },
-          { tone: "lilac" as const, icon: "lock" as const, title: "Dados sob seu controle", text: "Respostas do questionário são privadas; você pode exportar ou apagar seus dados." },
-        ].map((item) => (
-          <article key={item.title} className="surface-card p-5">
-            <IconChip icon={item.icon} tone={item.tone} size={44} />
-            <h3 className="mt-3 text-lead font-semibold">{item.title}</h3>
-            <p className="mt-1 text-body text-ink-soft">{item.text}</p>
-          </article>
-        ))}
-      </section>
+      <Principles />
 
       <RecentEvents />
     </div>

@@ -63,8 +63,8 @@ cp .env.example .env            # no Windows: copy .env.example .env
 # edite BETTER_AUTH_SECRET (qualquer texto longo e aleatório)
 
 npm run db:local                # terminal 1: PostgreSQL local (bancos polis e polis_test, UTF-8)
-npm run db:migrate:deploy       # terminal 2: aplica as migrations
-npm run db:seed                 # fontes, lições, acontecimentos e fóruns oficiais (idempotente)
+npm run db:migrate:deploy       # terminal 2: aplica as migrations e, num banco novo, carrega o conteúdo editorial
+npm run db:seed                 # atualiza fontes, lições, acontecimentos e fóruns oficiais (idempotente; opcional no primeiro uso)
 npm run dev                     # http://localhost:3000
 ```
 
@@ -83,8 +83,8 @@ npm run dev                     # http://localhost:3000
 | `npm run test` / `test:unit` / `test:integration` | Vitest (unitários e integração com banco) |
 | `npm run test:e2e` | build de produção + Playwright (desktop e 360 px) |
 | `npm run db:local` | PostgreSQL embutido para desenvolvimento |
-| `npm run db:migrate:dev` / `db:migrate:deploy` | criar migration (dev) / aplicar migrations (produção, sem apagar dados) |
-| `npm run db:seed` | seed editorial explícito e idempotente |
+| `npm run db:migrate:dev` / `db:migrate:deploy` | criar migration (dev) / aplicar migrations (produção, sem apagar dados) e, se o banco ainda não tiver módulos, carregar o seed editorial |
+| `npm run db:seed` | seed editorial explícito e idempotente (atualiza o conteúdo já carregado) |
 | `npm run check:content` | validação editorial das lições (estrutura, fontes, citações literais, exemplo, exercícios) |
 | `npm run check:catalog` | validação do catálogo de fontes e dos acontecimentos (URLs, trechos, portão de publicação) |
 | `npm run docs:catalog` | gera `docs/catalogo-de-fontes.md` |
@@ -132,13 +132,13 @@ A configuração está em [`.railway/railway.ts`](.railway/railway.ts) (Infraest
 3. Revise e aplique a configuração: `railway config plan` e `railway config apply`. Isso cria o PostgreSQL e o serviço `polis`.
    - **Windows com a CLI instalada pelo npm**: antes desses comandos, rode `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"` no PowerShell. Sem isso, o SDK não encontra o executável e acusa, por engano, "requires Railway CLI 5.42.1 or newer".
 4. **Gere o domínio público antes do primeiro deploy**: `railway domain --service polis`. `BETTER_AUTH_URL` vale `https://${{RAILWAY_PUBLIC_DOMAIN}}` e só é resolvida no deploy.
-5. Publique: `railway up --service polis` (envia a pasta respeitando o `.gitignore`). Se preferir deploy automático a cada push, envie o código para um repositório GitHub privado e conecte-o em **polis → Settings → Source**. Cada deploy executa `npm run build`, depois `npm run db:migrate:deploy` (pre-deploy: se falhar, a versão no ar continua) e `npm run start` (`0.0.0.0:$PORT`).
+5. Publique: `railway up --service polis` (envia a pasta respeitando o `.gitignore`). Se preferir deploy automático a cada push, envie o código para um repositório GitHub privado e conecte-o em **polis → Settings → Source**. Cada deploy executa `npm run build`, depois `npm run db:migrate:deploy` (pre-deploy: aplica as migrations e, no primeiro deploy, carrega o conteúdo editorial; se falhar, a versão no ar continua) e `npm run start` (`0.0.0.0:$PORT`).
 6. Confira `https://SEU-DOMINIO/api/health`. O esperado é `"status":"ok"`, `"database":"ok"`, `"auth":"configured"` e `"mail":"configured"`.
-7. **Seed inicial** (explícito e idempotente; não toca em dados de pessoas): `railway ssh --service polis`, depois `npm run db:seed` dentro do container (pasta `/app`) e `exit`.
-8. **Administrador**: crie sua conta no site, confirme o e-mail e, de novo via `railway ssh --service polis`, rode `npm run admin:promote -- seu@email.org`. Saia e entre de novo para ver `/admin`.
+7. **Conteúdo inicial**: o primeiro deploy já carrega fontes, lições, acontecimentos e fóruns oficiais (o log do pre-deploy mostra `Polis · seed editorial`). Os deploys seguintes não mexem nesse conteúdo, para preservar edições feitas na administração.
+8. **Administrador**: crie sua conta no site, confirme o e-mail e, via `railway ssh --service polis`, rode `npm run admin:promote -- seu@email.org`. Saia e entre de novo para ver `/admin`.
 9. Ative **Backups** no serviço PostgreSQL (veja abaixo).
 
-Para atualizar, rode `railway up --service polis` de novo (ou faça push, se conectou o GitHub). As migrations novas são aplicadas no pre-deploy. Rode o seed outra vez quando mudar o conteúdo editorial. Se a máquina não tiver SSH, rode o seed ou o promote localmente com `DATABASE_URL` igual à `DATABASE_PUBLIC_URL` do serviço Postgres (aba *Variables*).
+Para atualizar, rode `railway up --service polis` de novo (ou faça push, se conectou o GitHub). As migrations novas são aplicadas no pre-deploy. Quando mudar o conteúdo editorial do seed, rode `npm run db:seed` via `railway ssh --service polis` (ele atualiza o conteúdo já carregado). Se a máquina não tiver SSH, rode o seed ou o promote localmente com `DATABASE_URL` igual à `DATABASE_PUBLIC_URL` do serviço Postgres (aba *Variables*).
 
 **Domínio próprio**: adicione `domains: ["polis.seu-dominio.org"]` ao serviço em `.railway/railway.ts`, troque `BETTER_AUTH_URL` para `https://polis.seu-dominio.org` e rode `railway config apply`. Crie os registros DNS indicados por `railway domain status polis.seu-dominio.org`.
 

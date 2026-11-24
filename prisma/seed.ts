@@ -2,6 +2,8 @@
 // published events backed by approved sources, and empty official forums.
 // It never creates users, answers or fictitious activity, and never deletes
 // user data. Run with `npm run db:seed` (separate from application startup).
+// With `--if-empty` (used by `npm run db:migrate:deploy` on every deploy) it only
+// runs on a database that has no modules yet, so later editorial edits are kept.
 import "dotenv/config";
 import { db, disconnectDb } from "../src/lib/db";
 import { checkEventPublication } from "../src/modules/events/content";
@@ -180,6 +182,11 @@ async function seedForums() {
 }
 
 async function main() {
+  // Modules only come from this seed, so an empty table means it never ran here.
+  if (process.argv.includes("--if-empty") && (await db.module.count()) > 0) {
+    console.log("Polis · seed editorial: conteúdo inicial já carregado; nada a fazer (use npm run db:seed para atualizá-lo).");
+    return;
+  }
   console.log("Polis · seed editorial");
   const publisherIds = await seedPublishers();
   console.log(`✓ ${PUBLISHERS.length} editores aprovados`);

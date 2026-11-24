@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { Logo } from "@/components/ui/logo";
 import { AccountMenu } from "./account-menu";
-import { BottomNav, PrimaryNav } from "./nav";
+import { BottomNav, MethodLink, PrimaryNav } from "./nav";
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
@@ -17,10 +17,9 @@ export async function SiteHeader() {
             <Logo width={124} priority />
           </Link>
           <PrimaryNav />
-          <div className="flex items-center gap-3 lg:gap-6">
-            <Link href="/fontes-e-metodo" className="text-link hidden text-body no-underline hover:underline lg:inline">
-              Fontes e método
-            </Link>
+          <div className="flex items-center gap-3">
+            <MethodLink />
+            <span aria-hidden="true" className="hidden h-6 w-px bg-line lg:block" />
             {user ? (
               <AccountMenu name={user.name} email={user.email} isAdmin={user.role === "ADMIN"} />
             ) : (

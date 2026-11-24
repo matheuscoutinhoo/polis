@@ -15,7 +15,8 @@ export default defineRailway((ctx) => {
   const web = service("polis", {
     build: "npm run build",
     start: "npm run start",
-    // Applies pending migrations before each deploy; never resets the database.
+    // Applies pending migrations before each deploy (never resets the database) and,
+    // on a database without editorial content yet, loads the initial seed.
     preDeploy: "npm run db:migrate:deploy",
     // Returns 503 while the database or BETTER_AUTH_URL/BETTER_AUTH_SECRET are not usable,
     // so a misconfigured release never replaces the running one.

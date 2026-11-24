@@ -71,6 +71,34 @@ const paths = {
   ),
   shield: <path d="M12 3.75l7 2.75v5.25c0 4.25-3 7.25-7 8.5-4-1.25-7-4.25-7-8.5V6.5z" />,
   layers: <path d="M12 4l8.5 4.5L12 13 3.5 8.5zM3.5 12.5L12 17l8.5-4.5M3.5 16.25L12 20.75l8.5-4.5" />,
+  // Topic glyphs: each study area has its own shape, distinct from the navigation icons.
+  sprout: (
+    <>
+      <path d="M12 20.25V11.5M7.75 20.25h8.5" />
+      <path d="M12 11.5c0-3.6 2.6-6.25 6.75-6.25 0 3.6-2.6 6.25-6.75 6.25z" />
+      <path d="M12 14.5c0-2.9-2.1-5-5.5-5 0 2.9 2.1 5 5.5 5z" />
+    </>
+  ),
+  landmark: (
+    <>
+      <path d="M4 9.25L12 4.5l8 4.75z" />
+      <path d="M6.75 11.75v6M10.25 11.75v6M13.75 11.75v6M17.25 11.75v6M4.25 20.25h15.5" />
+    </>
+  ),
+  lightbulb: (
+    <>
+      <path d="M12 3.75a5.75 5.75 0 0 0-3.4 10.38c.62.46.9 1.1.9 1.87v.5h5v-.5c0-.77.28-1.41.9-1.87A5.75 5.75 0 0 0 12 3.75z" />
+      <path d="M9.75 18.75h4.5M10.75 21h2.5" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="4.25" y="4.25" width="6.25" height="6.25" rx="1.5" />
+      <rect x="13.5" y="4.25" width="6.25" height="6.25" rx="1.5" />
+      <rect x="4.25" y="13.5" width="6.25" height="6.25" rx="1.5" />
+      <rect x="13.5" y="13.5" width="6.25" height="6.25" rx="1.5" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof paths;

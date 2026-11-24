@@ -22,7 +22,7 @@
     "db:local": "node scripts/local-postgres.mjs",
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "prisma migrate deploy && tsx prisma/seed.ts --if-empty",
     "db:seed": "tsx prisma/seed.ts",
     "admin:promote": "tsx scripts/promote-admin.ts",
     "ai:eval": "tsx scripts/ai-eval.ts"
