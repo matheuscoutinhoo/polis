@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SignupBanner } from "@/components/auth/signup-gate";
-import { LearningPathView } from "@/components/polis/learning-path";
+import { SignupGate } from "@/components/auth/signup-gate";
 import { Icon } from "@/components/ui/icon";
-import { Notice } from "@/components/ui/notice";
 import { ProgressBar } from "@/components/ui/progress";
 import { EmptyState, TopicIcon, areaFromSlug, areaMeta, type Area } from "@/components/ui/topic";
 import { cn, plural } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
-import { getActiveResult } from "@/modules/diagnostic/service";
-import { getCatalog, getLearningPath } from "@/modules/learning/catalog";
+import { getContentUser } from "@/lib/session";
+import { getCatalog } from "@/modules/learning/catalog";
 import { getLearnerSummary } from "@/modules/learning/progress";
 
 export const metadata: Metadata = { title: "Aprender" };
-
-const NOTICES: Record<string, string> = {
-  "questionario-adiado": "Tudo bem. O questionário continua disponível quando você quiser; por enquanto, sua trilha segue a ordem geral.",
-  "trilha-geral": "Você está usando a trilha geral. Todo o catálogo continua aberto, e você pode responder ao questionário depois, se mudar de ideia.",
-};
 
 function FilterCount({ value, active }: { value: number; active: boolean }) {
   return (
@@ -29,32 +21,46 @@ function FilterCount({ value, active }: { value: number; active: boolean }) {
   );
 }
 
-export default async function CatalogPage({ searchParams }: { searchParams: Promise<{ tema?: string; aviso?: string }> }) {
+function Intro() {
+  return (
+    <>
+      <p className="eyebrow eyebrow-neutral">Aprender / Catálogo</p>
+      <h1 className="mt-2 text-display-sm font-semibold md:text-display">Qual tema você quer explorar?</h1>
+      <p className="mt-3 max-w-2xl text-lead text-ink-soft">Comece pelos fundamentos ou navegue livremente pelos assuntos.</p>
+    </>
+  );
+}
+
+export default async function CatalogPage({ searchParams }: { searchParams: Promise<{ tema?: string }> }) {
   const params = await searchParams;
   const area = areaFromSlug(params.tema);
-  const user = await getCurrentUser();
-  const [modules, result, summary] = await Promise.all([getCatalog(), user ? getActiveResult(user.id) : null, user ? getLearnerSummary(user.id) : null]);
-  const path = await getLearningPath(user, result);
-  const progress = summary?.progressByLesson ?? new Map();
-  const next = path.ordered.find((l) => !progress.get(l.id)?.completedAt) ?? null;
+  const user = await getContentUser();
+
+  if (!user) {
+    return (
+      <div className="page-frame py-8 md:py-12">
+        <Intro />
+        <SignupGate
+          path={area ? `/aprender?tema=${areaMeta[area].slug}` : "/aprender"}
+          eyebrow="Acesso com conta"
+          title="Crie uma conta para explorar os temas"
+          perks={["Módulos de todos os temas", "Lições completas, com fontes", "Trilha ordenada pelo questionário", "Progresso e conquistas salvos"]}
+          className="mt-8"
+        >
+          Os módulos e as lições ficam disponíveis para quem tem conta. Depois do cadastro, você responde ao questionário de afinidades, que ordena a sua trilha.
+        </SignupGate>
+      </div>
+    );
+  }
+
+  const [modules, summary] = await Promise.all([getCatalog(), getLearnerSummary(user.id)]);
+  const progress = summary.progressByLesson;
   const visible = area ? modules.filter((m) => m.area === area) : modules;
   const areas = Object.keys(areaMeta) as Area[];
 
   return (
     <div className="page-frame py-8 md:py-12">
-      {params.aviso && NOTICES[params.aviso] ? (
-        <Notice tone="info" className="mb-6" role="status">
-          {NOTICES[params.aviso]}
-        </Notice>
-      ) : null}
-      <p className="eyebrow eyebrow-neutral">Aprender / Catálogo</p>
-      <h1 className="mt-2 text-display-sm font-semibold md:text-display">Qual tema você quer explorar?</h1>
-      <p className="mt-3 max-w-2xl text-lead text-ink-soft">Comece pelos fundamentos ou navegue livremente pelos assuntos.</p>
-      {user ? null : (
-        <SignupBanner path={area ? `/aprender?tema=${areaMeta[area].slug}` : "/aprender"} title="Crie uma conta para ler as lições completas" className="mt-6">
-          Sem conta, você navega pelo catálogo e lê a abertura de cada lição.
-        </SignupBanner>
-      )}
+      <Intro />
 
       {/* `relative` keeps the absolutely positioned sr-only counts inside the scroller's clip. */}
       <nav aria-label="Filtrar por tema" className="relative -mx-4 mt-8 overflow-x-auto px-4 pb-1 min-[400px]:-mx-5 min-[400px]:px-5 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
@@ -87,96 +93,63 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         </div>
       </nav>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div>
-          {visible.length === 0 ? (
-            <EmptyState icon="book" title={area ? `Nenhum módulo publicado em ${areaMeta[area].label} ainda` : "O catálogo está sendo preparado"}>
-              {area ? (
-                <p>
-                  Veja{" "}
-                  <Link href="/aprender" className="text-link">
-                    todos os temas
-                  </Link>
-                  .
-                </p>
-              ) : (
-                <p>Os módulos aparecem aqui assim que o conteúdo editorial for publicado.</p>
-              )}
-            </EmptyState>
-          ) : (
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {visible.map((module) => {
-                const done = module.lessons.filter((l) => progress.get(l.id)?.completedAt).length;
-                const gap = module.status === "DOCUMENTARY_GAP";
-                return (
-                  <li key={module.id} className={cn("topic-card surface-card relative flex flex-col p-5", gap && "bg-paper")}>
-                    <div className="flex items-start justify-between gap-3">
-                      <TopicIcon area={module.area as Area} size={44} />
-                      <span className="text-label font-semibold uppercase tracking-wider text-ink-soft">Módulo {String(module.number).padStart(2, "0")}</span>
-                    </div>
-                    <h2 className="mt-4 text-h3 font-semibold">
-                      {gap ? (
-                        module.title
-                      ) : (
-                        <Link href={`/aprender/${module.slug}`} className="after:absolute after:inset-0 after:rounded-card focus-visible:outline-none">
-                          {module.title}
-                        </Link>
-                      )}
-                    </h2>
-                    <p className="mt-2 flex-1 text-body text-ink-soft">{module.summary}</p>
-                    {gap ? (
-                      <p className="mt-3 rounded-control bg-sand p-3 text-meta text-sand-ink">
-                        <span className="font-semibold">Em preparação: lacuna documental.</span> {module.gapNote}
-                      </p>
-                    ) : (
-                      <div className="mt-4">
-                        <p className="text-meta text-ink-soft">
-                          {plural(module.lessons.length, "lição", "lições")} · {areaMeta[module.area as Area].label}
-                          {user ? ` · ${done} concluída(s)` : ""}
-                        </p>
-                        {user ? <ProgressBar className="mt-2" value={done} max={module.lessons.length} label={`Progresso no módulo ${module.title}`} /> : null}
-                        <p className="mt-3 flex items-center justify-between text-meta font-semibold text-action">
-                          <span>{done === module.lessons.length && done > 0 ? "Revisar módulo" : done > 0 ? "Continuar módulo" : "Explorar módulo"}</span>
-                          <Icon name="arrowRight" size={18} />
-                        </p>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-panel bg-mint p-5 md:p-6">
-            <p className="eyebrow">Sua trilha</p>
-            <h2 className="mt-1 text-h3 font-semibold">{path.mode === "AFFINITY" ? "Sua trilha por afinidade" : "Trilha geral"}</h2>
-            <p className="mt-1 text-meta text-ink-soft">
-              {path.mode === "AFFINITY" ? "Ordem definida a partir do seu questionário. " : "Ordem editorial, igual para todas as pessoas. "}
-              {user ? (
-                <Link href={result ? "/questionario/resultado" : "/questionario"} className="text-link">
-                  {result ? "Mudar escolha da trilha" : "Conhecer o questionário"}
+      <div className="mt-8">
+        {visible.length === 0 ? (
+          <EmptyState icon="book" title={area ? `Nenhum módulo publicado em ${areaMeta[area].label} ainda` : "O catálogo está sendo preparado"}>
+            {area ? (
+              <p>
+                Veja{" "}
+                <Link href="/aprender" className="text-link">
+                  todos os temas
                 </Link>
-              ) : (
-                <Link href="/criar-conta" className="text-link">
-                  Crie uma conta para salvar o progresso
-                </Link>
-              )}
-            </p>
-            <p className="mt-4 flex gap-2 border-t border-action/15 pt-4 text-meta text-action-press">
-              <Icon name="book" size={18} className="mt-0.5 flex-none" />
-              A introdução é comum. O questionário pode ordenar os estudos e continua opcional; nenhuma corrente fica escondida.
-            </p>
-          </div>
-          <div className="mt-4">
-            {path.ordered.length ? (
-              <LearningPathView path={path} progress={progress} nextLessonId={next?.id ?? null} />
+                .
+              </p>
             ) : (
-              <p className="text-meta text-ink-soft">As etapas da trilha aparecem aqui quando houver lições publicadas.</p>
+              <p>Os módulos aparecem aqui assim que o conteúdo editorial for publicado.</p>
             )}
-          </div>
-        </aside>
+          </EmptyState>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((module) => {
+              const done = module.lessons.filter((l) => progress.get(l.id)?.completedAt).length;
+              const gap = module.status === "DOCUMENTARY_GAP";
+              return (
+                <li key={module.id} className={cn("topic-card surface-card relative flex flex-col p-5", gap && "bg-paper")}>
+                  <div className="flex items-start justify-between gap-3">
+                    <TopicIcon area={module.area as Area} size={44} />
+                    <span className="text-label font-semibold uppercase tracking-wider text-ink-soft">Módulo {String(module.number).padStart(2, "0")}</span>
+                  </div>
+                  <h2 className="mt-4 text-h3 font-semibold">
+                    {gap ? (
+                      module.title
+                    ) : (
+                      <Link href={`/aprender/${module.slug}`} className="after:absolute after:inset-0 after:rounded-card focus-visible:outline-none">
+                        {module.title}
+                      </Link>
+                    )}
+                  </h2>
+                  <p className="mt-2 flex-1 text-body text-ink-soft">{module.summary}</p>
+                  {gap ? (
+                    <p className="mt-3 rounded-control bg-sand p-3 text-meta text-sand-ink">
+                      <span className="font-semibold">Em preparação: lacuna documental.</span> {module.gapNote}
+                    </p>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="text-meta text-ink-soft">
+                        {plural(module.lessons.length, "lição", "lições")} · {areaMeta[module.area as Area].label} · {done} concluída(s)
+                      </p>
+                      <ProgressBar className="mt-2" value={done} max={module.lessons.length} label={`Progresso no módulo ${module.title}`} />
+                      <p className="mt-3 flex items-center justify-between text-meta font-semibold text-action">
+                        <span>{done === module.lessons.length && done > 0 ? "Revisar módulo" : done > 0 ? "Continuar módulo" : "Explorar módulo"}</span>
+                        <Icon name="arrowRight" size={18} />
+                      </p>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -76,13 +76,13 @@ export default async function AccountPage() {
           <PathModeForm
             current={user.pathMode}
             affinityAvailable={affinityAvailable}
-            unavailableReason={result ? undefined : "Disponível depois de responder ao questionário opcional."}
+            unavailableReason={result ? undefined : "Disponível depois de responder ao questionário."}
           />
           {!result ? (
             <p className="mt-3 text-meta text-ink-soft">
               A trilha por afinidade depende do{" "}
               <Link href="/questionario" className="text-link">
-                questionário opcional
+                questionário de afinidades
               </Link>
               .
             </p>

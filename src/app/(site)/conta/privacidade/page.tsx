@@ -14,10 +14,13 @@ import { getActiveConsent } from "@/modules/diagnostic/service";
 export const metadata: Metadata = { title: "Privacidade e dados" };
 
 const NOTICES: Record<string, { tone: "success" | "info"; text: string }> = {
-  "questionario-apagado": { tone: "success", text: "Respostas e resultado do questionário apagados. Sua trilha voltou à ordem geral." },
+  "questionario-apagado": {
+    tone: "success",
+    text: "Respostas e resultado do questionário apagados. Para voltar a usar lições, acontecimentos e fóruns, responda ao questionário de novo.",
+  },
   "consentimento-revogado": {
     tone: "success",
-    text: "Autorização revogada. Respostas e resultado foram apagados e a trilha voltou à ordem geral. Você pode autorizar de novo quando quiser.",
+    text: "Autorização revogada. Respostas e resultado foram apagados. Para voltar a usar lições, acontecimentos e fóruns, autorize e responda ao questionário de novo.",
   },
 };
 
@@ -68,7 +71,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             Questionário de afinidades
           </h2>
           <p className="mt-1 text-meta text-ink-soft">
-            Respostas e resultado são dados sensíveis: ficam privados, não são enviados a serviços de IA e servem apenas para ordenar sua trilha.
+            Respostas e resultado são dados sensíveis: ficam privados, não são enviados a serviços de IA e servem apenas para ordenar sua trilha. Responder é condição para usar
+            lições, acontecimentos e fóruns.
           </p>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
@@ -101,7 +105,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
                 triggerVariant="secondary"
                 triggerIcon="trash"
                 title="Apagar respostas e resultado?"
-                description="As respostas, o resultado e a tentativa em andamento serão apagados. A autorização continua ativa, então você pode responder de novo quando quiser. A trilha volta à ordem geral."
+                description="As respostas, o resultado e a tentativa em andamento serão apagados. A autorização continua ativa. Para voltar a usar lições, acontecimentos e fóruns, será preciso responder ao questionário de novo."
                 confirmLabel="Apagar dados do questionário"
                 pendingLabel="Apagando..."
                 action={deleteQuestionnaireDataAction}
@@ -112,14 +116,14 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
                 triggerLabel="Revogar autorização"
                 triggerVariant="secondary"
                 title="Revogar a autorização do questionário?"
-                description="O tratamento é interrompido: respostas e resultado são apagados imediatamente e a trilha volta à ordem geral. O registro da autorização e da revogação, com data e versão, é mantido como comprovação."
+                description="O tratamento é interrompido: respostas e resultado são apagados imediatamente. Como o questionário é condição para usar lições, acontecimentos e fóruns, o acesso a eles fica suspenso até você autorizar e responder de novo. O registro da autorização e da revogação, com data e versão, é mantido como comprovação."
                 confirmLabel="Revogar e apagar"
                 pendingLabel="Revogando..."
                 action={revokeQuestionnaireConsentAction}
               />
             ) : (
               <Link href="/questionario" className="text-link inline-flex min-h-[44px] items-center gap-1.5">
-                Conhecer o questionário <Icon name="arrowRight" size={16} />
+                Responder ao questionário <Icon name="arrowRight" size={16} />
               </Link>
             )}
           </div>

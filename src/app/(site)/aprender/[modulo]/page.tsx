@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SignupBanner } from "@/components/auth/signup-gate";
+import { SignupGate } from "@/components/auth/signup-gate";
 import { Icon } from "@/components/ui/icon";
 import { TopicIcon, areaMeta, type Area } from "@/components/ui/topic";
-import { cn } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { plural } from "@/lib/format";
+import { getContentUser } from "@/lib/session";
 import { getModuleBySlug } from "@/modules/learning/catalog";
 import { getLearnerSummary } from "@/modules/learning/progress";
 
@@ -16,13 +16,12 @@ export async function generateMetadata({ params }: { params: Promise<{ modulo: s
 
 export default async function ModulePage({ params }: { params: Promise<{ modulo: string }> }) {
   const { modulo } = await params;
-  const [mod, user] = await Promise.all([getModuleBySlug(modulo), getCurrentUser()]);
+  const [mod, user] = await Promise.all([getModuleBySlug(modulo), getContentUser()]);
   if (!mod || mod.status !== "PUBLISHED") notFound();
-  const summary = user ? await getLearnerSummary(user.id) : null;
   const area = mod.area as Area;
 
-  return (
-    <div className="page-frame py-8 md:py-12">
+  const header = (
+    <>
       <Link href="/aprender" className="text-link inline-flex items-center gap-1.5 text-meta">
         <Icon name="arrowLeft" size={16} /> Voltar ao catálogo
       </Link>
@@ -36,14 +35,34 @@ export default async function ModulePage({ params }: { params: Promise<{ modulo:
           <p className="mt-2 max-w-2xl text-lead text-ink-soft">{mod.summary}</p>
         </div>
       </div>
-      {user ? null : (
-        <SignupBanner path={`/aprender/${mod.slug}`} title="Crie uma conta para ler as lições completas" className="mt-8 max-w-3xl">
-          Sem conta, cada lição mostra só a abertura.
-        </SignupBanner>
-      )}
-      <ol className={cn("flex max-w-3xl flex-col gap-3", user ? "mt-10" : "mt-6")}>
+    </>
+  );
+
+  if (!user) {
+    return (
+      <div className="page-frame py-8 md:py-12">
+        {header}
+        <SignupGate
+          path={`/aprender/${mod.slug}`}
+          eyebrow="Acesso com conta"
+          title="Crie uma conta para estudar este módulo"
+          perks={["Lições completas, com fontes", "Verificação de compreensão", "Progresso salvo na sua trilha", "Discussões relacionadas"]}
+          className="mt-10 max-w-3xl"
+        >
+          Este módulo tem {plural(mod.lessons.length, "lição", "lições")}. Com uma conta, você lê cada uma por completo e acompanha o que já estudou.
+        </SignupGate>
+      </div>
+    );
+  }
+
+  const summary = await getLearnerSummary(user.id);
+
+  return (
+    <div className="page-frame py-8 md:py-12">
+      {header}
+      <ol className="mt-10 flex max-w-3xl flex-col gap-3">
         {mod.lessons.map((lesson) => {
-          const state = summary?.progressByLesson.get(lesson.id);
+          const state = summary.progressByLesson.get(lesson.id);
           return (
             <li key={lesson.id}>
               <Link
@@ -59,10 +78,8 @@ export default async function ModulePage({ params }: { params: Promise<{ modulo:
                     {lesson.minutes} min · {lesson.objective}
                   </span>
                 </span>
-                <span className="sr-only">
-                  {!user ? "Prévia; lição completa com conta" : state?.completedAt ? "Concluída" : state?.readAt ? "Leitura concluída" : "Não iniciada"}
-                </span>
-                {user ? <Icon name="arrowRight" size={20} className="flex-none text-action" /> : <Icon name="lock" size={18} className="flex-none text-ink-soft" />}
+                <span className="sr-only">{state?.completedAt ? "Concluída" : state?.readAt ? "Leitura concluída" : "Não iniciada"}</span>
+                <Icon name="arrowRight" size={20} className="flex-none text-action" />
               </Link>
             </li>
           );

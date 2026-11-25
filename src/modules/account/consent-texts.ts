@@ -1,6 +1,6 @@
 // Consent texts are versioned: changing the purpose requires a new version.
 
-export const TERMS_VERSION = "termos-2026-11";
+export const TERMS_VERSION = "termos-2026-11-v2";
 export const TERMS_PURPOSE =
   "Aceite dos Termos de uso e da Política de privacidade da Polis: criação e manutenção da conta, registro do progresso de aprendizado e participação nos fóruns.";
 

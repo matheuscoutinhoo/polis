@@ -10,8 +10,6 @@ import { getCurrentUser } from "@/lib/session";
 import { QUESTIONNAIRE_CONSENT_PURPOSE, QUESTIONNAIRE_CONSENT_VERSION } from "@/modules/account/consent-texts";
 import {
   acceptQuestionnaireConsentAction,
-  declineQuestionnaireAction,
-  deferQuestionnaireAction,
   discardRetakeAction,
   startRetakeAction,
 } from "@/modules/diagnostic/actions";
@@ -56,7 +54,11 @@ function Explanation() {
   );
 }
 
-export default async function QuestionnairePage({ searchParams }: { searchParams: Promise<{ bemvindo?: string; erro?: string; pausado?: string }> }) {
+export default async function QuestionnairePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bemvindo?: string; erro?: string; pausado?: string; pendente?: string }>;
+}) {
   const params = await searchParams;
   const user = await getCurrentUser();
 
@@ -65,7 +67,7 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
       <div className="page-frame py-8 md:py-12">
         <p className="eyebrow">Questionário de afinidades</p>
         <h1 className="mt-2 text-display-sm font-semibold md:text-display">Como você vê estas situações?</h1>
-        <p className="mt-3 max-w-2xl text-lead text-ink-soft">O questionário é opcional e leva cerca de 15 minutos.</p>
+        <p className="mt-3 max-w-2xl text-lead text-ink-soft">É o primeiro passo depois de criar a conta e leva cerca de 15 minutos.</p>
         <SignupBanner path="/questionario" title="Crie uma conta para responder" className="mt-6">
           As respostas ficam salvas na sua conta, para você pausar e continuar depois.
         </SignupBanner>
@@ -82,25 +84,30 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
     <div className="page-frame py-8 md:py-12">
       {params.bemvindo ? (
         <Notice tone="success" title="Conta criada" className="mb-6" role="status">
-          Enviamos um link de confirmação para o seu e-mail. A confirmação só é necessária para publicar nos fóruns.
+          Agora, responda ao questionário: é o primeiro passo para usar a Polis. Também enviamos um link de confirmação para o seu e-mail, necessário só para publicar nos
+          fóruns.
+        </Notice>
+      ) : params.pendente && !completed ? (
+        <Notice tone="info" title="Responda ao questionário para continuar" className="mb-6" role="status">
+          Lições, acontecimentos e fóruns ficam disponíveis assim que você concluir as 50 situações.
         </Notice>
       ) : null}
       {params.pausado ? (
         <Notice tone="info" className="mb-6" role="status">
-          Suas respostas foram salvas. Você pode continuar quando quiser.
+          Suas respostas foram salvas. Continue quando quiser; lições, acontecimentos e fóruns ficam disponíveis assim que você concluir.
         </Notice>
       ) : null}
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_420px]">
+      {/* Small screens: title, then the next action, then the explanation. */}
+      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr]">
         <div>
-          <p className="eyebrow">Questionário de afinidades · opcional</p>
+          <p className="eyebrow">Questionário de afinidades · primeiro passo</p>
           <h1 className="mt-2 text-display-sm font-semibold md:text-display">Como você vê estas situações?</h1>
-          <p className="mt-3 max-w-2xl text-lead text-ink-soft">Leva cerca de 15 minutos. Você pode pausar, voltar e revisar respostas; tudo é salvo automaticamente.</p>
-          <div className="mt-8">
-            <Explanation />
-          </div>
+          <p className="mt-3 max-w-2xl text-lead text-ink-soft">
+            Leva cerca de 15 minutos e é obrigatório para usar a Polis. Você pode pausar, voltar e revisar respostas; tudo é salvo automaticamente.
+          </p>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
           {consent ? (
             <div className="surface-card p-6">
               <p className="eyebrow">Sua situação</p>
@@ -151,11 +158,13 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
               )}
               <p className="mt-5 flex items-start gap-2 text-meta text-ink-soft">
                 <Icon name="lock" size={16} className="mt-0.5 flex-none" />
-                Autorização registrada em {formatDate(consent.grantedAt)} (versão {consent.version}). Você pode revogá-la em{" "}
-                <Link href="/conta/privacidade" className="text-link">
-                  Privacidade e dados
-                </Link>
-                .
+                <span>
+                  Autorização registrada em {formatDate(consent.grantedAt)} (versão {consent.version}). Você pode revogá-la em{" "}
+                  <Link href="/conta/privacidade" className="text-link">
+                    Privacidade e dados
+                  </Link>
+                  .
+                </span>
               </p>
             </div>
           ) : (
@@ -166,9 +175,20 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
                 Respostas a temas políticos são dados sensíveis. Esta autorização é separada dos termos de uso e pode ser revogada a qualquer momento, o que apaga respostas e
                 resultado.
               </p>
+              <p className="mt-4 flex gap-3 rounded-control bg-sand p-3 text-meta text-sand-ink">
+                <Icon name="alert" size={18} className="mt-0.5 flex-none" />
+                <span>
+                  <strong>Responder é condição para usar lições, acontecimentos e fóruns.</strong> Sem a autorização, você continua com acesso à sua conta e pode exportar seus
+                  dados ou excluir a conta em{" "}
+                  <Link href="/conta/privacidade" className="font-semibold underline underline-offset-2">
+                    Privacidade e dados
+                  </Link>
+                  .
+                </span>
+              </p>
               {params.erro === "consentimento" ? (
                 <Notice tone="error" className="mt-4" role="alert">
-                  Marque a autorização para começar, ou escolha uma das outras opções.
+                  Marque a autorização para começar.
                 </Notice>
               ) : null}
               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-control border border-control p-4 text-body has-[:checked]:border-action has-[:checked]:bg-selected">
@@ -185,21 +205,11 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
               </div>
             </form>
           )}
-          {!consent ? (
-            <div className="mt-4 flex flex-col gap-2">
-              <form action={deferQuestionnaireAction}>
-                <SubmitButton variant="secondary" block pendingLabel="Salvando...">
-                  Responder depois
-                </SubmitButton>
-              </form>
-              <form action={declineQuestionnaireAction}>
-                <SubmitButton variant="text" block pendingLabel="Salvando...">
-                  Não quero personalizar: usar a trilha geral
-                </SubmitButton>
-              </form>
-            </div>
-          ) : null}
         </aside>
+
+        <div className="lg:col-start-1">
+          <Explanation />
+        </div>
       </div>
     </div>
   );

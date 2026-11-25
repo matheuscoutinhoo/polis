@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { MODULES } from "../../prisma/seed-data/lessons";
-import { query, signUp, uniqueEmail, verifyEmail } from "./helpers";
-
-const OPTIONS = [/^Concordo totalmente/, /^Concordo em parte/, /^Nem concordo nem discordo/, /^Discordo em parte/, /^Discordo totalmente/, /^Não sei/];
+import { ANSWER_OPTIONS as OPTIONS, query, signUp, uniqueEmail, verifyEmail } from "./helpers";
 
 test("cadastro, questionário completo, resultado e primeira lição com XP sem duplicação", async ({ page }) => {
   const email = uniqueEmail("jornada");

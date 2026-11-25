@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { query, signIn, signOut, signUp, uniqueEmail, verifyEmail } from "./helpers";
+import { completeQuestionnaire, query, signIn, signOut, signUp, uniqueEmail, verifyEmail } from "./helpers";
 
 test("fórum e administração: criar, seguir, publicar, comentar, denunciar, moderar e revisar fonte com motivo registrado", async ({ page }) => {
   const authorEmail = uniqueEmail("autora");
   await signUp(page, "Autora Fórum", authorEmail);
+  await completeQuestionnaire(page);
 
   // Unverified accounts can read but not publish.
   await page.goto("/comunidade/novo");
@@ -38,6 +39,7 @@ test("fórum e administração: criar, seguir, publicar, comentar, denunciar, mo
   await signOut(page);
   const readerEmail = uniqueEmail("leitora");
   await signUp(page, "Leitora Fórum", readerEmail);
+  await completeQuestionnaire(page);
   await page.goto(topicUrl);
   await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0);
   await page.getByRole("button", { name: "Denunciar" }).last().click();

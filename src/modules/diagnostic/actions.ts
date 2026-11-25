@@ -13,7 +13,6 @@ import {
   revokeQuestionnaireConsent,
   saveAnswer,
   setPathMode,
-  setQuestionnaireDecision,
   startAttempt,
 } from "./service";
 
@@ -27,18 +26,6 @@ export async function acceptQuestionnaireConsentAction(formData: FormData) {
   await grantQuestionnaireConsent(user.id);
   await startAttempt(user.id);
   redirect("/questionario/responder");
-}
-
-export async function deferQuestionnaireAction() {
-  const user = await requireUser("/questionario");
-  await setQuestionnaireDecision(user.id, "DEFERRED");
-  redirect("/aprender?aviso=questionario-adiado");
-}
-
-export async function declineQuestionnaireAction() {
-  const user = await requireUser("/questionario");
-  await setQuestionnaireDecision(user.id, "DECLINED");
-  redirect("/aprender?aviso=trilha-geral");
 }
 
 export async function saveAnswerAction(questionId: string, choice: string): Promise<SaveAnswerResult> {

@@ -3,9 +3,9 @@ import { LinkButton } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/format";
 
-// Visitors without an account get the home page in full and a preview of every
-// other content page. Pages render only the preview for them, so gated content
-// never reaches the browser, and close it with one of these notices.
+// Visitors without an account get the home page in full. List pages hide their
+// lists behind a notice, and content pages show a preview. Pages render only what
+// visitors may see, so hidden content never reaches the browser.
 
 type NoticeProps = {
   /** Page to return to after signing in. */
@@ -19,8 +19,15 @@ function signInHref(path: string) {
   return `/entrar?proximo=${encodeURIComponent(path)}`;
 }
 
-/** Closes a preview: what an account unlocks and the two ways in. */
-export function SignupGate({ path, title, perks = [], children, className }: NoticeProps & { perks?: string[] }) {
+/** Closes a preview, or replaces a hidden list: what an account unlocks and the two ways in. */
+export function SignupGate({
+  path,
+  title,
+  eyebrow = "Prévia sem conta",
+  perks = [],
+  children,
+  className,
+}: NoticeProps & { eyebrow?: string; perks?: string[] }) {
   return (
     <section aria-labelledby="acesso-com-conta" className={cn("relative isolate overflow-hidden rounded-panel bg-mint p-6 md:p-8", className)}>
       <Icon name="lock" size={200} strokeWidth={1.25} className="pointer-events-none absolute -right-10 -bottom-14 -z-10 hidden text-mint-ink opacity-[0.08] sm:block" />
@@ -28,7 +35,7 @@ export function SignupGate({ path, title, perks = [], children, className }: Not
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-surface text-action" aria-hidden="true">
           <Icon name="lock" size={20} />
         </span>
-        <p className="eyebrow">Prévia sem conta</p>
+        <p className="eyebrow">{eyebrow}</p>
       </div>
       <h2 id="acesso-com-conta" className="mt-4 text-h2 font-semibold">
         {title}

@@ -68,6 +68,10 @@ export default function PrivacyPolicyPage() {
           A Polis coleta somente o necessário para funcionar. Respostas sobre temas políticos podem revelar opinião política, que a Lei Geral de Proteção de Dados (Lei nº
           13.709/2018, art. 5º, II) classifica como dado pessoal sensível. Por isso, elas têm uma autorização própria, ficam privadas e nunca são enviadas a serviços de IA.
         </p>
+        <p className="mt-4 rounded-card bg-sand p-4 text-body text-sand-ink">
+          <strong>Responder ao questionário é condição para usar lições, acontecimentos e fóruns</strong> (art. 9º, § 3º). Sem a autorização, você mantém o acesso à conta e
+          pode exportar seus dados ou excluir a conta a qualquer momento.
+        </p>
 
         <Section id="dados" title="Que dados tratamos e por quê">
           <div className="overflow-x-auto">
@@ -159,7 +163,8 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             A revogação da autorização do questionário é gratuita e imediata (art. 8º, § 5º): o tratamento para, e respostas e resultado são apagados. O registro de que a
-            autorização existiu e foi revogada é mantido como comprovação.
+            autorização existiu e foi revogada é mantido como comprovação. Como o questionário é condição para usar lições, acontecimentos e fóruns, o acesso a eles fica suspenso
+            até você autorizar e responder de novo.
           </p>
           {contact ? (
             <p>

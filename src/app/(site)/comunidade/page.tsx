@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SignupBanner } from "@/components/auth/signup-gate";
+import { SignupGate } from "@/components/auth/signup-gate";
 import { ParticipantLabel } from "@/components/community/community-ui";
 import { LinkButton } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState, IconChip } from "@/components/ui/topic";
 import { formatDate, plural } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 import { CATEGORY_LABEL, FORUM_CATEGORIES } from "@/modules/community/rules";
 import { listFollowedForums, listForums, recentFromFollowed } from "@/modules/community/service";
 
@@ -29,37 +29,60 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
   const q = (params.q ?? "").trim().slice(0, 80);
   const category = FORUM_CATEGORIES.some((c) => c.key === params.categoria) ? params.categoria : undefined;
   const page = Math.max(1, Number.parseInt(params.pagina ?? "1", 10) || 1);
-  const user = await getCurrentUser();
+  const user = await getContentUser();
+
+  const intro = (
+    <div>
+      <p className="eyebrow">Comunidade</p>
+      <h1 className="mt-2 text-display-sm font-semibold md:text-display">Fóruns de discussão</h1>
+      <p className="mt-2 max-w-2xl text-lead text-ink-soft">
+        Converse sobre correntes, ideias e acontecimentos. As publicações são de participantes e não passam por verificação editorial.
+      </p>
+    </div>
+  );
+  const rulesLink = (
+    <LinkButton href="/comunidade/regras" variant="secondary">
+      Regras da comunidade
+    </LinkButton>
+  );
+
+  if (!user) {
+    return (
+      <div className="page-frame py-8 md:py-12">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          {intro}
+          <div className="flex flex-col gap-3 sm:flex-row">{rulesLink}</div>
+        </div>
+        <SignupGate
+          path={buildHref({ q, categoria: category, pagina: page })}
+          eyebrow="Acesso com conta"
+          title="Crie uma conta para participar da comunidade"
+          perks={["Fóruns sobre ideias e acontecimentos", "Tópicos e comentários", "Seguir os fóruns de seu interesse", "Publicar, após confirmar o e-mail"]}
+          className="mt-8"
+        >
+          Os fóruns ficam disponíveis para quem tem conta. Com ela, você lê as discussões e, depois de confirmar o e-mail, também publica.
+        </SignupGate>
+      </div>
+    );
+  }
+
   const [{ forums, totalPages }, followed, recent] = await Promise.all([
     listForums({ q: q || undefined, category, page }),
-    user ? listFollowedForums(user.id) : Promise.resolve([]),
-    user ? recentFromFollowed(user.id, 6) : Promise.resolve([]),
+    listFollowedForums(user.id),
+    recentFromFollowed(user.id, 6),
   ]);
 
   return (
     <div className="page-frame py-8 md:py-12">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="eyebrow">Comunidade</p>
-          <h1 className="mt-2 text-display-sm font-semibold md:text-display">Fóruns de discussão</h1>
-          <p className="mt-2 max-w-2xl text-lead text-ink-soft">
-            Converse sobre correntes, ideias e acontecimentos. As publicações são de participantes e não passam por verificação editorial.
-          </p>
-        </div>
+        {intro}
         <div className="flex flex-col gap-3 sm:flex-row">
           <LinkButton href="/comunidade/novo" icon="plus" iconPosition="start">
             Criar fórum
           </LinkButton>
-          <LinkButton href="/comunidade/regras" variant="secondary">
-            Regras da comunidade
-          </LinkButton>
+          {rulesLink}
         </div>
       </div>
-      {user ? null : (
-        <SignupBanner path={buildHref({ q, categoria: category, pagina: page })} title="Crie uma conta para ler e participar dos fóruns" className="mt-6">
-          Sem conta, você vê a lista de fóruns. Os tópicos e comentários ficam disponíveis para quem tem conta.
-        </SignupBanner>
-      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>
@@ -122,14 +145,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
             <h2 id="seguidos" className="text-lead font-semibold">
               Fóruns que você segue
             </h2>
-            {!user ? (
-              <p className="mt-2 text-meta text-ink-soft">
-                <Link href="/entrar?proximo=/comunidade" className="text-link">
-                  Entre
-                </Link>{" "}
-                para seguir fóruns e ver as discussões recentes aqui.
-              </p>
-            ) : followed.length === 0 ? (
+            {followed.length === 0 ? (
               <p className="mt-2 text-meta text-ink-soft">Você ainda não segue nenhum fórum. Use o botão “Seguir” na página de um fórum.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-2">

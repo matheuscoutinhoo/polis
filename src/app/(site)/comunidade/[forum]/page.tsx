@@ -10,7 +10,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { EmptyState } from "@/components/ui/topic";
 import { formatDate, plural } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 import { followForumAction } from "@/modules/community/actions";
 import { CATEGORY_LABEL } from "@/modules/community/rules";
 import { getForumPage } from "@/modules/community/service";
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ForumPage({ params, searchParams }: { params: Params; searchParams: Promise<{ pagina?: string }> }) {
   const [{ forum: slug }, { pagina }] = await Promise.all([params, searchParams]);
-  const user = await getCurrentUser();
+  const user = await getContentUser();
   const page = Math.max(1, Number.parseInt(pagina ?? "1", 10) || 1);
   const data = await getForumPage(slug, page, user?.id ?? null);
   if (!data) notFound();

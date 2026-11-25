@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { CreateTopicForm } from "@/components/community/community-forms";
 import { PublishGate } from "@/components/community/community-ui";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Novo tópico" };
 
@@ -14,7 +14,7 @@ export default async function NewTopicPage({ params, searchParams }: { params: P
   const [{ forum: slug }, query] = await Promise.all([params, searchParams]);
   const forum = await db.forum.findFirst({ where: { slug, status: "VISIBLE" }, select: { id: true, slug: true, title: true, eventId: true } });
   if (!forum) notFound();
-  const user = await getCurrentUser();
+  const user = await getContentUser();
   const [lessons, events] = await Promise.all([
     db.lesson.findMany({
       where: { status: "PUBLISHED", module: { status: "PUBLISHED" } },

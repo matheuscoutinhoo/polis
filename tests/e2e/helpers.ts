@@ -66,6 +66,26 @@ export async function signOut(page: Page) {
   await page.context().clearCookies();
 }
 
+export const ANSWER_OPTIONS = [/^Concordo totalmente/, /^Concordo em parte/, /^Nem concordo nem discordo/, /^Discordo em parte/, /^Discordo totalmente/, /^Não sei/];
+
+/** Authorizes and answers all 50 situations: accounts must finish the questionnaire before using the content. */
+export async function completeQuestionnaire(page: Page) {
+  await page.goto("/questionario");
+  await page.getByRole("checkbox", { name: /Autorizo/ }).check();
+  await page.getByRole("button", { name: "Autorizar e começar" }).click();
+  await page.waitForURL(/\/questionario\/responder/);
+  for (let i = 0; i < 50; i++) {
+    await expect(page.getByText(`Pergunta ${i + 1} de 50`)).toBeVisible();
+    await page.getByRole("radio", { name: ANSWER_OPTIONS[i % ANSWER_OPTIONS.length] }).check();
+    await expect(page.getByText("Resposta salva")).toBeVisible();
+    const isBlockEnd = (i + 1) % 10 === 0;
+    await page.getByRole("button", { name: isBlockEnd ? "Revisar bloco" : "Próxima" }).click();
+    if (isBlockEnd && i < 49) await page.getByRole("button", { name: `Continuar para o bloco ${(i + 1) / 10 + 1}` }).click();
+  }
+  await page.getByRole("button", { name: "Ver resultado" }).click();
+  await page.waitForURL(/\/questionario\/resultado/);
+}
+
 export async function query<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
   const client = new Client({ connectionString: DATABASE_URL });
   await client.connect();

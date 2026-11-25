@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
 import { Pagination } from "@/components/ui/pagination";
 import { formatDate, plural } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 import { deleteCommentAction, deleteTopicAction } from "@/modules/community/actions";
 import { getTopicPage } from "@/modules/community/service";
 
@@ -36,7 +36,7 @@ export default async function TopicPage({ params, searchParams }: { params: Para
   if (!data) notFound();
   const { topic, lesson, comments, totalPages } = data;
   if (topic.forum.slug !== forumSlug) redirect(`/comunidade/${topic.forum.slug}/${topic.id}`);
-  const user = await getCurrentUser();
+  const user = await getContentUser();
   const path = `/comunidade/${topic.forum.slug}/${topic.id}`;
   const isAuthor = Boolean(user && topic.author?.id === user.id);
   const visible = topic.status === "VISIBLE";

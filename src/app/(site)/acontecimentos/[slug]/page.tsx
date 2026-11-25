@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
 import { formatDate, formatPartialDate, plural } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 import { aiConfigured } from "@/modules/ai/provider";
 import { getPublishedEvent } from "@/modules/events/service";
 import { THEME_LABEL } from "@/modules/events/themes";
@@ -38,7 +38,7 @@ function Section({ id, number, title, children }: { id: string; number: string; 
 
 export default async function EventPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const [event, user] = await Promise.all([getPublishedEvent(slug), getCurrentUser()]);
+  const [event, user] = await Promise.all([getPublishedEvent(slug), getContentUser()]);
   if (!event) notFound();
   const c = event.content;
   const sources = event.sources.map((s) => s.source);

@@ -53,4 +53,20 @@ export async function requireAdmin(): Promise<CurrentUser> {
   return user;
 }
 
+const hasCompletedQuestionnaire = cache(async (userId: string) => {
+  const attempt = await db.questionnaireAttempt.findUnique({ where: { userId_status: { userId, status: "COMPLETED" } }, select: { id: true } });
+  return attempt !== null;
+});
+
+/**
+ * Current user on content pages (dashboard, lessons, events and community).
+ * Visitors get `null` and see a limited page; people with an account must finish
+ * the questionnaire first. Administrators are exempt, so moderation never waits on it.
+ */
+export async function getContentUser(): Promise<CurrentUser | null> {
+  const user = await getCurrentUser();
+  if (user && user.role !== "ADMIN" && !(await hasCompletedQuestionnaire(user.id))) redirect("/questionario?pendente=1");
+  return user;
+}
+
 export { isSuspended } from "./session-utils";

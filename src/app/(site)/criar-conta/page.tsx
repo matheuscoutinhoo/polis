@@ -32,7 +32,10 @@ export default async function SignUpPage() {
             </li>
             <li className="flex gap-3">
               <Icon name="lock" className="mt-0.5 flex-none text-action" />
-              <span>O questionário é opcional e tem autorização separada. Respostas e resultado são privados e podem ser apagados.</span>
+              <span>
+                Depois do cadastro, você responde ao questionário de afinidades, condição para usar lições, acontecimentos e fóruns. Ele tem autorização separada; respostas e
+                resultado são privados e podem ser apagados.
+              </span>
             </li>
             <li className="flex gap-3">
               <Icon name="download" className="mt-0.5 flex-none text-action" />

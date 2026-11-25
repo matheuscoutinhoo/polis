@@ -3,13 +3,13 @@ import Link from "next/link";
 import { CreateForumForm } from "@/components/community/community-forms";
 import { PublishGate } from "@/components/community/community-ui";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Criar fórum" };
 
 export default async function NewForumPage({ searchParams }: { searchParams: Promise<{ acontecimento?: string }> }) {
   const { acontecimento } = await searchParams;
-  const user = await getCurrentUser();
+  const user = await getContentUser();
   const event = acontecimento
     ? await db.event.findFirst({ where: { id: acontecimento.slice(0, 40), status: "PUBLISHED", isDemo: false }, select: { id: true, title: true } })
     : null;

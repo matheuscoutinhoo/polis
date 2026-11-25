@@ -14,7 +14,7 @@ Este repositório contém o MVP completo: contas e privacidade, questionário de
 - [Acontecimentos e uso de IA](#acontecimentos-e-uso-de-ia)
 - [Comunidade e moderação](#comunidade-e-moderação)
 - [Privacidade e segurança](#privacidade-e-segurança)
-- [Acesso sem conta](#acesso-sem-conta)
+- [Acesso sem conta e questionário obrigatório](#acesso-sem-conta-e-questionário-obrigatório)
 - [Catálogo de fontes aprovadas](#catálogo-de-fontes-aprovadas)
 - [Conteúdo inicial e lacunas documentais](#conteúdo-inicial-e-lacunas-documentais)
 - [Condições de uso e limitações editoriais](#condições-de-uso-e-limitações-editoriais)
@@ -109,7 +109,7 @@ Cobertura proporcional ao risco:
 - **XP idempotente**: requisições simultâneas e repetidas não duplicam pontos (índice único + inserções idempotentes).
 - **Recuperação de acesso**: aceite dos termos obrigatório no cadastro, token de redefinição de uso único, mesma resposta para e-mail cadastrado ou não, sessões encerradas após a troca.
 - **IA**: referências inválidas, números ausentes das evidências, recomendações e instruções embutidas (unitários com provedor falso).
-- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado → lição → XP sem duplicação → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê prévias com aviso, sem receber o conteúdo restrito; telas principais a 360 px sem rolagem horizontal.
+- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado → lição → XP sem duplicação → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê avisos no lugar das listas e prévias nas páginas de conteúdo, sem receber o que fica oculto; conta nova é levada ao questionário antes do conteúdo; telas principais a 360 px sem rolagem horizontal.
 
 ## Deploy no Railway
 
@@ -197,24 +197,26 @@ Fóruns sobre correntes, ideias e acontecimentos (título, descrição, categori
 
 ## Privacidade e segurança
 
-- Respostas e afinidades são **dados sensíveis** (LGPD, art. 5º, II): autorização específica, separada dos termos, com finalidade, versão e data registradas, revogável a qualquer momento (a revogação apaga respostas e resultado).
+- Respostas e afinidades são **dados sensíveis** (LGPD, art. 5º, II): autorização específica, separada dos termos, com finalidade, versão e data registradas, revogável a qualquer momento (a revogação apaga respostas e resultado). Responder é condição para usar lições, acontecimentos e fóruns, o que é informado com destaque antes da autorização (art. 9º, § 3º).
 - A pessoa exporta todos os seus dados em JSON, apaga as respostas do questionário e exclui a conta em `/conta/privacidade`. Na exclusão, escolhe manter os textos publicados sem vínculo (“Participante removido”) ou apagá-los.
 - Sessões e senhas gerenciadas pelo Better Auth (cookies `httpOnly`, seguros em HTTPS; proteção de origem/CSRF), senha mínima de 10 caracteres, recuperação com token de uso único e expiração de 1 hora, sem revelar se o e-mail existe; limites de tentativa persistentes no PostgreSQL.
 - Autorização no servidor em todas as ações (sessão, propriedade do registro e papel de administrador). Validação com Zod e limites de tamanho; consultas parametrizadas pelo Prisma.
 - Fontes só de editores aprovados, por domínio exato e caminho (HTTPS, sem IP, credenciais ou portas não padrão). A aplicação não busca URLs enviadas por usuários.
 - Páginas privadas não são cacheadas; cabeçalhos de segurança configurados em `next.config.ts`.
 
-## Acesso sem conta
+## Acesso sem conta e questionário obrigatório
 
-Sem conta, a página inicial aparece completa. As demais páginas de conteúdo mostram uma prévia e um aviso para criar a conta ou entrar (“Já tenho conta” volta para a mesma página depois do login):
+Sem conta, a página inicial aparece completa. Nas demais páginas de conteúdo, as listas dão lugar a um aviso para criar a conta ou entrar, e as páginas abertas por link direto mostram uma prévia com o mesmo aviso (“Já tenho conta” volta para a mesma página depois do login):
 
-- **Aprender**: catálogo e módulos como lista; cada lição mostra o cabeçalho, a introdução e a primeira seção. Fontes, conceitos relacionados, verificação de compreensão, perguntas à IA e discussões exigem conta.
-- **Acontecimentos**: lista com os resumos; cada acontecimento mostra o cabeçalho e “O que aconteceu”.
-- **Comunidade**: lista de fóruns; cada fórum mostra a apresentação e as regras, e cada tópico mostra só o título.
+- **Aprender**: catálogo e módulos ficam ocultos; cada lição mostra o cabeçalho, a introdução e a primeira seção. Fontes, conceitos relacionados, verificação de compreensão, perguntas à IA e discussões exigem conta.
+- **Acontecimentos**: a lista fica oculta; cada acontecimento mostra o cabeçalho e “O que aconteceu”.
+- **Comunidade**: a lista de fóruns fica oculta; cada fórum mostra a apresentação e as regras, e cada tópico mostra só o título.
 - **Fontes e método**: introdução e política editorial.
-- **Questionário**: explicação e dimensões (responder sempre exigiu conta).
+- **Questionário**: explicação e dimensões.
 
-Termos de uso, política de privacidade, regras da comunidade e as páginas de acesso (entrar, criar conta, recuperar senha, confirmar e-mail) continuam públicas. A prévia é montada no servidor e o conteúdo restrito não chega ao navegador (`components/auth/signup-gate.tsx`; `previewBlocks` em `modules/learning/content.ts`).
+Termos de uso, política de privacidade, regras da comunidade e as páginas de acesso (entrar, criar conta, recuperar senha, confirmar e-mail) continuam públicas. O que fica oculto não é renderizado nem chega ao navegador (`components/auth/signup-gate.tsx`; `previewBlocks` em `modules/learning/content.ts`).
+
+Com conta, o **questionário é obrigatório**: enquanto não houver um resultado concluído, a página inicial, as lições, os acontecimentos e os fóruns levam a `/questionario` (`getContentUser` em `lib/session.ts`). Conta, privacidade, fontes e método e as páginas públicas continuam acessíveis, e administradores são dispensados para que a moderação não dependa disso. A condição é informada com destaque antes da autorização (LGPD, art. 9º, § 3º). Apagar as respostas ou revogar a autorização suspende o acesso ao conteúdo até uma nova resposta.
 
 ## Catálogo de fontes aprovadas
 

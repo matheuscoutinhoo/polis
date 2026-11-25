@@ -35,6 +35,10 @@ export default function TermsPage() {
             <li>Para criar uma conta, informe um nome de exibição, um e-mail válido e uma senha com pelo menos 10 caracteres.</li>
             <li>Você é responsável por manter a senha em sigilo. Se suspeitar de acesso indevido, altere a senha; as outras sessões serão encerradas.</li>
             <li>Publicar nos fóruns exige e-mail confirmado.</li>
+            <li>
+              Para usar lições, acontecimentos e fóruns, é preciso responder ao questionário de afinidades depois de criar a conta. Ele tem autorização própria, descrita na
+              Política de privacidade.
+            </li>
             <li>Você pode exportar seus dados e excluir a conta a qualquer momento em “Privacidade e dados”.</li>
           </ul>
         </Section>
@@ -83,7 +87,8 @@ export default function TermsPage() {
             <Link href="/privacidade" className="text-link">
               Política de privacidade
             </Link>
-            . A autorização para tratar as respostas do questionário é separada destes termos e pode ser revogada a qualquer momento.
+            . A autorização para tratar as respostas do questionário é separada destes termos e pode ser revogada a qualquer momento; nesse caso, o acesso a lições,
+            acontecimentos e fóruns fica suspenso até uma nova resposta.
           </p>
         </Section>
 

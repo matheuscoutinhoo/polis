@@ -35,13 +35,6 @@ export async function grantQuestionnaireConsent(userId: string) {
   await db.user.update({ where: { id: userId }, data: { questionnaireDecision: "ACCEPTED" } });
 }
 
-export async function setQuestionnaireDecision(userId: string, decision: "DEFERRED" | "DECLINED") {
-  await db.user.update({
-    where: { id: userId },
-    data: decision === "DECLINED" ? { questionnaireDecision: "DECLINED", pathMode: "GENERAL" } : { questionnaireDecision: "DEFERRED" },
-  });
-}
-
 /** Revoking consent stops processing: answers and result are deleted immediately. */
 export async function revokeQuestionnaireConsent(userId: string) {
   await db.$transaction([

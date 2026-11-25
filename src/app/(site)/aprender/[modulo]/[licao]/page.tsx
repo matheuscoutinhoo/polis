@@ -10,7 +10,7 @@ import { EvidenceBlock } from "@/components/polis/evidence-block";
 import { Icon } from "@/components/ui/icon";
 import { areaMeta, type Area } from "@/components/ui/topic";
 import { formatDate, formatPartialDate } from "@/lib/format";
-import { getCurrentUser } from "@/lib/session";
+import { getContentUser } from "@/lib/session";
 import { aiConfigured } from "@/modules/ai/provider";
 import { getLesson, getLessonTopics } from "@/modules/learning/catalog";
 import { previewBlocks, publicQuiz, quizSchema } from "@/modules/learning/content";
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function LessonPage({ params }: { params: Params }) {
   const { modulo, licao } = await params;
-  const [lesson, user] = await Promise.all([getLesson(modulo, licao), getCurrentUser()]);
+  const [lesson, user] = await Promise.all([getLesson(modulo, licao), getContentUser()]);
   if (!lesson) notFound();
   const path = `/aprender/${modulo}/${licao}`;
   const siblings = lesson.module.lessons;

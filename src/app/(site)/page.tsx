@@ -6,7 +6,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress";
 import { TopicTile, IconChip, SectionHeading, areaMeta, type Area } from "@/components/ui/topic";
 import { cn, formatDate } from "@/lib/format";
-import { getCurrentUser, type CurrentUser } from "@/lib/session";
+import { getContentUser, type CurrentUser } from "@/lib/session";
 import { getActiveResult } from "@/modules/diagnostic/service";
 import { eventContentSchema } from "@/modules/events/content";
 import { listPublishedEvents } from "@/modules/events/service";
@@ -30,10 +30,10 @@ function Illustration({ className }: { className?: string }) {
 
 const HOW_IT_WORKS = [
   { title: "Conta", text: "Crie uma conta com nome de exibição, e-mail e senha.", icon: "user", tone: "bg-mint text-mint-ink" },
-  { title: "Questionário opcional", text: "50 situações do cotidiano. O resultado é privado e só ordena seus estudos.", icon: "layers", tone: "bg-blue text-blue-ink", optional: true },
+  { title: "Questionário", text: "50 situações do cotidiano, logo após o cadastro. O resultado é privado e ordena seus estudos.", icon: "layers", tone: "bg-blue text-blue-ink" },
   { title: "Trilha de lições", text: "Lições de 3 a 7 minutos, com exemplos, fontes e verificação de compreensão.", icon: "book", tone: "bg-lilac text-lilac-ink" },
   { title: "Acontecimentos e fóruns", text: "Relacione conceitos a fatos documentados e participe das discussões.", icon: "event", tone: "bg-sand text-sand-ink" },
-] as const satisfies ReadonlyArray<{ title: string; text: string; icon: IconName; tone: string; optional?: boolean }>;
+] as const satisfies ReadonlyArray<{ title: string; text: string; icon: IconName; tone: string }>;
 
 /**
  * Drawn flow, centered on each step: vertical on small screens, horizontal from lg.
@@ -47,13 +47,7 @@ function HowItWorks() {
         {HOW_IT_WORKS.map((step, index) => (
           <li key={step.title} className="relative flex w-full max-w-sm flex-col items-center text-center lg:max-w-none">
             <span aria-hidden="true" className="relative">
-              <span
-                className={cn(
-                  "inline-flex h-16 w-16 items-center justify-center rounded-full",
-                  step.tone,
-                  "optional" in step && "outline-2 outline-offset-4 outline-blue-ink/50 outline-dashed",
-                )}
-              >
+              <span className={cn("inline-flex h-16 w-16 items-center justify-center rounded-full", step.tone)}>
                 <Icon name={step.icon} size={28} />
               </span>
               <span className="absolute -top-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-action text-label font-semibold text-white ring-2 ring-surface">
@@ -223,7 +217,6 @@ async function Dashboard({ user }: { user: CurrentUser }) {
   const completed = path.ordered.filter((lesson) => summary.progressByLesson.get(lesson.id)?.completedAt).length;
   const moduleLessons = next ? path.ordered.filter((l) => l.moduleSlug === next.moduleSlug) : [];
   const followed = await recentFromFollowed(user.id, 4);
-  const showQuestionnaire = user.questionnaireDecision === "UNDECIDED" || user.questionnaireDecision === "DEFERRED";
 
   return (
     <div className="page-frame py-6 md:py-10">
@@ -307,19 +300,6 @@ async function Dashboard({ user }: { user: CurrentUser }) {
         </div>
       </div>
 
-      {showQuestionnaire ? (
-        <section className="mt-6 flex flex-col gap-4 rounded-panel bg-blue p-5 md:flex-row md:items-center md:p-6">
-          <IconChip icon="layers" tone="blue" size={48} />
-          <div className="flex-1">
-            <h2 className="text-lead font-semibold">Questionário de afinidades (opcional)</h2>
-            <p className="text-body text-ink-soft">50 situações para ordenar sua trilha a partir de temas mais familiares. O resultado é privado e não muda o conteúdo das lições.</p>
-          </div>
-          <LinkButton href="/questionario" variant="secondary">
-            Conhecer o questionário
-          </LinkButton>
-        </section>
-      ) : null}
-
       <ExploreByTopic />
 
       {followed.length ? (
@@ -346,6 +326,6 @@ async function Dashboard({ user }: { user: CurrentUser }) {
 }
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const user = await getContentUser();
   return user ? <Dashboard user={user} /> : <Landing />;
 }
