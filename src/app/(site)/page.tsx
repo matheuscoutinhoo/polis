@@ -100,14 +100,11 @@ function Principles() {
         <p className="mt-2 text-body text-ink-soft">Compromissos que valem para todas as lições, acontecimentos e perspectivas.</p>
       </div>
       <ul className="divide-y divide-line-soft md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
-        {PRINCIPLES.map((item, index) => (
+        {PRINCIPLES.map((item) => (
           <li key={item.title} className="p-6 md:p-8">
-            <div className="flex items-center gap-3" aria-hidden="true">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-selected text-action">
-                <Icon name={item.icon} size={22} />
-              </span>
-              <span className="text-label font-semibold tracking-wider text-ink-soft">{String(index + 1).padStart(2, "0")}</span>
-            </div>
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-selected text-action" aria-hidden="true">
+              <Icon name={item.icon} size={22} />
+            </span>
             <h3 className="mt-4 text-lead font-semibold">{item.title}</h3>
             <p className="mt-1 text-body text-ink-soft">{item.text}</p>
           </li>

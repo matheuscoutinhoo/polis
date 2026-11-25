@@ -423,16 +423,47 @@
   }
 
   .topic-card {
+    --topic-motion: 0;
     transition: transform 140ms var(--ease-polis), box-shadow 140ms var(--ease-polis), border-color 140ms var(--ease-polis);
   }
   @media (hover: hover) {
     .topic-card:hover {
+      --topic-motion: 1;
       transform: translateY(-2px);
       box-shadow: var(--shadow-lift);
     }
   }
   .topic-card:focus-within {
     border-color: var(--color-action);
+  }
+  .topic-card:has(:focus-visible) {
+    --topic-motion: 1;
+  }
+
+  /*
+   * Topic tile watermark: a large, faint copy of the topic glyph. Pointing at the
+   * tile (or focusing its link from the keyboard) sets --topic-motion to 1 and each
+   * glyph moves with its metaphor: the sprout grows, the landmark rises, the
+   * lightbulb lights up and the magnifier scans.
+   */
+  .topic-watermark {
+    opacity: calc(0.12 + var(--topic-motion) * 0.12);
+    transition: transform 520ms var(--ease-polis), opacity 520ms var(--ease-polis);
+  }
+  .topic-watermark[data-motion="grow"] {
+    transform-origin: 50% 100%;
+    transform: scale(calc(1 + var(--topic-motion) * 0.18)) rotate(calc(var(--topic-motion) * -6deg));
+  }
+  .topic-watermark[data-motion="rise"] {
+    transform: translateY(calc(var(--topic-motion) * -18px)) scale(calc(1 + var(--topic-motion) * 0.06));
+  }
+  .topic-watermark[data-motion="glow"] {
+    opacity: calc(0.12 + var(--topic-motion) * 0.2);
+    transform-origin: 50% 90%;
+    transform: rotate(calc(var(--topic-motion) * 10deg)) scale(calc(1 + var(--topic-motion) * 0.1));
+  }
+  .topic-watermark[data-motion="scan"] {
+    transform: translate(calc(var(--topic-motion) * -22px), calc(var(--topic-motion) * -14px)) rotate(calc(var(--topic-motion) * -16deg));
   }
 
   .progress-track {
@@ -514,6 +545,10 @@
   }
   .topic-card:hover {
     transform: none;
+  }
+  /* Immediate state only: the watermark brightens but does not move. */
+  .topic-watermark {
+    transform: none !important;
   }
   .choice-check path {
     transition: none;

@@ -5,7 +5,11 @@ import { Icon, type IconName } from "./icon";
 
 export type Area = "FUNDAMENTOS" | "INSTITUICOES" | "IDEIAS" | "LEITURA_CRITICA";
 
-export const areaMeta: Record<Area, { label: string; description: string; icon: IconName; bg: string; ink: string; border: string; slug: string }> = {
+// `motion` names how the tile's watermark glyph moves on hover (see `.topic-watermark` in globals.css).
+export const areaMeta: Record<
+  Area,
+  { label: string; description: string; icon: IconName; bg: string; ink: string; border: string; slug: string; motion: "grow" | "rise" | "glow" | "scan" }
+> = {
   FUNDAMENTOS: {
     label: "Fundamentos",
     description: "Política, Estado, cidadania e conceitos do debate.",
@@ -14,6 +18,7 @@ export const areaMeta: Record<Area, { label: string; description: string; icon: 
     ink: "text-mint-ink",
     border: "border-mint-ink",
     slug: "fundamentos",
+    motion: "grow",
   },
   INSTITUICOES: {
     label: "Instituições",
@@ -23,6 +28,7 @@ export const areaMeta: Record<Area, { label: string; description: string; icon: 
     ink: "text-blue-ink",
     border: "border-blue-ink",
     slug: "instituicoes",
+    motion: "rise",
   },
   IDEIAS: {
     label: "Ideias e correntes",
@@ -32,6 +38,7 @@ export const areaMeta: Record<Area, { label: string; description: string; icon: 
     ink: "text-lilac-ink",
     border: "border-lilac-ink",
     slug: "ideias",
+    motion: "glow",
   },
   LEITURA_CRITICA: {
     label: "Leitura crítica",
@@ -41,6 +48,7 @@ export const areaMeta: Record<Area, { label: string; description: string; icon: 
     ink: "text-sand-ink",
     border: "border-sand-ink",
     slug: "leitura-critica",
+    motion: "scan",
   },
 };
 
@@ -74,8 +82,8 @@ export function IconChip({ icon, tone = "mint", size = 48 }: { icon: IconName; t
 /**
  * Topic entry point in the topic color: what the area covers (its published
  * modules, or the lessons when there is a single module), counts and one link
- * to the filtered catalog. `featured` marks the common starting point (wide
- * tile, contents listed beside the introduction).
+ * to the filtered catalog, stretched over the whole tile. `featured` marks the
+ * common starting point (wide tile, contents listed beside the introduction).
  */
 export function TopicTile({
   area,
@@ -98,7 +106,7 @@ export function TopicTile({
   return (
     <article
       className={cn(
-        "topic-card group relative isolate flex h-full flex-col overflow-hidden rounded-panel border border-transparent p-5 focus-within:shadow-[inset_0_0_0_2px_var(--color-action)] md:p-6",
+        "topic-card relative isolate flex h-full flex-col overflow-hidden rounded-panel border border-transparent p-5 focus-within:shadow-[inset_0_0_0_2px_var(--color-action)] md:p-6",
         meta.bg,
         featured && "lg:grid lg:grid-cols-2 lg:grid-rows-[1fr_auto] lg:gap-x-10 lg:p-8",
         className,
@@ -108,7 +116,8 @@ export function TopicTile({
         name={meta.icon}
         size={featured ? 240 : 150}
         strokeWidth={1.25}
-        className={cn("pointer-events-none absolute -z-10 opacity-[0.12]", meta.ink, featured ? "-right-8 -bottom-12" : "-right-6 -bottom-8")}
+        data-motion={meta.motion}
+        className={cn("topic-watermark pointer-events-none absolute -z-10", meta.ink, featured ? "-right-8 -bottom-12" : "-right-6 -bottom-8")}
       />
       <div>
         <div className="flex items-center gap-3">
@@ -125,15 +134,12 @@ export function TopicTile({
         <p className="mt-2 max-w-md text-body text-ink-soft">{meta.description}</p>
       </div>
       {highlights.length ? (
-        <ul
-          className={cn(
-            "mt-4 flex flex-1 flex-col gap-1.5 text-meta",
-            featured && "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:rounded-card lg:bg-surface/70 lg:p-5",
-          )}
-        >
+        <ul className={cn("mt-5 flex flex-col gap-2.5", featured ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center" : "flex-1")}>
           {highlights.map((item) => (
-            <li key={item} className="flex items-start gap-2">
-              <span className={cn("mt-[7px] h-1.5 w-1.5 flex-none rounded-full bg-current", meta.ink)} aria-hidden="true" />
+            <li key={item} className="flex items-center gap-3 text-meta text-ink">
+              <span className={cn("inline-flex h-7 w-7 flex-none items-center justify-center rounded-full bg-surface", meta.ink)} aria-hidden="true">
+                <Icon name="book" size={14} />
+              </span>
               <span>{item}</span>
             </li>
           ))}
@@ -141,16 +147,8 @@ export function TopicTile({
       ) : (
         <div className="flex-1" />
       )}
-      <p className="mt-5 flex items-center justify-between gap-3">
-        <span className={cn("text-meta font-semibold", meta.ink)}>
-          {lessonCount ? `${plural(moduleCount, "módulo", "módulos")} · ${plural(lessonCount, "lição", "lições")}` : "Em preparação"}
-        </span>
-        <span
-          className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-surface text-action transition-colors duration-150 group-hover:bg-action group-hover:text-white"
-          aria-hidden="true"
-        >
-          <Icon name="arrowRight" size={18} />
-        </span>
+      <p className={cn("mt-5 text-meta font-semibold", meta.ink)}>
+        {lessonCount ? `${plural(moduleCount, "módulo", "módulos")} · ${plural(lessonCount, "lição", "lições")}` : "Em preparação"}
       </p>
     </article>
   );
