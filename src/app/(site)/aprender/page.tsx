@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SignupBanner } from "@/components/auth/signup-gate";
 import { LearningPathView } from "@/components/polis/learning-path";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
@@ -49,6 +50,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       <p className="eyebrow eyebrow-neutral">Aprender / Catálogo</p>
       <h1 className="mt-2 text-display-sm font-semibold md:text-display">Qual tema você quer explorar?</h1>
       <p className="mt-3 max-w-2xl text-lead text-ink-soft">Comece pelos fundamentos ou navegue livremente pelos assuntos.</p>
+      {user ? null : (
+        <SignupBanner path={area ? `/aprender?tema=${areaMeta[area].slug}` : "/aprender"} title="Crie uma conta para ler as lições completas" className="mt-6">
+          Sem conta, você navega pelo catálogo e lê a abertura de cada lição.
+        </SignupBanner>
+      )}
 
       {/* `relative` keeps the absolutely positioned sr-only counts inside the scroller's clip. */}
       <nav aria-label="Filtrar por tema" className="relative -mx-4 mt-8 overflow-x-auto px-4 pb-1 min-[400px]:-mx-5 min-[400px]:px-5 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">

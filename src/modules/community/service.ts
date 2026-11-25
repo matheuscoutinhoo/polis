@@ -83,7 +83,7 @@ export async function getForumPage(slug: string, page: number, userId: string | 
     db.topic.count({ where: { forumId: forum.id, status: { in: ["VISIBLE", "DELETED"] } } }),
     userId ? db.forumFollow.findUnique({ where: { userId_forumId: { userId, forumId: forum.id } } }) : null,
   ]);
-  return { forum, topics, page: safePage, totalPages: Math.max(1, Math.ceil(totalTopics / PAGE_SIZE)), following: Boolean(following) };
+  return { forum, topics, page: safePage, totalTopics, totalPages: Math.max(1, Math.ceil(totalTopics / PAGE_SIZE)), following: Boolean(following) };
 }
 
 export async function createForum(actor: Actor, raw: unknown) {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { PreviewContinuation, SignupGate } from "@/components/auth/signup-gate";
 import { CommentForm, EditCommentForm, EditTopicForm, ReportForm } from "@/components/community/community-forms";
 import { AuthorLine, ParticipantLabel, PublishGate, UserText } from "@/components/community/community-ui";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -40,23 +41,51 @@ export default async function TopicPage({ params, searchParams }: { params: Para
   const isAuthor = Boolean(user && topic.author?.id === user.id);
   const visible = topic.status === "VISIBLE";
 
+  const breadcrumb = (
+    <nav aria-label="Trilha de navegação" className="text-meta text-ink-soft">
+      <Link href="/comunidade" className="text-link">
+        Comunidade
+      </Link>{" "}
+      /{" "}
+      <Link href={`/comunidade/${topic.forum.slug}`} className="text-link">
+        {topic.forum.title}
+      </Link>
+    </nav>
+  );
+
+  if (!user) {
+    return (
+      <div className="page-frame py-8 md:py-12">
+        {breadcrumb}
+        <div className="mt-3 max-w-3xl">
+          <ParticipantLabel />
+          <h1 className="mt-3 text-h2 font-semibold md:text-display-sm">{topic.title}</h1>
+          <p className="mt-2 text-meta text-ink-soft">
+            {plural(topic.commentCount, "comentário", "comentários")} · última atividade em {formatDate(topic.lastActivityAt)}
+          </p>
+          <PreviewContinuation />
+          <SignupGate
+            path={path}
+            title="Crie uma conta para ler esta conversa"
+            perks={["O texto do tópico e os comentários", "Seguir os fóruns de seu interesse", "Comentar, após confirmar o e-mail", "Denunciar violações das regras"]}
+            className="mt-4"
+          >
+            Sem conta, você vê só o título dos tópicos.
+          </SignupGate>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-frame py-8 md:py-12">
-      <nav aria-label="Trilha de navegação" className="text-meta text-ink-soft">
-        <Link href="/comunidade" className="text-link">
-          Comunidade
-        </Link>{" "}
-        /{" "}
-        <Link href={`/comunidade/${topic.forum.slug}`} className="text-link">
-          {topic.forum.title}
-        </Link>
-      </nav>
+      {breadcrumb}
 
       <div className="mt-3 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
           <article aria-labelledby="topic-title">
             <ParticipantLabel />
-            <h1 id="topic-title" className="mt-3 text-h1 font-semibold md:text-display-sm">
+            <h1 id="topic-title" className="mt-3 text-h2 font-semibold md:text-display-sm">
               {topic.title}
             </h1>
             <div className="mt-2">

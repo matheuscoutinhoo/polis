@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SignupBanner } from "@/components/auth/signup-gate";
 import { ParticipantLabel } from "@/components/community/community-ui";
 import { LinkButton } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -54,6 +55,11 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
           </LinkButton>
         </div>
       </div>
+      {user ? null : (
+        <SignupBanner path={buildHref({ q, categoria: category, pagina: page })} title="Crie uma conta para ler e participar dos fóruns" className="mt-6">
+          Sem conta, você vê a lista de fóruns. Os tópicos e comentários ficam disponíveis para quem tem conta.
+        </SignupBanner>
+      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>

@@ -26,7 +26,7 @@ export default function CommunityRulesPage() {
             Para participar
           </h2>
           <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-body">
-            <li>Ler é aberto a todos. Para publicar, é preciso ter conta e e-mail confirmado.</li>
+            <li>Ler e publicar exigem uma conta. Para publicar, é preciso também confirmar o e-mail.</li>
             <li>Outras pessoas veem apenas seu nome de exibição e o que você publica. Respostas do questionário e afinidades nunca aparecem nos fóruns.</li>
             <li>Você pode editar ou excluir o próprio conteúdo. Conteúdo excluído deixa um aviso para que as respostas continuem compreensíveis.</li>
             <li>Seguir um fórum mostra as discussões recentes dele na sua página inicial. Não há notificações por e-mail nem push.</li>

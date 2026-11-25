@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SignupGate } from "@/components/auth/signup-gate";
 import { MATERIAL_LABEL } from "@/components/polis/evidence-block";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { db } from "@/lib/db";
 import { formatDate, formatDecimal, formatPartialDate } from "@/lib/format";
+import { getCurrentUser } from "@/lib/session";
 import { DIMENSIONS, DIMENSION_BY_KEY, type DimensionKey } from "@/modules/diagnostic/dimensions";
 import { PROFILES_VERSION, RANGE_SUPPORT_LABEL, REFERENCE_PROFILES } from "@/modules/diagnostic/profiles";
 import { QUESTIONS, QUESTION_BANK_VERSION } from "@/modules/diagnostic/question-bank";
@@ -51,7 +53,73 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
   );
 }
 
+function Intro() {
+  return (
+    <>
+      <p className="eyebrow">Transparência</p>
+      <h1 className="mt-2 text-display-sm font-semibold md:text-display">Fontes e método</h1>
+      <p className="reading-measure mt-3 text-lead text-ink-soft">
+        Como a Polis escolhe fontes, escreve explicações, calcula o resultado do questionário, ordena a trilha e usa inteligência artificial. Tudo o que está aqui pode ser
+        contestado: use “Sinalizar problema” nas lições e acontecimentos.
+      </p>
+    </>
+  );
+}
+
+function EditorialPolicy() {
+  return (
+    <section aria-labelledby="politica-editorial" className="reading-measure">
+      <H2 id="politica-editorial">Política editorial</H2>
+      <ul className="mt-4 flex list-disc flex-col gap-2 pl-5 text-body">
+        <li>
+          <strong>Explicar, nunca conduzir.</strong> As explicações não recomendam voto, partido, candidato, movimento ou corrente, mesmo quando alguém pede. Comparações usam os
+          mesmos critérios, a mesma extensão e o mesmo peso visual para cada perspectiva, com a ordem de apresentação declarada.
+        </li>
+        <li>
+          <strong>Somente fontes aprovadas.</strong> Toda afirmação verificável indica a fonte. Usamos órgãos públicos, instituições oficiais e publicações de instituições públicas
+          cadastradas em uma lista de editores aprovados. Origem oficial não significa endosso nem garantia de neutralidade: cada fonte informa o que sustenta e seus limites.
+        </li>
+        <li>
+          <strong>Categorias distintas.</strong> Separamos fato verificável, declaração de um ator, interpretação atribuída, projeção e efeito possível. Promessas e anúncios não
+          são tratados como resultados.
+        </li>
+        <li>
+          <strong>Impactos com mecanismo.</strong> Um impacto só é apresentado como documentado quando uma fonte aprovada o sustenta. Efeitos possíveis aparecem com o mecanismo,
+          as condições e a indicação de que não foram comprovados.
+        </li>
+        <li>
+          <strong>Lacunas declaradas.</strong> Quando o acervo não cobre um tema, a Polis registra a lacuna em vez de preencher com conhecimento não referenciado.
+        </li>
+        <li>
+          <strong>Revisão humana.</strong> Lições e acontecimentos são revisados por administradores antes da publicação e mostram a data da última revisão. Sinalizações de erro
+          entram na fila de revisão.
+        </li>
+      </ul>
+    </section>
+  );
+}
+
 export default async function SourcesAndMethodPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return (
+      <div className="page-frame py-8 md:py-12">
+        <Intro />
+        <div className="mt-10">
+          <EditorialPolicy />
+        </div>
+        <SignupGate
+          path="/fontes-e-metodo"
+          title="Veja o método completo com uma conta"
+          perks={["Catálogo de fontes aprovadas", "Método do questionário e perfis", "Ordem da trilha e uso de IA", "Lacunas documentais"]}
+          className="mt-12"
+        >
+          Sem conta, você vê a política editorial. Com uma conta, consulta também os critérios e os números usados em cada parte da Polis.
+        </SignupGate>
+      </div>
+    );
+  }
+
   const [catalog, gapModules] = await Promise.all([
     listPublicCatalog(),
     db.module.findMany({ where: { status: "DOCUMENTARY_GAP" }, orderBy: { number: "asc" }, select: { title: true, gapNote: true } }),
@@ -61,12 +129,7 @@ export default async function SourcesAndMethodPage() {
 
   return (
     <div className="page-frame py-8 md:py-12">
-      <p className="eyebrow">Transparência</p>
-      <h1 className="mt-2 text-display-sm font-semibold md:text-display">Fontes e método</h1>
-      <p className="reading-measure mt-3 text-lead text-ink-soft">
-        Como a Polis escolhe fontes, escreve explicações, calcula o resultado do questionário, ordena a trilha e usa inteligência artificial. Tudo o que está aqui pode ser
-        contestado: use “Sinalizar problema” nas lições e acontecimentos.
-      </p>
+      <Intro />
 
       <nav aria-label="Seções desta página" className="mt-6 flex flex-wrap gap-2">
         {SECTIONS.map((s) => (
@@ -77,35 +140,7 @@ export default async function SourcesAndMethodPage() {
       </nav>
 
       <div className="mt-10 flex flex-col gap-14">
-        <section aria-labelledby="politica-editorial" className="reading-measure">
-          <H2 id="politica-editorial">Política editorial</H2>
-          <ul className="mt-4 flex list-disc flex-col gap-2 pl-5 text-body">
-            <li>
-              <strong>Explicar, nunca conduzir.</strong> As explicações não recomendam voto, partido, candidato, movimento ou corrente, mesmo quando alguém pede. Comparações usam os
-              mesmos critérios, a mesma extensão e o mesmo peso visual para cada perspectiva, com a ordem de apresentação declarada.
-            </li>
-            <li>
-              <strong>Somente fontes aprovadas.</strong> Toda afirmação verificável indica a fonte. Usamos órgãos públicos, instituições oficiais e publicações de instituições
-              públicas cadastradas em uma lista de editores aprovados. Origem oficial não significa endosso nem garantia de neutralidade: cada fonte informa o que sustenta e seus
-              limites.
-            </li>
-            <li>
-              <strong>Categorias distintas.</strong> Separamos fato verificável, declaração de um ator, interpretação atribuída, projeção e efeito possível. Promessas e anúncios
-              não são tratados como resultados.
-            </li>
-            <li>
-              <strong>Impactos com mecanismo.</strong> Um impacto só é apresentado como documentado quando uma fonte aprovada o sustenta. Efeitos possíveis aparecem com o mecanismo,
-              as condições e a indicação de que não foram comprovados.
-            </li>
-            <li>
-              <strong>Lacunas declaradas.</strong> Quando o acervo não cobre um tema, a Polis registra a lacuna em vez de preencher com conhecimento não referenciado.
-            </li>
-            <li>
-              <strong>Revisão humana.</strong> Lições e acontecimentos são revisados por administradores antes da publicação e mostram a data da última revisão. Sinalizações de
-              erro entram na fila de revisão.
-            </li>
-          </ul>
-        </section>
+        <EditorialPolicy />
 
         <section aria-labelledby="fontes">
           <div className="reading-measure">

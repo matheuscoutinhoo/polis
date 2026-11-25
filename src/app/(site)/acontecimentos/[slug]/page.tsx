@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { PreviewContinuation, SignupGate } from "@/components/auth/signup-gate";
 import { AskPanel } from "@/components/learning/ask-panel";
 import { FlagContent } from "@/components/learning/flag-content";
 import { ArgumentComparison } from "@/components/polis/argument-comparison";
@@ -10,7 +11,7 @@ import { ImpactMechanism, ProcessStages, AiAssistedNote } from "@/components/pol
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
-import { formatDate, formatPartialDate } from "@/lib/format";
+import { formatDate, formatPartialDate, plural } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { aiConfigured } from "@/modules/ai/provider";
 import { getPublishedEvent } from "@/modules/events/service";
@@ -41,41 +42,82 @@ export default async function EventPage({ params }: { params: Params }) {
   if (!event) notFound();
   const c = event.content;
   const sources = event.sources.map((s) => s.source);
+  const path = `/acontecimentos/${slug}`;
+
+  const header = (
+    <>
+      <Link href="/acontecimentos" className="text-link inline-flex items-center gap-1.5 text-meta">
+        <Icon name="arrowLeft" size={16} /> Acontecimentos
+      </Link>
+      <div className="mt-6 flex flex-wrap gap-2">
+        {event.themes.map((theme) => (
+          <Badge key={theme} tone="blue">
+            {THEME_LABEL[theme] ?? theme}
+          </Badge>
+        ))}
+        <Badge tone="neutral">{event.statusLabel}</Badge>
+      </div>
+      <h1 className="mt-3 font-serif text-[2rem] font-semibold leading-tight md:text-[2.5rem] md:leading-[3rem]">{event.title}</h1>
+      <dl className="mt-4 grid gap-x-6 gap-y-1 text-meta text-ink-soft sm:grid-cols-3">
+        <div>
+          <dt className="font-semibold text-ink">Data do acontecimento</dt>
+          <dd>{formatDate(event.eventDate)}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-ink">Publicação na Polis</dt>
+          <dd>{event.publishedAt ? formatDate(event.publishedAt) : "—"}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-ink">Última revisão</dt>
+          <dd>{event.lastReviewedAt ? formatDate(event.lastReviewedAt) : formatDate(event.updatedAt)}</dd>
+        </div>
+      </dl>
+    </>
+  );
+  const aiNote = event.aiAssisted ? (
+    <p>
+      <AiAssistedNote />
+    </p>
+  ) : null;
+
+  if (!user) {
+    // Citation numbers point to the sources section, which is not part of the preview.
+    return (
+      <article className="page-frame py-8 md:py-12">
+        <div className="mx-auto max-w-[880px]">
+          {header}
+          <p className="mt-3 text-meta text-ink-soft">
+            Análise revisada pela equipe editorial antes da publicação, com base em {plural(sources.length, "fonte oficial", "fontes oficiais")}.
+          </p>
+
+          <Section id="o-que-aconteceu" number="01" title="O que aconteceu">
+            <p className="text-reading">{c.summary.text}</p>
+          </Section>
+          <PreviewContinuation />
+          <SignupGate
+            path={path}
+            title="Entenda este acontecimento por completo"
+            perks={["Situação atual e etapas", "Contexto, atores e instituições", "Impactos e argumentos atribuídos", "Fontes oficiais e discussões"]}
+            className="mt-4"
+          >
+            Sem conta, você vê o resumo. Com uma conta, acompanha o que mudou, por que importa e de onde vem cada informação.
+          </SignupGate>
+
+          {aiNote ? <footer className="mt-10 border-t border-line pt-6">{aiNote}</footer> : null}
+        </div>
+      </article>
+    );
+  }
+
   const numbers = new Map(sources.map((s, i) => [s.key, i + 1]));
   const cite = (keys: string[]) => <CitationLinks keys={keys} numbers={numbers} />;
   const documented = c.impacts.filter((i) => i.kind === "DOCUMENTED");
   const possible = c.impacts.filter((i) => i.kind === "POSSIBLE");
-  const path = `/acontecimentos/${slug}`;
 
   return (
     <article className="page-frame py-8 md:py-12">
       <div className="mx-auto max-w-[880px]">
-        <Link href="/acontecimentos" className="text-link inline-flex items-center gap-1.5 text-meta">
-          <Icon name="arrowLeft" size={16} /> Acontecimentos
-        </Link>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {event.themes.map((theme) => (
-            <Badge key={theme} tone="blue">
-              {THEME_LABEL[theme] ?? theme}
-            </Badge>
-          ))}
-          <Badge tone="neutral">{event.statusLabel}</Badge>
-        </div>
-        <h1 className="mt-3 font-serif text-[2rem] font-semibold leading-tight md:text-[2.5rem] md:leading-[3rem]">{event.title}</h1>
-        <dl className="mt-4 grid gap-x-6 gap-y-1 text-meta text-ink-soft sm:grid-cols-3">
-          <div>
-            <dt className="font-semibold text-ink">Data do acontecimento</dt>
-            <dd>{formatDate(event.eventDate)}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-ink">Publicação na Polis</dt>
-            <dd>{event.publishedAt ? formatDate(event.publishedAt) : "—"}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-ink">Última revisão</dt>
-            <dd>{event.lastReviewedAt ? formatDate(event.lastReviewedAt) : formatDate(event.updatedAt)}</dd>
-          </div>
-        </dl>
+        {header}
         <p className="mt-3 text-meta text-ink-soft">Análise revisada pela equipe editorial antes da publicação. Origem: fontes oficiais listadas ao final.</p>
 
         <Section id="o-que-aconteceu" number="01" title="O que aconteceu">
@@ -297,15 +339,11 @@ export default async function EventPage({ params }: { params: Params }) {
           </p>
         </Section>
 
-        <AskPanel kind="event" targetId={event.id} path={path} signedIn={Boolean(user)} available={aiConfigured()} />
+        <AskPanel kind="event" targetId={event.id} path={path} signedIn available={aiConfigured()} />
 
         <footer className="mt-10 flex flex-col gap-4 border-t border-line pt-6">
-          {event.aiAssisted ? (
-            <p>
-              <AiAssistedNote />
-            </p>
-          ) : null}
-          <FlagContent targetType="EVENT" targetId={event.id} path={path} signedIn={Boolean(user)} />
+          {aiNote}
+          <FlagContent targetType="EVENT" targetId={event.id} path={path} signedIn />
         </footer>
       </div>
     </article>

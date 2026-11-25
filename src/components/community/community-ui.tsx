@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { ResendVerificationButton } from "@/components/auth/auth-forms";
+import { SignupBanner } from "@/components/auth/signup-gate";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -39,17 +39,9 @@ export function UserText({ children }: { children: string }) {
 export function PublishGate({ user, nextPath, children }: { user: CurrentUser | null; nextPath: string; children: ReactNode }) {
   if (!user) {
     return (
-      <Notice tone="neutral" title="Entre para participar">
-        <p>Leitura aberta a todos. Para publicar, entre ou crie uma conta e confirme seu e-mail.</p>
-        <p className="mt-2 flex flex-wrap gap-4">
-          <Link href={`/entrar?proximo=${encodeURIComponent(nextPath)}`} className="text-link">
-            Entrar
-          </Link>
-          <Link href="/criar-conta" className="text-link">
-            Criar conta
-          </Link>
-        </p>
-      </Notice>
+      <SignupBanner path={nextPath} title="Crie uma conta para participar">
+        Ler e publicar nos fóruns exige uma conta. Para publicar, confirme também o seu e-mail.
+      </SignupBanner>
     );
   }
   if (!user.emailVerified) {

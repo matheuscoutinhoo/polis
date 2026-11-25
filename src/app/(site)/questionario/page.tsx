@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SignupBanner } from "@/components/auth/signup-gate";
 import { LinkButton } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
@@ -64,13 +65,10 @@ export default async function QuestionnairePage({ searchParams }: { searchParams
       <div className="page-frame py-8 md:py-12">
         <p className="eyebrow">Questionário de afinidades</p>
         <h1 className="mt-2 text-display-sm font-semibold md:text-display">Como você vê estas situações?</h1>
-        <p className="mt-3 max-w-2xl text-lead text-ink-soft">O questionário é opcional e exige uma conta, porque as respostas são salvas para você continuar depois.</p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <LinkButton href="/criar-conta">Criar conta</LinkButton>
-          <LinkButton href="/entrar?proximo=/questionario" variant="secondary">
-            Entrar
-          </LinkButton>
-        </div>
+        <p className="mt-3 max-w-2xl text-lead text-ink-soft">O questionário é opcional e leva cerca de 15 minutos.</p>
+        <SignupBanner path="/questionario" title="Crie uma conta para responder" className="mt-6">
+          As respostas ficam salvas na sua conta, para você pausar e continuar depois.
+        </SignupBanner>
         <div className="mt-10">
           <Explanation />
         </div>

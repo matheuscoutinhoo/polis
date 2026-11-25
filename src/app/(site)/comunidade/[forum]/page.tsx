@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SignupGate } from "@/components/auth/signup-gate";
 import { ReportForm } from "@/components/community/community-forms";
 import { ParticipantLabel, REMOVED_AUTHOR, UserText } from "@/components/community/community-ui";
 import { LinkButton } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default async function ForumPage({ params, searchParams }: { params: Para
   const page = Math.max(1, Number.parseInt(pagina ?? "1", 10) || 1);
   const data = await getForumPage(slug, page, user?.id ?? null);
   if (!data) notFound();
-  const { forum, topics, totalPages, following } = data;
+  const { forum, topics, totalTopics, totalPages, following } = data;
   const path = `/comunidade/${forum.slug}`;
 
   return (
@@ -67,11 +68,11 @@ export default async function ForumPage({ params, searchParams }: { params: Para
             </p>
           ) : null}
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-          <LinkButton href={`${path}/novo-topico`} icon="plus" iconPosition="start">
-            Novo tópico
-          </LinkButton>
-          {user ? (
+        {user ? (
+          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
+            <LinkButton href={`${path}/novo-topico`} icon="plus" iconPosition="start">
+              Novo tópico
+            </LinkButton>
             <form action={followForumAction}>
               <input type="hidden" name="forumId" value={forum.id} />
               <input type="hidden" name="path" value={path} />
@@ -80,12 +81,8 @@ export default async function ForumPage({ params, searchParams }: { params: Para
                 {following ? "Deixar de seguir" : "Seguir fórum"}
               </SubmitButton>
             </form>
-          ) : (
-            <LinkButton href={`/entrar?proximo=${encodeURIComponent(path)}`} variant="secondary">
-              Entrar para seguir
-            </LinkButton>
-          )}
-        </div>
+          </div>
+        ) : null}
       </header>
 
       <details className="surface-card mt-6 p-5">
@@ -105,37 +102,48 @@ export default async function ForumPage({ params, searchParams }: { params: Para
         </div>
       </details>
 
-      <section aria-labelledby="topicos" className="mt-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="topicos" className="text-h2 font-semibold">
-            Tópicos
-          </h2>
-          <ParticipantLabel />
-        </div>
-        {topics.length === 0 ? (
-          <div className="mt-4">
-            <EmptyState icon="community" title="Nenhum tópico ainda" action={<LinkButton href={`${path}/novo-topico`}>Abrir o primeiro tópico</LinkButton>}>
-              Comece uma conversa sobre o tema deste fórum.
-            </EmptyState>
+      {!user ? (
+        <SignupGate
+          path={path}
+          title="Crie uma conta para ler este fórum"
+          perks={["Todos os tópicos e comentários", "Seguir os fóruns de seu interesse", "Publicar, após confirmar o e-mail", "Denunciar violações das regras"]}
+          className="mt-8"
+        >
+          {totalTopics ? `Este fórum tem ${plural(totalTopics, "tópico", "tópicos")}.` : "Este fórum ainda não tem tópicos."} Sem conta, você vê apenas a apresentação e as regras.
+        </SignupGate>
+      ) : (
+        <section aria-labelledby="topicos" className="mt-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="topicos" className="text-h2 font-semibold">
+              Tópicos
+            </h2>
+            <ParticipantLabel />
           </div>
-        ) : (
-          <ul className="surface-card mt-4 divide-y divide-line-soft">
-            {topics.map((topic) => (
-              <li key={topic.id} className="p-4 md:p-5">
-                <Link href={`${path}/${topic.id}`} className="text-lead font-semibold hover:text-action-hover">
-                  {topic.title}
-                </Link>
-                <p className="mt-1 text-meta text-ink-soft">
-                  {topic.status === "DELETED" ? "Excluído pela pessoa autora" : (topic.author?.name ?? REMOVED_AUTHOR)} · {plural(topic.commentCount, "comentário", "comentários")} ·
-                  última atividade em {formatDate(topic.lastActivityAt)}
-                  {topic.closedAt ? " · encerrado para novos comentários" : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Pagination page={data.page} totalPages={totalPages} hrefFor={(p) => (p > 1 ? `${path}?pagina=${p}` : path)} label="Páginas de tópicos" />
-      </section>
+          {topics.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState icon="community" title="Nenhum tópico ainda" action={<LinkButton href={`${path}/novo-topico`}>Abrir o primeiro tópico</LinkButton>}>
+                Comece uma conversa sobre o tema deste fórum.
+              </EmptyState>
+            </div>
+          ) : (
+            <ul className="surface-card mt-4 divide-y divide-line-soft">
+              {topics.map((topic) => (
+                <li key={topic.id} className="p-4 md:p-5">
+                  <Link href={`${path}/${topic.id}`} className="text-lead font-semibold hover:text-action-hover">
+                    {topic.title}
+                  </Link>
+                  <p className="mt-1 text-meta text-ink-soft">
+                    {topic.status === "DELETED" ? "Excluído pela pessoa autora" : (topic.author?.name ?? REMOVED_AUTHOR)} · {plural(topic.commentCount, "comentário", "comentários")} ·
+                    última atividade em {formatDate(topic.lastActivityAt)}
+                    {topic.closedAt ? " · encerrado para novos comentários" : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Pagination page={data.page} totalPages={totalPages} hrefFor={(p) => (p > 1 ? `${path}?pagina=${p}` : path)} label="Páginas de tópicos" />
+        </section>
+      )}
 
       {user && !forum.isOfficial ? (
         <div className="mt-8 border-t border-line-soft pt-4">

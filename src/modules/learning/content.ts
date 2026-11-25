@@ -55,6 +55,16 @@ export function publicQuiz(quiz: Quiz) {
   return quiz.questions.map((q) => ({ id: q.id, prompt: q.prompt, options: q.options }));
 }
 
+/** Opening shown to visitors without an account: the first section, at most `max` blocks. */
+export function previewBlocks(blocks: LessonBlock[], max = 3): LessonBlock[] {
+  const preview: LessonBlock[] = [];
+  for (const block of blocks) {
+    if (preview.length === max || (block.type === "heading" && preview.length > 0)) break;
+    preview.push(block);
+  }
+  return preview;
+}
+
 export function sourceKeysUsed(content: LessonContent): string[] {
   const keys = new Set<string>();
   for (const block of content.blocks) {

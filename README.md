@@ -14,6 +14,7 @@ Este repositório contém o MVP completo: contas e privacidade, questionário de
 - [Acontecimentos e uso de IA](#acontecimentos-e-uso-de-ia)
 - [Comunidade e moderação](#comunidade-e-moderação)
 - [Privacidade e segurança](#privacidade-e-segurança)
+- [Acesso sem conta](#acesso-sem-conta)
 - [Catálogo de fontes aprovadas](#catálogo-de-fontes-aprovadas)
 - [Conteúdo inicial e lacunas documentais](#conteúdo-inicial-e-lacunas-documentais)
 - [Condições de uso e limitações editoriais](#condições-de-uso-e-limitações-editoriais)
@@ -108,7 +109,7 @@ Cobertura proporcional ao risco:
 - **XP idempotente**: requisições simultâneas e repetidas não duplicam pontos (índice único + inserções idempotentes).
 - **Recuperação de acesso**: aceite dos termos obrigatório no cadastro, token de redefinição de uso único, mesma resposta para e-mail cadastrado ou não, sessões encerradas após a troca.
 - **IA**: referências inválidas, números ausentes das evidências, recomendações e instruções embutidas (unitários com provedor falso).
-- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado → lição → XP sem duplicação → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; telas principais a 360 px sem rolagem horizontal.
+- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado → lição → XP sem duplicação → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê prévias com aviso, sem receber o conteúdo restrito; telas principais a 360 px sem rolagem horizontal.
 
 ## Deploy no Railway
 
@@ -203,9 +204,21 @@ Fóruns sobre correntes, ideias e acontecimentos (título, descrição, categori
 - Fontes só de editores aprovados, por domínio exato e caminho (HTTPS, sem IP, credenciais ou portas não padrão). A aplicação não busca URLs enviadas por usuários.
 - Páginas privadas não são cacheadas; cabeçalhos de segurança configurados em `next.config.ts`.
 
+## Acesso sem conta
+
+Sem conta, a página inicial aparece completa. As demais páginas de conteúdo mostram uma prévia e um aviso para criar a conta ou entrar (“Já tenho conta” volta para a mesma página depois do login):
+
+- **Aprender**: catálogo e módulos como lista; cada lição mostra o cabeçalho, a introdução e a primeira seção. Fontes, conceitos relacionados, verificação de compreensão, perguntas à IA e discussões exigem conta.
+- **Acontecimentos**: lista com os resumos; cada acontecimento mostra o cabeçalho e “O que aconteceu”.
+- **Comunidade**: lista de fóruns; cada fórum mostra a apresentação e as regras, e cada tópico mostra só o título.
+- **Fontes e método**: introdução e política editorial.
+- **Questionário**: explicação e dimensões (responder sempre exigiu conta).
+
+Termos de uso, política de privacidade, regras da comunidade e as páginas de acesso (entrar, criar conta, recuperar senha, confirmar e-mail) continuam públicas. A prévia é montada no servidor e o conteúdo restrito não chega ao navegador (`components/auth/signup-gate.tsx`; `previewBlocks` em `modules/learning/content.ts`).
+
 ## Catálogo de fontes aprovadas
 
-O catálogo completo (editores, domínios aceitos, fontes, o que cada uma sustenta, limites e condição de reutilização) está em **[`docs/catalogo-de-fontes.md`](docs/catalogo-de-fontes.md)** (gerado por `npm run docs:catalog`) e na página `/fontes-e-metodo`. Editores aprovados incluem Presidência da República (legislação e notícias), Câmara dos Deputados, Senado Federal e ILB, Congresso Nacional, STF, TSE, Banco Central, IBGE, Ipea, ministérios (MEC e Portal Domínio Público, MMA, Fazenda, Receita Federal, Tesouro, Secom, MJSP), ANPD, Arquivo Nacional, CGU, Casa Civil, CAPES/eduCAPES e o Portal de Periódicos da UFMG.
+O catálogo completo (editores, domínios aceitos, fontes, o que cada uma sustenta, limites e condição de reutilização) está em **[`docs/catalogo-de-fontes.md`](docs/catalogo-de-fontes.md)** (gerado por `npm run docs:catalog`) e na página `/fontes-e-metodo` (para quem tem conta). Editores aprovados incluem Presidência da República (legislação e notícias), Câmara dos Deputados, Senado Federal e ILB, Congresso Nacional, STF, TSE, Banco Central, IBGE, Ipea, ministérios (MEC e Portal Domínio Público, MMA, Fazenda, Receita Federal, Tesouro, Secom, MJSP), ANPD, Arquivo Nacional, CGU, Casa Civil, CAPES/eduCAPES e o Portal de Periódicos da UFMG.
 
 Todas as fontes do seed foram conferidas nas páginas oficiais durante a implementação (consulta em 21/11/2026), com trechos literais. Quando a condição de reutilização não é informada, a Polis apenas referencia e cita trechos curtos com atribuição. Origem oficial não significa endosso.
 

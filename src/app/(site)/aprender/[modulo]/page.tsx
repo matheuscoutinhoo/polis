@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SignupBanner } from "@/components/auth/signup-gate";
 import { Icon } from "@/components/ui/icon";
 import { TopicIcon, areaMeta, type Area } from "@/components/ui/topic";
+import { cn } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { getModuleBySlug } from "@/modules/learning/catalog";
 import { getLearnerSummary } from "@/modules/learning/progress";
@@ -34,7 +36,12 @@ export default async function ModulePage({ params }: { params: Promise<{ modulo:
           <p className="mt-2 max-w-2xl text-lead text-ink-soft">{mod.summary}</p>
         </div>
       </div>
-      <ol className="mt-10 flex max-w-3xl flex-col gap-3">
+      {user ? null : (
+        <SignupBanner path={`/aprender/${mod.slug}`} title="Crie uma conta para ler as lições completas" className="mt-8 max-w-3xl">
+          Sem conta, cada lição mostra só a abertura.
+        </SignupBanner>
+      )}
+      <ol className={cn("flex max-w-3xl flex-col gap-3", user ? "mt-10" : "mt-6")}>
         {mod.lessons.map((lesson) => {
           const state = summary?.progressByLesson.get(lesson.id);
           return (
@@ -52,8 +59,10 @@ export default async function ModulePage({ params }: { params: Promise<{ modulo:
                     {lesson.minutes} min · {lesson.objective}
                   </span>
                 </span>
-                <span className="sr-only">{state?.completedAt ? "Concluída" : state?.readAt ? "Leitura concluída" : "Não iniciada"}</span>
-                <Icon name="arrowRight" size={20} className="flex-none text-action" />
+                <span className="sr-only">
+                  {!user ? "Prévia; lição completa com conta" : state?.completedAt ? "Concluída" : state?.readAt ? "Leitura concluída" : "Não iniciada"}
+                </span>
+                {user ? <Icon name="arrowRight" size={20} className="flex-none text-action" /> : <Icon name="lock" size={18} className="flex-none text-ink-soft" />}
               </Link>
             </li>
           );

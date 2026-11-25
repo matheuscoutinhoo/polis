@@ -199,7 +199,7 @@ function Landing() {
             </LinkButton>
           </div>
           <p className="mt-5 flex items-start gap-2 text-meta text-action-press">
-            <Icon name="book" size={18} className="mt-0.5 flex-none" /> Fundamentos em comum. Catálogo sempre acessível, com ou sem conta.
+            <Icon name="book" size={18} className="mt-0.5 flex-none" /> Fundamentos em comum. Com uma conta, você acessa as lições completas, os acontecimentos e os fóruns.
           </p>
         </div>
         <Illustration className="mx-auto h-auto w-full max-w-[520px]" />
