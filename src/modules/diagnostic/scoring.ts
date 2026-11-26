@@ -16,6 +16,9 @@ import { CHOICE_VALUE, type AnswerChoice } from "./scale";
 //    MIN_OVERLAP_FOR_PROFILE). Não é probabilidade nem precisão científica.
 // 6. Empates (mesmo índice arredondado) são exibidos como empate; para ordenar a
 //    trilha, usa-se a ordem editorial fixa dos perfis.
+// 7. Resultados guardados mantêm os escores calculados; quando os perfis de
+//    referência mudam de versão, as afinidades são recalculadas a partir desses
+//    escores (withCurrentProfiles), sem alterar respostas nem escores.
 
 export const SCORING_VERSION = "2026.11-v1";
 export const MIN_VALID_PER_DIMENSION = 6;
@@ -77,6 +80,8 @@ export type QuestionnaireResult = {
   affinities: AffinityResult[];
   closest: CurrentKey[];
   tensionDimensions: DimensionKey[];
+  /** Set when the affinities were recomputed: profiles version used when the result was saved. */
+  computedWithProfilesVersion?: string;
 };
 
 export function round2(value: number): number {
@@ -196,16 +201,20 @@ export function rankAffinities(results: AffinityResult[], profiles: ReferencePro
   return sorted;
 }
 
-export function computeResult(answers: AnswerMap, now: Date = new Date(), questions: Question[] = QUESTIONS): QuestionnaireResult {
-  const dimensions = DIMENSIONS.map((d) => scoreDimension(d.key, answers, questions));
+function affinitiesFor(dimensions: DimensionResult[]) {
   const validDimensionCount = dimensions.filter((d) => d.status === "OK").length;
-  const affinityStatus = validDimensionCount >= MIN_VALID_DIMENSIONS_FOR_AFFINITY ? "OK" : "INSUFFICIENT";
+  const affinityStatus: QuestionnaireResult["affinityStatus"] = validDimensionCount >= MIN_VALID_DIMENSIONS_FOR_AFFINITY ? "OK" : "INSUFFICIENT";
   const affinities =
     affinityStatus === "OK" ? rankAffinities(REFERENCE_PROFILES.map((profile) => computeAffinity(profile, dimensions))) : [];
   const comparable = affinities.filter((a) => a.comparable && a.index !== null);
   const top = comparable[0]?.index ?? null;
   const closest =
     top !== null && top >= BAND_MODERATE ? comparable.filter((a) => (a.index ?? 0) >= round2(top - CLOSEST_MARGIN)).map((a) => a.key) : [];
+  return { validDimensionCount, affinityStatus, affinities, closest };
+}
+
+export function computeResult(answers: AnswerMap, now: Date = new Date(), questions: Question[] = QUESTIONS): QuestionnaireResult {
+  const dimensions = DIMENSIONS.map((d) => scoreDimension(d.key, answers, questions));
   const answeredCount = questions.filter((q) => answers[q.id]).length;
   const unknownCount = questions.filter((q) => answers[q.id] === "UNKNOWN").length;
 
@@ -217,11 +226,23 @@ export function computeResult(answers: AnswerMap, now: Date = new Date(), questi
     answeredCount,
     unknownCount,
     dimensions,
-    validDimensionCount,
-    affinityStatus,
-    affinities,
-    closest,
+    ...affinitiesFor(dimensions),
     tensionDimensions: dimensions.filter((d) => d.tension).map((d) => d.key),
+  };
+}
+
+/**
+ * A stored result as it reads today: when the reference profiles changed after it
+ * was saved, the affinities are recomputed from its dimension scores, so names,
+ * comparisons and the path always use the current profiles.
+ */
+export function withCurrentProfiles(result: QuestionnaireResult): QuestionnaireResult {
+  if (result.profilesVersion === PROFILES_VERSION) return result;
+  return {
+    ...result,
+    ...affinitiesFor(result.dimensions),
+    profilesVersion: PROFILES_VERSION,
+    computedWithProfilesVersion: result.computedWithProfilesVersion ?? result.profilesVersion,
   };
 }
 

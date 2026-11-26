@@ -252,7 +252,10 @@ export default async function SourcesAndMethodPage() {
               ficam a até {n(CLOSEST_MARGIN)} do maior índice, se ele for pelo menos moderado. Índices iguais são exibidos como empate; para ordenar a trilha, vale a ordem editorial
               fixa dos perfis.
             </li>
-            <li>Refazer o questionário substitui o resultado ativo. Não guardamos histórico de resultados anteriores.</li>
+            <li>
+              Ao refazer o questionário, o novo resultado passa a ordenar a trilha; os anteriores ficam no seu histórico, privados, para comparação, até você apagá-los. Quando os
+              perfis de referência mudam de versão, as afinidades dos resultados guardados são recalculadas a partir dos escores salvos, sem alterar respostas nem escores.
+            </li>
           </ol>
 
           <h3 className="mt-6 text-h3 font-semibold">As 50 situações</h3>
@@ -391,7 +394,13 @@ export default async function SourcesAndMethodPage() {
               </li>
             ))}
             <li>Progressismo: nenhuma fonte aprovada define o termo; a lição de temas transversais registra essa ausência.</li>
-            <li>Anarquismos: o acervo cobre a vertente apresentada por Bakunin e um estudo histórico brasileiro; outras vertentes não são descritas.</li>
+            <li>
+              Conservadorismos: o acervo traz a descrição de uma obra, o resumo de um artigo e menções em livro didático; não há textos de autores conservadores.
+            </li>
+            <li>Socialismos: o acervo detalha a formulação de Marx e o Estado socialista do século XX; socialismos que se apresentam como democráticos não são descritos.</li>
+            <li>
+              Anarquismos: o acervo cobre a vertente apresentada por Bakunin, um estudo histórico brasileiro e menções em livros didáticos; outras vertentes não são descritas.
+            </li>
             <li>Libertarianismos: o acervo não descreve a vertente que propõe eliminar o Estado.</li>
             <li>Ambientalismo e nacionalismo aparecem no acervo como temas de políticas públicas e de estudos históricos, não como correntes definidas.</li>
             <li>

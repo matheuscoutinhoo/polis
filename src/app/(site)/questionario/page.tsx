@@ -14,7 +14,7 @@ import {
   startRetakeAction,
 } from "@/modules/diagnostic/actions";
 import { DIMENSIONS } from "@/modules/diagnostic/dimensions";
-import { getActiveConsent, getCompletedAttempt, getInProgressAttempt } from "@/modules/diagnostic/service";
+import { getActiveConsent, getCompletedAttempt, getInProgressAttempt, isCurrentConsent } from "@/modules/diagnostic/service";
 
 export const metadata: Metadata = { title: "Questionário de afinidades" };
 
@@ -79,6 +79,8 @@ export default async function QuestionnairePage({
   }
 
   const [consent, inProgress, completed] = await Promise.all([getActiveConsent(user.id), getInProgressAttempt(user.id), getCompletedAttempt(user.id)]);
+  // Consent given for an earlier purpose (before results were kept as history) must be renewed to answer again.
+  const outdatedConsent = Boolean(consent) && !isCurrentConsent(consent);
 
   return (
     <div className="page-frame py-8 md:py-12">
@@ -108,7 +110,7 @@ export default async function QuestionnairePage({
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
-          {consent ? (
+          {consent && !outdatedConsent ? (
             <div className="surface-card p-6">
               <p className="eyebrow">Sua situação</p>
               {inProgress ? (
@@ -134,7 +136,10 @@ export default async function QuestionnairePage({
               ) : completed ? (
                 <>
                   <h2 className="mt-2 text-h3 font-semibold">Resultado disponível</h2>
-                  <p className="mt-2 text-body text-ink-soft">Concluído em {completed.completedAt ? formatDate(completed.completedAt) : "—"}. Ao refazer, o novo resultado substitui o anterior.</p>
+                  <p className="mt-2 text-body text-ink-soft">
+                    Concluído em {completed.completedAt ? formatDate(completed.completedAt) : "—"}. Ao refazer, o novo resultado passa a ordenar a trilha e este fica no seu
+                    histórico, para comparar.
+                  </p>
                   <div className="mt-5 flex flex-col gap-3">
                     <LinkButton href="/questionario/resultado" icon="arrowRight">
                       Ver resultado
@@ -144,6 +149,9 @@ export default async function QuestionnairePage({
                         Refazer questionário
                       </SubmitButton>
                     </form>
+                    <Link href="/conta/resultados" className="text-link inline-flex min-h-[44px] items-center gap-1.5 self-start font-semibold">
+                      <Icon name="layers" size={18} /> Histórico e comparação
+                    </Link>
                   </div>
                 </>
               ) : (
@@ -169,11 +177,22 @@ export default async function QuestionnairePage({
             </div>
           ) : (
             <form action={acceptQuestionnaireConsentAction} className="surface-card p-6">
-              <p className="eyebrow">Autorização específica</p>
+              <p className="eyebrow">{outdatedConsent ? "Autorização atualizada" : "Autorização específica"}</p>
               <h2 className="mt-2 text-h3 font-semibold">Tratamento das respostas</h2>
+              {outdatedConsent ? (
+                <p className="mt-2 text-body text-ink-soft">
+                  A Polis agora guarda cada resultado concluído no seu histórico, para você comparar tentativas. Para responder de novo, confirme a nova versão da autorização.
+                  {completed ? " Seu resultado atual continua disponível." : ""}
+                </p>
+              ) : null}
+              {outdatedConsent && completed ? (
+                <Link href="/questionario/resultado" className="text-link mt-2 inline-flex min-h-[44px] items-center gap-1.5 font-semibold">
+                  Ver resultado atual <Icon name="arrowRight" size={16} />
+                </Link>
+              ) : null}
               <p className="mt-2 text-meta text-ink-soft">
                 Respostas a temas políticos são dados sensíveis. Esta autorização é separada dos termos de uso e pode ser revogada a qualquer momento, o que apaga respostas e
-                resultado.
+                resultados.
               </p>
               <p className="mt-4 flex gap-3 rounded-control bg-sand p-3 text-meta text-sand-ink">
                 <Icon name="alert" size={18} className="mt-0.5 flex-none" />
@@ -200,7 +219,7 @@ export default async function QuestionnairePage({
               </label>
               <div className="mt-5 flex flex-col gap-3">
                 <SubmitButton icon="arrowRight" block pendingLabel="Registrando...">
-                  Autorizar e começar
+                  {outdatedConsent ? "Confirmar e responder" : "Autorizar e começar"}
                 </SubmitButton>
               </div>
             </form>

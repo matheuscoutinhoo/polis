@@ -40,7 +40,7 @@ export default async function AdminDashboardPage() {
         <div className="surface-card flex items-start gap-3 p-5">
           <Icon name="layers" size={24} className="mt-1 flex-none text-action" />
           <span>
-            <span className="block text-meta text-ink-soft">Questionários concluídos</span>
+            <span className="block text-meta text-ink-soft">Pessoas com questionário concluído</span>
             <span className="block text-h2 font-semibold">{counts.completedQuestionnaires}</span>
             <span className="block text-meta text-ink-soft">Apenas a contagem total; resultados individuais não são exibidos.</span>
           </span>

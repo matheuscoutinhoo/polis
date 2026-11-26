@@ -95,6 +95,7 @@ export function AffinityList({ affinities }: { affinities: AffinityResult[] }) {
     <ul className="flex flex-col gap-3">
       {affinities.map((affinity) => {
         const profile = PROFILE_BY_KEY[affinity.key as CurrentKey];
+        if (!profile) return null;
         return (
           <li key={affinity.key} className="surface-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">

@@ -129,7 +129,8 @@ export async function adminDashboardCounts() {
     db.event.count({ where: { status: { in: ["DRAFT", "IN_REVIEW"] } } }),
     db.event.count({ where: { status: "PUBLISHED" } }),
     db.user.count({ where: { suspendedUntil: { gt: new Date() } } }),
-    db.questionnaireAttempt.count({ where: { status: "COMPLETED" } }),
+    // People, not attempts: completed results are kept as a history.
+    db.user.count({ where: { attempts: { some: { status: "COMPLETED" } } } }),
   ]);
   return { openReports, openFlags, pendingSources, drafts, published, suspended, completedQuestionnaires };
 }

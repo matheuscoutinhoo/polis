@@ -25,9 +25,14 @@ export type SeedSource = {
   reuseCondition: string;
   scopeNote: string;
   excerpts: Array<{ locator: string; text: string }>;
+  /** Date the excerpts were last checked on the official page, when later than ACCESSED_ON. */
+  accessedOn?: string;
 };
 
 export const ACCESSED_ON = "2026-11-21";
+
+/** Date of the editorial revision that split the currents into their own modules. */
+export const REVISED_ON = "2026-11-25";
 
 export const REUSE = {
   officialAct:

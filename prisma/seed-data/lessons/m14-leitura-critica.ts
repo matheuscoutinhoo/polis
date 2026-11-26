@@ -1,9 +1,9 @@
-import { licaoCorrelacaoCausalidade } from "./m10-l2-correlacao-causalidade";
+import { licaoCorrelacaoCausalidade } from "./m14-l2-correlacao-causalidade";
 import type { SeedModule } from "./types";
 
 export const moduloLeituraCritica: SeedModule = {
   slug: "leitura-critica",
-  number: 10,
+  number: 14,
   title: "Leitura crítica",
   summary: "Evidência, opinião, desinformação, leitura de dados e a diferença entre correlação e causalidade.",
   area: "LEITURA_CRITICA",

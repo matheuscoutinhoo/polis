@@ -8,6 +8,7 @@ import {
   QuestionnaireError,
   completeAttempt,
   deleteQuestionnaireData,
+  deleteResult,
   discardInProgressAttempt,
   grantQuestionnaireConsent,
   revokeQuestionnaireConsent,
@@ -55,7 +56,13 @@ export async function completeQuestionnaireAction(): Promise<{ ok: false; error:
 
 export async function startRetakeAction() {
   const user = await requireUser("/questionario");
-  await startAttempt(user.id);
+  try {
+    await startAttempt(user.id);
+  } catch (error) {
+    // Missing or outdated consent: the questionnaire page asks for it.
+    if (error instanceof QuestionnaireError) redirect("/questionario");
+    throw error;
+  }
   redirect("/questionario/responder");
 }
 
@@ -65,11 +72,21 @@ export async function discardRetakeAction() {
   redirect("/questionario");
 }
 
-export async function setPathModeAction(formData: FormData) {
+export type PathModeState = { mode: "GENERAL" | "AFFINITY"; saved: boolean };
+
+export async function setPathModeAction(_previous: PathModeState, formData: FormData): Promise<PathModeState> {
   const user = await requireUser("/aprender");
-  const mode = formData.get("mode") === "AFFINITY" ? "AFFINITY" : "GENERAL";
-  await setPathMode(user.id, mode);
+  const requested = formData.get("mode") === "AFFINITY" ? "AFFINITY" : "GENERAL";
+  const mode = await setPathMode(user.id, requested);
   revalidatePath("/", "layout");
+  return { mode, saved: true };
+}
+
+export async function deleteResultAction(formData: FormData) {
+  const user = await requireUser("/conta/resultados");
+  const deleted = await deleteResult(user.id, String(formData.get("resultId") ?? ""));
+  revalidatePath("/", "layout");
+  redirect(deleted ? "/conta/resultados?aviso=resultado-apagado" : "/conta/resultados");
 }
 
 export async function deleteQuestionnaireDataAction() {

@@ -2,7 +2,7 @@ import type { SeedModule } from "./types";
 
 export const moduloHistoria: SeedModule = {
   slug: "historia-politica-do-brasil",
-  number: 9,
+  number: 13,
   title: "História política do Brasil",
   summary: "Constituições, voto e regimes políticos como contexto para os debates atuais.",
   area: "INSTITUICOES",

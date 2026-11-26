@@ -2,7 +2,7 @@ import type { SeedModule } from "./types";
 
 export const moduloTemasTransversais: SeedModule = {
   slug: "temas-transversais",
-  number: 8,
+  number: 12,
   title: "Temas transversais",
   summary:
     "O módulo mostra como as fontes do acervo tratam meio ambiente, desenvolvimento sustentável, nacionalismo e populismo e registra o que elas não definem, como ambientalismo e progressismo.",

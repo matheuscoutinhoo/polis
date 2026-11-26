@@ -6,9 +6,10 @@ import type { DimensionKey } from "./dimensions";
 // indefinidas e não entram no cálculo. Interpretação editorial documentada em
 // /fontes-e-metodo; não é um teste validado nem uma classificação oficial.
 
-export const PROFILES_VERSION = "2026.11-v2";
+// v3: socialismos e comunismo passaram a ter perfis separados, como no catálogo.
+export const PROFILES_VERSION = "2026.11-v3";
 
-export type CurrentKey = "liberalismos" | "conservadorismos" | "social-democracia" | "socialismos" | "anarquismos" | "libertarianismos";
+export type CurrentKey = "liberalismos" | "conservadorismos" | "social-democracia" | "socialismos" | "comunismo" | "anarquismos" | "libertarianismos";
 
 /**
  * DIRECT: a faixa decorre do que a fonte afirma.
@@ -46,16 +47,16 @@ export const REFERENCE_PROFILES: ReferenceProfile[] = [
     summary:
       "Correntes que partem do indivíduo e de seus direitos e atribuem ao Estado a função de garantir segurança, liberdade e propriedade, com papel central do mercado na vida econômica.",
     interpretation:
-      "Consideramos o núcleo descrito nos livros didáticos do PNAP (Coelho e Salles, 2015; Coelho, 2014) e os temas da ementa do ILB: liberalismo e democracia, o argumento neoliberal e os direitos individuais.",
+      "Consideramos o núcleo descrito nos livros didáticos do PNAP (Coelho e Salles, 2015; Coelho, 2014), a aproximação entre liberalismo e democracia descrita pelos mesmos autores e os temas da ementa do ILB: liberalismo e democracia, o argumento neoliberal e os direitos individuais.",
     variations:
-      "Segundo Silva Júnior (2014), a teoria liberal contemporânea abriga a tensão entre Rawls, que admite corrigir parte das desigualdades, e Nozick, que prioriza a liberdade. Coelho (2014) registra a revisão de paradigmas dentro do próprio pensamento liberal com o Estado de bem-estar social.",
+      "Segundo Silva Júnior (2014), a teoria liberal contemporânea abriga a tensão entre Rawls, que admite corrigir parte das desigualdades, e Nozick, que prioriza a liberdade. Coelho (2014) registra a revisão de paradigmas dentro do próprio pensamento liberal, o predomínio de Keynes no pós-guerra, a oposição de Hayek e Friedman e o renascimento liberal chamado de neoliberalismo.",
     ranges: {
       economia: {
         min: -1,
         max: -0.2,
         support: "DIRECT",
         justification:
-          "Coelho e Salles (2015) descrevem a defesa da liberdade e da propriedade individuais, e Coelho (2014) associa o Estado liberal clássico ao Estado mínimo, com as demais dimensões da vida social reguladas pelo mercado. A faixa se aproxima do centro porque, segundo Silva Júnior (2014), Rawls admite corrigir parte das desigualdades dentro da teoria liberal.",
+          "Coelho e Salles (2015) descrevem a defesa da liberdade e da propriedade individuais, e Coelho (2014) associa o Estado liberal clássico ao Estado mínimo, com as demais dimensões da vida social reguladas pelo mercado. A faixa se aproxima do centro porque, segundo Silva Júnior (2014), Rawls admite corrigir parte das desigualdades dentro da teoria liberal e, segundo Coelho (2014), Keynes, economista formado no pensamento liberal, defendia a intervenção do governo nas recessões.",
       },
       liberdades: {
         min: -1,
@@ -131,16 +132,16 @@ export const REFERENCE_PROFILES: ReferenceProfile[] = [
     summary:
       "Corrente associada, no acervo, ao Estado de bem-estar social, que intervém por meio de políticas públicas no mercado para assegurar um patamar mínimo de igualdade social e de bem-estar.",
     interpretation:
-      "Consideramos o Estado de bem-estar social descrito por Coelho (2014) e os temas das ementas do ILB: histórico, bases materiais do compromisso social-democrata, razões de sua crise e a chamada Terceira Via.",
+      "Consideramos o Estado de bem-estar social descrito por Coelho (2014), que registra governos sociais-democratas entre os que o construíram no pós-guerra, e os temas das ementas do ILB: histórico, bases materiais do compromisso social-democrata, razões de sua crise e a chamada Terceira Via.",
     variations:
-      "A ementa do ILB sobre novas esquerdas trata da Terceira Via e da relação entre esquerda e direita hoje; o acervo não detalha as diferenças entre as vertentes.",
+      "A ementa do ILB sobre novas esquerdas trata da Terceira Via e da relação entre esquerda e direita hoje; O acervo não detalha as diferenças entre as vertentes.",
     ranges: {
       economia: {
         min: 0.2,
         max: 0.8,
         support: "DIRECT",
         justification:
-          "Coelho (2014) descreve o Estado de bem-estar social intervindo por meio de políticas públicas no mercado para assegurar um patamar mínimo de igualdade social e de bem-estar. A intervenção ocorre no mercado, sem substituí-lo, por isso a faixa não chega ao extremo.",
+          "Coelho (2014) descreve o Estado de bem-estar social intervindo por meio de políticas públicas no mercado para assegurar um patamar mínimo de igualdade social e de bem-estar, e cita os governos sociais-democratas escandinavos e alemão entre os que, no pós-guerra, intervieram fortemente na economia e criaram sistemas de proteção social abrangentes. A intervenção ocorre no mercado, sem substituí-lo, por isso a faixa não chega ao extremo.",
       },
       liberdades: {
         min: -0.8,
@@ -171,48 +172,88 @@ export const REFERENCE_PROFILES: ReferenceProfile[] = [
   },
   {
     key: "socialismos",
-    name: "Socialismos e comunismo",
+    name: "Socialismos",
     editorialOrder: 4,
     summary:
-      "Correntes que propõem superar a propriedade privada dos meios de produção e as divisões de classe; no marxismo, o socialismo é descrito como fase de transição para o comunismo.",
+      "Correntes que propõem superar a propriedade privada dos meios de produção e as divisões de classe. No pensamento de Marx, o socialismo é a fase de transição para o comunismo; no século XX, deu nome a Estados com controle estatal da produção.",
     interpretation:
-      "Consideramos a proposta do Manifesto Comunista (abolição da propriedade burguesa e centralização dos instrumentos de produção), a descrição do Estado socialista por Coelho (2014) e a distinção, na ementa do ILB, entre a utopia socialista e o socialismo real.",
+      "Consideramos o resumo do pensamento de Marx por Coelho e Salles (2015), com o socialismo como fase transitória e o fim da propriedade privada dos meios de produção, a descrição do Estado socialista do século XX por Coelho (2014) e a distinção, na ementa do ILB, entre a utopia socialista e o socialismo real.",
     variations:
-      "O acervo distingue a proposta socialista das experiências históricas do chamado socialismo real, mas não descreve cada vertente em detalhe. Por isso as dimensões de liberdades e de participação ficam indefinidas.",
+      "Marx distinguia o seu socialismo científico do socialismo utópico de outros filósofos, e a ementa do ILB separa a proposta das experiências históricas. O acervo não descreve socialismos que se apresentam como democráticos; por isso a dimensão de participação fica indefinida.",
     ranges: {
       economia: {
-        min: 0.7,
+        min: 0.6,
         max: 1,
         support: "DIRECT",
         justification:
-          "O Manifesto propõe a abolição da propriedade burguesa e a centralização dos instrumentos de produção nas mãos do Estado; Coelho (2014) aponta o controle estatal de todo o processo produtivo como primeira característica do Estado socialista.",
+          "Coelho e Salles (2015) descrevem o fim da propriedade privada dos meios de produção como etapa da construção do socialismo, e Coelho (2014) aponta o controle estatal de todo o processo produtivo como primeira característica do Estado socialista.",
+      },
+      liberdades: {
+        min: 0,
+        max: 0.8,
+        support: "EDITORIAL_INFERENCE",
+        justification:
+          "Coelho (2014) descreve os Estados socialistas do século XX como orientados mais pela igualdade social do que pela liberdade individual, com punição de toda discordância em relação ao partido, e Coelho e Salles (2015) registram que, na fase socialista, o proletariado usaria toda a força do Estado. A faixa começa no centro porque, segundo os mesmos autores, Marx não propunha com a palavra ditadura um governo mais duro ou autoritário que os de seu tempo.",
+      },
+    },
+    undefinedReasons: {
+      participacao:
+        "O acervo descreve a proposta de um partido operário que toma o poder do Estado e Estados socialistas dirigidos por um único partido, mas não descreve socialismos que se apresentam como democráticos; não permite situar as vertentes de forma uniforme.",
+      costumes: "O acervo aprovado não descreve a posição das vertentes socialistas sobre costumes e tradições.",
+      socioambiental: NO_POSITION,
+    },
+    sourceKeys: ["pnap-ciencia-politica", "pnap-estado-governo-mercado", "ilb-doutrina-socialismo"],
+  },
+  {
+    key: "comunismo",
+    name: "Comunismo",
+    editorialOrder: 5,
+    summary:
+      "Corrente que, no Manifesto de 1848, propõe abolir a propriedade burguesa e, no pensamento de Marx, projeta uma sociedade sem classes e sem Estado. No século XX, deu nome a partidos e a regimes de partido único.",
+    interpretation:
+      "Consideramos a proposta do Manifesto Comunista (abolição da propriedade burguesa e centralização dos instrumentos de produção nas mãos do Estado), a sociedade sem classes e sem Estado descrita por Coelho e Salles (2015) e a descrição dos partidos e regimes comunistas do século XX por Coelho (2014) e por Coelho e Salles (2015).",
+    variations:
+      "Coelho (2014) distingue a orientação leninista, que rejeitava a democracia, do eurocomunismo, que declarou fidelidade às instituições democráticas. Por essa divergência e pela distância entre o horizonte sem Estado e os regimes de partido único, a dimensão de participação fica indefinida.",
+    ranges: {
+      economia: {
+        min: 0.8,
+        max: 1,
+        support: "DIRECT",
+        justification:
+          "O Manifesto propõe a abolição da propriedade burguesa e a centralização de todos os instrumentos de produção nas mãos do Estado; segundo Coelho e Salles (2015), nas revoluções comunistas o objetivo primeiro era acabar com a propriedade privada.",
       },
       costumes: {
         min: 0,
         max: 1,
         support: "EDITORIAL_INFERENCE",
         justification:
-          "O Manifesto critica instituições sociais de sua época, como a família burguesa, que associa ao capital. A faixa é ampla porque o acervo não descreve a posição das diferentes vertentes sobre costumes.",
+          "O Manifesto critica instituições sociais de sua época, como a família burguesa, que associa ao capital. A faixa é ampla porque o acervo não descreve a posição dos partidos e regimes comunistas sobre costumes.",
+      },
+      liberdades: {
+        min: 0,
+        max: 1,
+        support: "EDITORIAL_INFERENCE",
+        justification:
+          "Coelho e Salles (2015) classificam os regimes comunistas do século XX como totalitários, com partido único e terror de Estado, e Coelho (2014) registra que, com Lênin, a ditadura do proletariado ganhou um significado mais forte. A faixa começa no centro porque o eurocomunismo declarou fidelidade às instituições democráticas e porque o horizonte descrito por Marx é uma sociedade sem Estado.",
       },
     },
     undefinedReasons: {
-      liberdades: "O acervo distingue a proposta socialista do socialismo real e não permite situar as vertentes de forma uniforme entre liberdades e autoridade.",
       participacao:
-        "O Manifesto fala em conquista da democracia e em supremacia política do proletariado; o acervo não permite situar as vertentes de forma uniforme entre representação e participação direta.",
+        "O horizonte descrito por Marx é uma sociedade sem Estado, enquanto os regimes do século XX foram de partido único; o acervo não permite situar a corrente de forma uniforme entre representação e participação direta.",
       socioambiental: NO_POSITION,
     },
-    sourceKeys: ["dominiopublico-manifesto-comunista", "pnap-ciencia-politica", "pnap-estado-governo-mercado", "ilb-doutrina-socialismo"],
+    sourceKeys: ["dominiopublico-manifesto-comunista", "pnap-ciencia-politica", "pnap-estado-governo-mercado"],
   },
   {
     key: "anarquismos",
     name: "Anarquismos",
-    editorialOrder: 5,
+    editorialOrder: 6,
     summary:
       "Correntes que rejeitam a autoridade do Estado e outras autoridades impostas. Em Deus e o Estado, Bakunin aceita apenas a autoridade que considera racional e conforme à liberdade humana.",
     interpretation:
       "Consideramos a posição defendida por Bakunin em Deus e o Estado e o estudo histórico sobre a experiência anarquista no movimento operário brasileiro (greves de 1917).",
     variations:
-      "O acervo cobre a vertente de Bakunin e um estudo histórico brasileiro; não descreve as demais vertentes. A defesa de mercado sem Estado não tem fonte no acervo.",
+      "O acervo cobre a vertente de Bakunin, um estudo histórico brasileiro e menções em livro didático à força dos sindicatos anarquistas nos anos 1910; não descreve as demais vertentes. A defesa de mercado sem Estado não tem fonte no acervo.",
     ranges: {
       liberdades: {
         min: -1,
@@ -239,7 +280,7 @@ export const REFERENCE_PROFILES: ReferenceProfile[] = [
   {
     key: "libertarianismos",
     name: "Libertarianismos",
-    editorialOrder: 6,
+    editorialOrder: 7,
     summary:
       "Correntes que dão prioridade à liberdade individual e adotam uma concepção de justiça segundo a qual o Estado só pode atuar de forma corretiva.",
     interpretation:
@@ -252,7 +293,7 @@ export const REFERENCE_PROFILES: ReferenceProfile[] = [
         max: -0.6,
         support: "DIRECT",
         justification:
-          "Segundo Silva Júnior (2014), Nozick condiciona a distribuição do que é produzido ao valor que as pessoas atribuem às ações e aos serviços de cada um; Rocha e Galuppo (2016) descrevem um Estado que só atua de forma corretiva.",
+          "Segundo Silva Júnior (2014), Nozick condiciona a distribuição do que é produzido ao valor que as pessoas atribuem às ações e aos serviços de cada um e vê a tributação para fins distributivos como obrigar pessoas a trabalhar sem remuneração; Rocha e Galuppo (2016) descrevem um Estado que só atua de forma corretiva.",
       },
       liberdades: {
         min: -1,

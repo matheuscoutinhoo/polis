@@ -54,7 +54,7 @@ export async function requireAdmin(): Promise<CurrentUser> {
 }
 
 const hasCompletedQuestionnaire = cache(async (userId: string) => {
-  const attempt = await db.questionnaireAttempt.findUnique({ where: { userId_status: { userId, status: "COMPLETED" } }, select: { id: true } });
+  const attempt = await db.questionnaireAttempt.findFirst({ where: { userId, status: "COMPLETED" }, select: { id: true } });
   return attempt !== null;
 });
 

@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { MODULES } from "../../prisma/seed-data/lessons";
-import { ANSWER_OPTIONS as OPTIONS, query, signUp, uniqueEmail, verifyEmail } from "./helpers";
+import { ANSWER_OPTIONS as OPTIONS, answerAllSituations, query, signUp, uniqueEmail, verifyEmail } from "./helpers";
 
-test("cadastro, questionário completo, resultado e primeira lição com XP sem duplicação", async ({ page }) => {
+test("cadastro, questionário completo, resultado, primeira lição com XP sem duplicação e histórico de resultados", async ({ page }) => {
   const email = uniqueEmail("jornada");
   await signUp(page, "Pessoa Jornada", email);
   await expect(page.getByText("Conta criada")).toBeVisible();
@@ -37,6 +37,16 @@ test("cadastro, questionário completo, resultado e primeira lição com XP sem 
   await page.waitForURL(/\/questionario\/resultado/);
   await expect(page.getByRole("heading", { name: "O que suas respostas indicam" })).toBeVisible();
   await expect(page.getByText(/Suas respostas (se aproximam|não se aproximam)/)).toBeVisible();
+  // The path is drawn as a flow of modules, starting with the common foundations.
+  const foundations = page.getByRole("list", { name: "Fundamentos em comum" });
+  await expect(foundations.getByRole("link").first()).toContainText(MODULES[0].title);
+  // Path choice: the save button appears only after a change and confirms the saved option.
+  const pathForm = page.locator("form").filter({ has: page.getByRole("radio", { name: /Trilha geral/ }) });
+  await expect(pathForm.getByRole("button", { name: "Salvar escolha" })).toHaveCount(0);
+  await pathForm.getByRole("radio", { name: /Trilha geral/ }).check();
+  await pathForm.getByRole("button", { name: "Salvar escolha" }).click();
+  await expect(pathForm.getByText("Escolha salva: trilha geral.")).toBeVisible();
+  await expect(pathForm.getByRole("radio", { name: /Trilha geral/ })).toBeChecked();
 
   // First lesson of the path (common foundations for everyone).
   const first = MODULES.find((m) => m.stage === "FOUNDATIONS")!;
@@ -67,11 +77,24 @@ test("cadastro, questionário completo, resultado e primeira lição com XP sem 
   );
   expect(Number(total)).toBe(25);
 
+  // Retaking keeps the earlier result in a private history, to compare and reopen.
+  await page.goto("/conta");
+  await page.getByRole("button", { name: "Refazer questionário" }).click();
+  await page.waitForURL(/\/questionario\/responder/);
+  await answerAllSituations(page, 1);
+  await page.getByRole("link", { name: "Comparar seus 2 resultados" }).first().click();
+  await page.waitForURL(/\/conta\/resultados/);
+  await expect(page.getByRole("heading", { name: "Comparar dois resultados" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Índice de proximidade de cada corrente, antes e depois" })).toBeVisible();
+  await page.getByRole("link", { name: "Ver detalhes" }).nth(1).click();
+  await page.waitForURL(/\/questionario\/resultado\/[^/]+$/);
+  await expect(page.getByText("Este é um resultado anterior")).toBeVisible();
+
   // Privacy: answers can be deleted on demand.
   await page.goto("/conta/privacidade");
-  await page.getByRole("button", { name: "Apagar respostas e resultado" }).click();
+  await page.getByRole("button", { name: "Apagar respostas e resultados" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Apagar dados do questionário" }).click();
-  await expect(page.getByText("Respostas e resultado do questionário apagados.")).toBeVisible();
+  await expect(page.getByText("Respostas e resultados do questionário apagados.")).toBeVisible();
   const [{ count }] = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM questionnaire_attempts a JOIN users u ON u.id = a."userId" WHERE u.email = $1`,
     [email],

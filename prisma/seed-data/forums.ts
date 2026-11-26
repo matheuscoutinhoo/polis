@@ -24,7 +24,7 @@ export const OFFICIAL_FORUMS: SeedForum[] = [
     slug: "correntes-politicas-em-comparacao",
     title: "Correntes políticas em comparação",
     description:
-      "Discussão sobre semelhanças, diferenças e variações entre liberalismos, conservadorismos, social-democracia, socialismos e comunismo, anarquismos e libertarianismos. Apresente argumentos e fontes; o objetivo é compreender, não converter.",
+      "Discussão sobre semelhanças, diferenças e variações entre liberalismos, conservadorismos, social-democracia, socialismos, comunismo, anarquismos e libertarianismos. Apresente argumentos e fontes; o objetivo é compreender, não converter.",
     category: "CORRENTES",
     rules: `${DEFAULT_FORUM_RULES}\nAo descrever uma corrente, diferencie o que seus autores defendem do que críticos afirmam sobre ela.`,
   },

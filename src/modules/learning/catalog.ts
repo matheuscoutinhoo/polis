@@ -27,7 +27,7 @@ export async function getPublishedPathLessons(): Promise<PathLessonInput[]> {
       minutes: true,
       number: true,
       currentKeys: true,
-      module: { select: { slug: true, title: true, number: true, stage: true } },
+      module: { select: { slug: true, title: true, number: true, stage: true, area: true } },
     },
   });
   return lessons.map((lesson) => ({
@@ -38,6 +38,7 @@ export async function getPublishedPathLessons(): Promise<PathLessonInput[]> {
     moduleSlug: lesson.module.slug,
     moduleTitle: lesson.module.title,
     moduleNumber: lesson.module.number,
+    moduleArea: lesson.module.area,
     lessonNumber: lesson.number,
     stage: lesson.module.stage,
     currentKeys: lesson.currentKeys,

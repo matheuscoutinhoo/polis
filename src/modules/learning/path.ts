@@ -11,6 +11,7 @@ export type PathLessonInput = {
   moduleSlug: string;
   moduleTitle: string;
   moduleNumber: number;
+  moduleArea?: "FUNDAMENTOS" | "INSTITUICOES" | "IDEIAS" | "LEITURA_CRITICA";
   lessonNumber: number;
   stage: "FOUNDATIONS" | "PERSPECTIVES" | "CONTEXT";
   currentKeys: string[];
@@ -56,7 +57,9 @@ const affinityStrategy: PerspectiveOrderingStrategy = {
       return editorialOrder(a, b);
     });
     const familiar = sorted.filter((lesson) => lesson.currentKeys.some((key) => closest.includes(key)));
-    const familiarIds = new Set((familiar.length ? familiar : sorted.slice(0, 1)).map((l) => l.id));
+    // Without a clearly closest current, start with the whole module of the top lesson.
+    const fallback = sorted.length ? sorted.filter((l) => l.moduleSlug === sorted[0].moduleSlug) : [];
+    const familiarIds = new Set((familiar.length ? familiar : fallback).map((l) => l.id));
     return [
       { stage: "FAMILIAR", lessons: sorted.filter((l) => familiarIds.has(l.id)) },
       { stage: "OTHER_PERSPECTIVES", lessons: sorted.filter((l) => !familiarIds.has(l.id)) },
@@ -88,6 +91,20 @@ export function buildLearningPath(
   ] satisfies PathStep[]).filter((step) => step.lessons.length > 0);
 
   return { mode: strategy.mode, steps, ordered: steps.flatMap((s) => s.lessons) };
+}
+
+/** A module as a station of the trail flow: its lessons that sit together in the path order. */
+export type PathModuleNode = { slug: string; title: string; number: number; area?: PathLessonInput["moduleArea"]; lessons: PathLessonInput[] };
+
+/** Groups consecutive lessons of the same module, keeping the path order. */
+export function pathModules(lessons: PathLessonInput[]): PathModuleNode[] {
+  const nodes: PathModuleNode[] = [];
+  for (const lesson of lessons) {
+    const last = nodes.at(-1);
+    if (last?.slug === lesson.moduleSlug) last.lessons.push(lesson);
+    else nodes.push({ slug: lesson.moduleSlug, title: lesson.moduleTitle, number: lesson.moduleNumber, area: lesson.moduleArea, lessons: [lesson] });
+  }
+  return nodes;
 }
 
 export const STAGE_LABEL: Record<PathStageKey, { title: string; description: string }> = {

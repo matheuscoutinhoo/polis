@@ -29,10 +29,10 @@ const DATA_TABLE = [
     retention: "Enquanto a conta existir",
   },
   {
-    data: "Respostas ao questionário e mapa de afinidades",
-    purpose: "Ordenar a sua trilha de estudos, e nada além disso",
+    data: "Respostas ao questionário e mapas de afinidades (histórico de resultados)",
+    purpose: "Ordenar a sua trilha de estudos e permitir que você compare seus resultados, e nada além disso",
     basis: "Consentimento específico e destacado para dado sensível (art. 11, I)",
-    retention: "Até você apagar, revogar a autorização, refazer o questionário (o resultado anterior é substituído) ou excluir a conta",
+    retention: "Até você apagar (cada resultado pode ser apagado separadamente), revogar a autorização ou excluir a conta. Refazer o questionário guarda um novo resultado sem apagar os anteriores",
   },
   {
     data: "Progresso nas lições, XP e conquistas",
@@ -134,7 +134,7 @@ export default function PrivacyPolicyPage() {
 
         <Section id="exclusao" title="Exclusão da conta e anonimização">
           <ul className="flex list-disc flex-col gap-1.5 pl-5">
-            <li>Ao excluir a conta, apagamos imediatamente respostas e resultado do questionário, autorizações, progresso, XP, conquistas, fóruns seguidos e sessões.</li>
+            <li>Ao excluir a conta, apagamos imediatamente respostas e resultados do questionário, autorizações, progresso, XP, conquistas, fóruns seguidos e sessões.</li>
             <li>
               Você escolhe o destino dos textos publicados: mantê-los sem vínculo com você (o autor aparece como “Participante removido”) ou apagar o texto de tópicos e
               comentários.
@@ -162,7 +162,7 @@ export default function PrivacyPolicyPage() {
             .
           </p>
           <p>
-            A revogação da autorização do questionário é gratuita e imediata (art. 8º, § 5º): o tratamento para, e respostas e resultado são apagados. O registro de que a
+            A revogação da autorização do questionário é gratuita e imediata (art. 8º, § 5º): o tratamento para, e respostas e resultados são apagados. O registro de que a
             autorização existiu e foi revogada é mantido como comprovação. Como o questionário é condição para usar lições, acontecimentos e fóruns, o acesso a eles fica suspenso
             até você autorizar e responder de novo.
           </p>

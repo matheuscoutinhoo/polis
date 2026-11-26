@@ -29,7 +29,7 @@ for (const event of EVENTS) for (const key of event.sourceKeys) usedBy.set(key, 
 const lines: string[] = [
   "# Catálogo de fontes aprovadas",
   "",
-  `Gerado por \`npm run docs:catalog\` a partir de \`prisma/seed-data\`. Consulta das fontes: ${ACCESSED_ON} (trechos das fontes de acontecimentos reconferidos em 2026-11-23). ${PUBLISHERS.length} editores aprovados e ${ALL_SOURCES.length} fontes.`,
+  `Gerado por \`npm run docs:catalog\` a partir de \`prisma/seed-data\`. Consulta das fontes: ${ACCESSED_ON} (trechos das fontes de acontecimentos reconferidos em 2026-11-23; fontes com data própria indicada na tabela). ${PUBLISHERS.length} editores aprovados e ${ALL_SOURCES.length} fontes.`,
   "",
   "Uma fonte só é aceita quando o endereço pertence exatamente a um domínio (e, quando indicado, a um caminho) de um editor aprovado, com HTTPS. A origem oficial não equivale a endosso nem a neutralidade garantida: cada fonte registra o que sustenta e seus limites. A mesma lista aparece na aplicação em `/fontes-e-metodo`.",
   "",
@@ -50,7 +50,7 @@ for (const publisher of PUBLISHERS) {
   for (const s of sources) {
     const use = usedBy.get(s.key);
     lines.push(
-      `| [${escape(s.title)}](${s.url})${s.locator ? `<br>${escape(s.locator)}` : ""} | ${MATERIAL[s.materialType]} | ${REUSE[s.reuseKind]} | ${escape(s.scopeNote)} | ${use ? [...new Set(use)].join("; ") : "perfis de referência"} |`,
+      `| [${escape(s.title)}](${s.url})${s.locator ? `<br>${escape(s.locator)}` : ""}${s.accessedOn ? `<br>Trechos conferidos em ${s.accessedOn}` : ""} | ${MATERIAL[s.materialType]} | ${REUSE[s.reuseKind]} | ${escape(s.scopeNote)} | ${use ? [...new Set(use)].join("; ") : "perfis de referência"} |`,
     );
   }
   lines.push("");

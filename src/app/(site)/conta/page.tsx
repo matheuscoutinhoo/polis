@@ -3,12 +3,15 @@ import Link from "next/link";
 import { DisplayNameForm } from "@/components/account/account-forms";
 import { ChangePasswordForm, ResendVerificationButton } from "@/components/auth/auth-forms";
 import { PathModeForm } from "@/components/questionnaire/path-mode-form";
+import { joinNames } from "@/components/questionnaire/result-report";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
-import { formatDate } from "@/lib/format";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { formatDate, plural } from "@/lib/format";
 import { isSuspended, requireUser } from "@/lib/session";
-import { getActiveResult } from "@/modules/diagnostic/service";
+import { startRetakeAction } from "@/modules/diagnostic/actions";
+import { listResults } from "@/modules/diagnostic/service";
 import { ACHIEVEMENTS, getLearnerSummary } from "@/modules/learning/progress";
 
 export const metadata: Metadata = { title: "Sua conta" };
@@ -27,7 +30,9 @@ function Section({ id, title, description, children }: { id: string; title: stri
 
 export default async function AccountPage() {
   const user = await requireUser("/conta");
-  const [summary, result] = await Promise.all([getLearnerSummary(user.id), getActiveResult(user.id)]);
+  const [summary, results] = await Promise.all([getLearnerSummary(user.id), listResults(user.id)]);
+  const latest = results[0] ?? null;
+  const result = latest?.result ?? null;
   const suspended = isSuspended(user);
   const affinityAvailable = Boolean(result && result.affinityStatus === "OK");
 
@@ -53,6 +58,53 @@ export default async function AccountPage() {
           </Notice>
         ) : null}
       </div>
+
+      <section aria-labelledby="questionario" className="surface-card mt-6 grid gap-5 p-5 md:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="flex items-start gap-4">
+          <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-[10px] bg-blue text-blue-ink" aria-hidden="true">
+            <Icon name="layers" size={24} />
+          </span>
+          <div className="min-w-0">
+            <h2 id="questionario" className="text-h3 font-semibold">
+              Questionário de afinidades
+            </h2>
+            {latest ? (
+              <>
+                <p className="mt-1 text-body">
+                  Último resultado em {formatDate(latest.completedAt)}
+                  {latest.result.closest.length ? `: mais próximo de ${joinNames(latest.result.closest)}` : ""}.
+                </p>
+                <p className="mt-1 text-meta text-ink-soft">
+                  {plural(results.length, "resultado guardado", "resultados guardados")}, visíveis só para você. Refaça quando quiser e compare as respostas ao longo do tempo.
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-body text-ink-soft">Você ainda não concluiu o questionário. Ele ordena a sua trilha e é condição para usar lições, acontecimentos e fóruns.</p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
+          {latest ? (
+            <>
+              <Link href="/questionario/resultado" className="btn btn-secondary">
+                Ver resultado
+              </Link>
+              <Link href="/conta/resultados" className="btn btn-secondary">
+                <Icon name="scale" size={18} /> {results.length > 1 ? "Comparar resultados" : "Histórico"}
+              </Link>
+              <form action={startRetakeAction}>
+                <SubmitButton block pendingLabel="Preparando...">
+                  Refazer questionário
+                </SubmitButton>
+              </form>
+            </>
+          ) : (
+            <Link href="/questionario" className="btn btn-primary">
+              Responder ao questionário <Icon name="arrowRight" size={18} />
+            </Link>
+          )}
+        </div>
+      </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Section id="perfil" title="Perfil público" description="Nos fóruns, outras pessoas veem apenas o nome de exibição e o que você publica.">

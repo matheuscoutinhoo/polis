@@ -1,4 +1,4 @@
-import { REUSE, type SeedSource } from "./publishers";
+import { REUSE, REVISED_ON, type SeedSource } from "./publishers";
 
 const PNAP_LICENSE =
   "Licença Creative Commons Atribuição-NãoComercial-CompartilhaIgual 3.0 Brasil, declarada na ficha catalográfica do livro. A Polis cita trechos com atribuição e produz explicação própria, sem fins comerciais.";
@@ -11,28 +11,130 @@ export const IDEAS_SOURCES: SeedSource[] = [
     url: "https://educapes.capes.gov.br/handle/capes/145420",
     author: "Ricardo Corrêa Coelho (UFSC/CAPES/UAB)",
     publishedOn: "2014",
-    locator: "Unidade 1 (matrizes liberal e marxista) e Unidade 2 (Estado liberal, socialista, de bem-estar social e neoliberal)",
+    locator: "Unidade 1 (matrizes liberal e marxista; Lênin, Gramsci e eurocomunismo; Keynes) e Unidade 2 (Estado liberal, socialista, de bem-estar social, desenvolvimentista e neoliberal)",
     materialType: "CONTEUDO_DIDATICO",
     reuseKind: "OPEN_LICENSE",
     reuseCondition: PNAP_LICENSE,
     scopeNote:
-      "Livro didático público sobre as matrizes do pensamento político e os modelos de Estado. Apresenta interpretações do autor; não trata de anarquismo, conservadorismo ou libertarianismo em seções próprias.",
+      "Livro didático público sobre as matrizes do pensamento político e os modelos de Estado. Apresenta interpretações do autor, inclusive sobre os Estados socialistas do século XX e a agenda neoliberal; não trata de anarquismo, conservadorismo ou libertarianismo em seções próprias.",
+    accessedOn: REVISED_ON,
     excerpts: [
       { locator: "p. 29", text: "O pensamento liberal funda-se numa corrente filosófica que foi predominante na Europa durante os séculos XVII e XVIII: o Jusnaturalismo." },
+      {
+        locator: "p. 56",
+        text: "Assim, a ditadura do proletariado assumiria na União Soviética e no pensamento de Lênin um significado bem mais forte do que no de Marx, pois no tempo deste inexistia democracia no mundo, ao passo que no de Lênin essa já era a forma de governo dos países capitalistas mais desenvolvidos da Europa e dos Estados Unidos.",
+      },
+      {
+        locator: "p. 56–57",
+        text: "A rejeição da democracia e a defesa intransigente da ditadura como forma de garantir as conquistas da revolução socialista iriam separar claramente as correntes marxistas de orientação leninista, ligadas à III Internacional, que ocupariam maior espaço entre a esquerda dos países da periferia do mundo capitalista, e as correntes marxistas dos países capitalistas centrais.",
+      },
+      {
+        locator: "p. 57–58",
+        text: "O Eurocomunismo iria se afastar ideologicamente do Partido Comunista da União Soviética ao declarar fidelidade às instituições democráticas, renunciar à revolução social como forma de construção do socialismo e procurar representar outras forças sociais além do operariado industrial, como os funcionários do setor público, as classes médias e os novos movimentos sociais.",
+      },
+      {
+        locator: "p. 61",
+        text: "Para os liberais, duas importantes mudanças ocorridas nas sociedades capitalistas durante o século XX, que desafiavam a interpretação liberal dominante no século XIX, precisariam ser explicadas: a compatibilidade entre democracia e economia de mercado, e a convivência entre esta e a crescente intervenção do Estado no domínio das relações econômicas.",
+      },
+      {
+        locator: "p. 62",
+        text: "Embora predominante, a posição de Keynes nunca foi consensual no meio liberal, encontrando a oposição de alguns importantes economistas, como o austríaco Friedrich von Hayek (1899-1992) e o americano Milton Friedman (1912–2006), que se mantiveram fiéis aos princípios do liberalismo econômico clássico e firmes na convicção de que ao Estado basta ter uma política monetária austera para que os mecanismos de mercado façam os ajustes necessários à economia.",
+      },
       {
         locator: "p. 75",
         text: "por Estado mínimo designa-se a organização política que interviria apenas naquilo que fosse estritamente necessário para garantir a liberdade e igualdade dos cidadãos, ficando todas as demais dimensões da vida social a cabo da regulação do mercado.",
       },
       { locator: "p. 81", text: "A primeira característica fundamental do Estado socialista é o controle estatal de todo o processo produtivo." },
       {
+        locator: "p. 81",
+        text: "Independentemente da forma de propriedade – estatal, no caso de fábricas, bancos e grandes estabelecimentos comerciais; ou coletiva, no caso de algumas terras (como os chamados kolkhozes, na União Soviética) –, o fato é que todas as atividades econômicas – produção e distribuição de bens e prestação de serviços – encontravam-se sob rígido controle do Estado.",
+      },
+      {
+        locator: "p. 82",
+        text: "Diferentemente do Estado liberal, que se pretendia equidistante das classes sociais e neutro em relação aos seus interesses específicos, o Estado socialista reivindicaria a representação dos interesses da maioria trabalhadora – dos campos e das cidades –, antes oprimida pelos capitalistas. Essa representação se daria por meio do Partido Comunista, único legítimo representante dos seus interesses.",
+      },
+      {
+        locator: "p. 82",
+        text: "Sob a ordem do Estado socialista, toda discordância em relação à sua atuação e à direção do partido comunista iria ser considerada desvio e traição e, como tal, seria punida.",
+      },
+      {
+        locator: "p. 82",
+        text: "Com todos os recursos econômicos e sociais reunidos sob o controle do Estado e direção do Partido Comunista, a União Soviética pôs em prática a primeira e provavelmente mais bem-sucedida experiência de planejamento central de Estado: os planos quinquenais de investimento e de desenvolvimento industrial.",
+      },
+      {
+        locator: "p. 83",
+        text: "Orientados mais pelo princípio da igualdade social do que pelo da liberdade individual, os estados socialistas conseguiram efetivamente produzir sociedades bem mais igualitárias, do ponto de vista do acesso dos seus cidadãos a bens e serviços, do que os estados nas sociedades capitalistas.",
+      },
+      {
+        locator: "p. 83",
+        text: "Em poucos anos após a Revolução Cubana, o nível educacional e de saúde da população de Cuba ultrapassaria em muito o de qualquer outra sociedade latino-americana.",
+      },
+      {
+        locator: "p. 83",
+        text: "No entanto, em nenhum país socialista – nem mesmo nos mais ricos – a escassez de produtos básicos de alimentação e de higiene pessoal seria superada.",
+      },
+      { locator: "p. 85", text: "A glasnost avançou desde o início das reformas, mas a perestroika veio a ser um rotundo fracasso." },
+      {
+        locator: "p. 85",
+        text: "No final dos anos de 1980, começaram a cair, um a um, os regimes socialistas na Europa Oriental, até que no início dos anos 1990, a própria União Soviética iria desmoronar como um castelo de cartas.",
+      },
+      {
+        locator: "p. 85",
+        text: "Mas até quando a abertura dos mercados chinês e vietnamita com adoção de pluralismo econômico poderá avançar sem colocar em questão o controle monopolista do poder político exercido pelos respectivos partidos comunistas é uma questão que segue em aberto.",
+      },
+      {
         locator: "p. 86",
         text: "O Estado de bem-estar social sucede o Estado liberal, intervindo por meio de políticas públicas no mercado a fim de assegurar aos seus cidadãos um patamar mínimo de igualdade social e um padrão mínimo de bem-estar.",
+      },
+      {
+        locator: "p. 87",
+        text: "o Estado de bem-estar social só se firmou quando a cultura individualista, que havia se consolidado nas sociedades liberais e que via no Estado um mal necessário, cujas atribuições deveriam se restringir ao mínimo essencial para viabilizar a vida em coletividade, cedeu lugar a uma outra cultura mais solidária.",
+      },
+      {
+        locator: "p. 88",
+        text: "Na Alemanha de Bismark – por exemplo – as organizações dos trabalhadores repudiariam os seguros criados pelo governo, não apenas por razões ideológicas, mas porque, além dos benefícios trazidos pelos seguros sociais à produtividade do trabalho, aquelas medidas tinham o claro intuito de enfraquecer tanto o partido social-democrata entre os operários, quanto a ação da burguesia liberal alemã.",
+      },
+      {
+        locator: "p. 89",
+        text: "Na Europa Ocidental, após o fim da Segunda Guerra Mundial, todos os Estados, fossem eles governados por partidos de esquerda – como os sociais-democratas, nos países escandinavos e na Alemanha, ou o trabalhista, na Inglaterra – ou por partidos de direita, – como a França e a Itália – intervieram fortemente na economia dos seus países, por meio da regulação, estatização de empresas privadas e criação de empresas públicas, além de desenvolver sistemas de proteção social abrangentes, elevando substancialmente o nível de vida dos seus habitantes.",
+      },
+      {
+        locator: "p. 91–92",
+        text: "Se nos anos de 1910 os patrões e o governo viram-se, por diversas vezes, desafiados por movimentos reivindicatórios organizados pelos sindicatos, o mesmo não aconteceu nos anos de 1920, que foram marcados pelo recesso do movimento operário e decadência dos sindicatos anarquistas, que tiveram grande força na década anterior.",
+      },
+      {
+        locator: "p. 97",
+        text: "Após um período de contínua expansão econômica e aumento do bem-estar – que durou três décadas, na Europa, e meio século, no Brasil – acompanhado de constante expansão do Estado, o mundo entrou num período que foi denominado pelos economistas de estagflação",
       },
       {
         locator: "p. 98",
         text: "O renascimento desse ideário convencionou-se chamar de neoliberalismo e seria protagonizado no mundo pelos governos de Margaret Thatcher, no Reino Unido (1979–1990), e de Ronald Reagan, nos Estados Unidos (1981–1989).",
       },
       { locator: "p. 98", text: "Já o substantivo neoliberalismo e o adjetivo neoliberal foram empregados sempre que a intenção fosse atacar e destratar o interlocutor." },
+      {
+        locator: "p. 99",
+        text: "A agenda neoliberal – colocada em prática, primeiro na Inglaterra e nos Estados Unidos, e posteriormente em diversos países do mundo, inclusive sob governos socialistas, como o de Felipe González, na Espanha (1982–1996) – seria baseada no tripé: desregulamentação, privatizações e abertura dos mercados.",
+      },
+      {
+        locator: "p. 99",
+        text: "Os defensores dessa agenda argumentavam ser necessário desregular os mercados porque o número excessivo de regras e controles estatais sobre a economia inibia os investimentos privados, comprometendo o crescimento econômico.",
+      },
+      {
+        locator: "p. 100",
+        text: "Ao examinar essa agenda, percebemos que não se trata de um mero retorno aos “velhos e bons” princípios liberais, havendo algo de realmente novo – que justificaria o prefixo “neo” – diferenciando-a da agenda liberal que resultaria na formação do Estado liberal no século XIX.",
+      },
+      {
+        locator: "p. 100–101",
+        text: "Já as críticas dos neoliberais ao Estado de bem-estar social e suas propostas para tirar as sociedades capitalistas da crise em que se encontravam são dirigidas não à intervenção do Estado em geral, mas à sua intervenção específica em determinadas esferas das relações econômicas, como o mercado de trabalho, mercado de capitais e mercado de bens e serviços.",
+      },
+      {
+        locator: "p. 101",
+        text: "Quanto às políticas sociais, estas manteriam seu lugar na agenda do Estado como direitos de cidadania e instrumentos de promoção da equidade.",
+      },
+      {
+        locator: "p. 101",
+        text: "Apesar dessas variações e diferenças, em todos os lugares um mesmo fenômeno iria se produzir: o aumento das disparidades de renda entre ricos e pobres.",
+      },
     ],
   },
   {
@@ -42,26 +144,127 @@ export const IDEAS_SOURCES: SeedSource[] = [
     url: "https://educapes.capes.gov.br/handle/capes/145351",
     author: "Ricardo Corrêa Coelho; Helena da Motta Salles (UFSC/CAPES/UAB)",
     publishedOn: "2015",
-    locator: "Unidade 2 — O Pensamento Liberal (p. 43–53) e O Pensamento Marxista (p. 53–72)",
+    locator: "Unidade 1 — Estado e poder político (p. 21); Unidade 2 — O Pensamento Liberal (p. 43–53) e O Pensamento Marxista (p. 53–68); Unidade 3 — Regimes autocráticos totalitários (p. 77–86)",
     materialType: "CONTEUDO_DIDATICO",
     reuseKind: "OPEN_LICENSE",
     reuseCondition: PNAP_LICENSE,
-    scopeNote: "Livro didático público que apresenta liberalismo e marxismo como matrizes do pensamento político. O conservadorismo aparece apenas em menção histórica.",
+    scopeNote:
+      "Livro didático público que apresenta liberalismo e marxismo como matrizes do pensamento político e classifica regimes do século XX, inclusive os comunistas, com os critérios de Raymond Aron. Interpretações dos autores; o conservadorismo aparece apenas em menção histórica.",
+    accessedOn: REVISED_ON,
     excerpts: [
+      {
+        locator: "p. 21",
+        text: "Em sociedades nas quais não exista uma instância que exerça com exclusividade a força física sobre os seus membros, não se pode rigorosamente falar da existência de um Estado, configurando, antes, uma situação de anarquia.",
+      },
       {
         locator: "p. 43",
         text: "Liberalismo e marxismo constituem-se fundamentos teóricos que explicam a realidade política contemporânea e orientam a ação da maior parte dos grupos políticos que se encontram em disputa nas sociedades ocidentais.",
-      },
-      { locator: "p. 53 (síntese)", text: "o liberalismo funda-se no jusnaturalismo, que tem o indivíduo por ponto de partida" },
-      { locator: "p. 53 (síntese)", text: "a função do Estado é a de garantir a segurança, a liberdade e a propriedade dos indivíduos" },
-      {
-        locator: "p. 65",
-        text: "O socialismo seria apenas uma fase transitória do capitalismo ao comunismo, durante a qual o proletariado utilizaria toda a força do Estado para acabar com a sociedade de classes.",
       },
       {
         locator: "p. 42",
         text: "Ao longo do século XIX, o liberalismo se impôs completamente ao pensamento conservador, varrendo-o do cenário político e reorganizando as sociedades europeias conforme os seus princípios.",
       },
+      {
+        locator: "p. 51",
+        text: "Ao romper com o Direito divino e introduzir as noções de representação e soberania popular como bases de qualquer regime político legítimo, a teoria jusnaturalista abriu caminho para o surgimento da democracia dois séculos mais tarde.",
+      },
+      {
+        locator: "p. 51",
+        text: "Na virada do século XIX para o XX, os países em que o liberalismo havia se tornado referência de organização do poder do Estado tornaram-se democracias, consagrando, definitivamente, o princípio da soberania popular. Mas até que a democracia fosse admitida pelos liberais, um longo percurso teria de ser percorrido.",
+      },
+      { locator: "p. 51", text: "Durante muito tempo, liberalismo e democracia foram vistos como princípios inconciliáveis." },
+      { locator: "p. 53 (síntese)", text: "o liberalismo funda-se no jusnaturalismo, que tem o indivíduo por ponto de partida" },
+      { locator: "p. 53 (síntese)", text: "a função do Estado é a de garantir a segurança, a liberdade e a propriedade dos indivíduos" },
+      {
+        locator: "p. 53",
+        text: "Contrariamente ao liberalismo, que parte do indivíduo para explicar as relações de poder na sociedade e a função do Estado, o marxismo toma por ponto de partida o grupo social, retomando uma longa tradição filosófica posta de lado durante os duzentos anos de domínio do jusnaturalismo no pensamento europeu.",
+      },
+      { locator: "p. 55", text: "A história possui um motor – que é a luta de classes – que a conduz a certo fim e que independe da consciência dos homens." },
+      {
+        locator: "p. 56",
+        text: "Segundo Marx, antes do surgimento das primeiras civilizações, o modo de produção vigente era o “comunismo primitivo”. Nesse, a humanidade vivia organizada em tribos, não havia Estado, nem divisão social do trabalho; não havia classes sociais, nem tampouco propriedade.",
+      },
+      {
+        locator: "p. 56",
+        text: "De acordo com a teoria marxista, a garantia da dominação da classe dominante sobre a classe dominada foi a principal razão para o surgimento e a existência do Estado.",
+      },
+      {
+        locator: "p. 58",
+        text: "As classes fundamentais desse modo de produção passaram a ser a burguesia, proprietária de todos os meios de produção; e o proletariado, destituído de toda propriedade, exceto a da sua força de trabalho.",
+      },
+      {
+        locator: "p. 60",
+        text: "a revolução proletária e a passagem do capitalismo para o socialismo, primeiramente, e, finalmente, do socialismo para o comunismo, não apenas são desejáveis como também necessárias para o progresso da humanidade.",
+      },
+      { locator: "p. 60", text: "Essa parte do valor criado pelo trabalho humano e não apropriado pelos trabalhadores, Marx chamou de mais-valia." },
+      {
+        locator: "p. 63",
+        text: "O socialismo como alternativa à barbárie, dependeria, entretanto, da ação deliberada do proletariado. A classe operária teria de se organizar em um partido político com o objetivo de tomar o poder e, a partir do Estado, implantar uma ordem social conforme os seus interesses de classe, os quais seriam também os interesses da maioria, uma vez que o proletariado seria a classe majoritária na sociedade.",
+      },
+      {
+        locator: "p. 64",
+        text: "Para Marx, a construção do socialismo rumo ao comunismo passaria por algumas etapas necessárias. Ao tomar o poder do Estado, o proletariado deveria:",
+      },
+      {
+        locator: "p. 64",
+        text: "acabar com a propriedade privada dos meios de produção, que é a base material – a infraestrutura sobre a qual a burguesia exerce o seu poder sobre o proletariado –; e",
+      },
+      { locator: "p. 64", text: "instituir a ditadura do proletariado, pondo fim ao ordenamento político vigente – a ordem liberal, ou a superestrutura da sociedade burguesa." },
+      {
+        locator: "p. 64",
+        text: "Ao empregar o termo ‘ditadura’, Marx não estava propondo uma forma de governo mais dura ou autoritária que a dos governos liberais e monarquias parlamentares do seu tempo. Estava, simplesmente, deixando claro que aquele seria um governo de classe, e não um governo de todos.",
+      },
+      {
+        locator: "p. 65",
+        text: "O socialismo seria apenas uma fase transitória do capitalismo ao comunismo, durante a qual o proletariado utilizaria toda a força do Estado para acabar com a sociedade de classes.",
+      },
+      {
+        locator: "p. 65",
+        text: "A missão histórica e libertadora do proletariado seria precisamente essa: acabar com as classes sociais, restabelecendo a igualdade inicial entre os homens.",
+      },
+      {
+        locator: "p. 65",
+        text: "No entanto, diferentemente do comunismo primitivo, situação em que todos eram iguais na pobreza e em meio à escassez, na sociedade comunista pós-capitalista e pós-socialista, os homens iriam ser iguais na abundância, podendo, finalmente, desenvolver plenamente o seu potencial.",
+      },
+      {
+        locator: "p. 65–66 (trecho de A ideologia alemã, de Marx e Engels)",
+        text: "Na sociedade comunista, porém, onde cada indivíduo pode aperfeiçoar-se no campo que lhe aprouver, não tendo por isso uma esfera de atividade exclusiva, é a sociedade que regula a produção geral e me possibilita fazer hoje uma coisa, amanhã outra, caçar de manhã, pescar à tarde, pastorear à noite, fazer crítica depois da refeição, e tudo isto a meu bel-prazer, sem por isso me tornar exclusivamente caçador, pescador ou crítico.",
+      },
+      {
+        locator: "p. 66",
+        text: "Quando as classes tivessem sido finalmente abolidas, o próprio Estado deixaria de existir, pois teria perdido completamente a sua função, que seria a de garantir a dominação de uma classe sobre as demais.",
+      },
+      { locator: "p. 66", text: "Assim, o comunismo seria o estágio superior da condição humana, no qual o homem viveria em uma sociedade civilizada e sem Estado." },
+      {
+        locator: "p. 66",
+        text: "Por isso, Marx chama o socialismo por ele propugnado de socialismo científico, diferenciando-o do socialismo utópico, proposto por outros filósofos do seu tempo.",
+      },
+      {
+        locator: "p. 68",
+        text: "É importante perceber que ambas as correntes, que se encontram em disputa desde o século XIX até os dias de hoje, pretendem-se libertárias – têm a liberdade e a igualdade entre os seres humanos como valores máximos e finalidade da ação política. Suas divergências dizem respeito aos meios de promover a liberdade e a igualdade e ao método de análise que leva à seleção desses meios.",
+      },
+      {
+        locator: "p. 73",
+        text: "Da mesma forma, os regimes socialistas, que surgiram em diversas partes do mundo a partir do século XX, têm seus fundamentos no marxismo, embora Marx tivesse a convicção de que o socialismo fosse emergir nas sociedades capitalistas altamente industrializadas e desenvolvidas, e não em países como Rússia, China e Cuba, cujo capitalismo era ainda muito pouco desenvolvido.",
+      },
+      {
+        locator: "p. 79",
+        text: "Regimes totalitários são aqueles em que o grupo governante não só detém o monopólio do acesso ao exercício do governo como também pretende exercer o controle total sobre a sociedade.",
+      },
+      {
+        locator: "p. 80",
+        text: "Sob o sistema de partido único organizaram-se regimes políticos em muitos sentidos diferentes, e até opostos, como o fascismo, na Itália de Mussolini (1922–1945); o nazismo, na Alemanha hitlerista (1933–1945); e os regimes comunistas da União Soviética (1917–1991), China (1949–), Coreia do Norte (1954–), Cuba (1959–) e dos demais países do mundo cujos regimes se autodenominavam comunistas.",
+      },
+      {
+        locator: "p. 81",
+        text: "Diferentemente da ideologia revolucionária nazista, a ideologia comunista não tem, nem nunca teve, qualquer viés racista ou genocida, embora também fosse orientada para a modificação radical da sociedade existente, o que certamente passava pela sua depuração.",
+      },
+      {
+        locator: "p. 84",
+        text: "Os regimes comunistas pretendiam-se, e ainda se pretendem, governos da classe operária sob a forma da ditadura do proletariado.",
+      },
+      { locator: "p. 85", text: "No entanto, em ambos encontramos o mesmo traço marcante: a pretensão do Estado em controlar totalmente a sociedade." },
+      { locator: "p. 86", text: "O regime chinês é um bom exemplo de regime totalitário que foi progressivamente se transformando em autoritário." },
     ],
   },
   {
@@ -71,17 +274,33 @@ export const IDEAS_SOURCES: SeedSource[] = [
     url: "https://educapes.capes.gov.br/handle/capes/176402",
     author: "José Alexandre da Silva Júnior (UFAL/Edufal)",
     publishedOn: "2014",
-    locator: "Unidade I — Liberdade e igualdade (Rawls e Nozick), p. 16",
+    locator: "Unidade I — Liberdade e igualdade (Rawls, Dworkin e Nozick), p. 15–17",
     materialType: "CONTEUDO_DIDATICO",
     reuseKind: "REFERENCE_ONLY",
     reuseCondition: `${REUSE.referenceOnly} O livro indica "Direitos desta edição reservados à Edufal".`,
-    scopeNote: "Apresenta a tensão entre liberdade e igualdade na teoria liberal contemporânea (Rawls e Nozick). Não usa o rótulo 'libertarianismo'.",
+    scopeNote:
+      "Apresenta a tensão entre liberdade e igualdade na teoria liberal contemporânea (Rawls, Dworkin e Nozick, chamados pelo autor de revisionistas liberais). Não usa o rótulo 'libertarianismo'.",
+    accessedOn: REVISED_ON,
     excerpts: [
+      {
+        locator: "p. 15",
+        text: "O difícil equilíbrio entre igualdade e liberdade está no centro da polêmica envolvendo os chamados revisionistas liberais: Rawls (2000), Dworkin (2001) e Nozick (1981).",
+      },
       {
         locator: "p. 16",
         text: "Contrariamente, Nozick (1981) acredita que a sociedade ideal maximiza a liberdade de seus membros. Para tanto, precisa condicionar a distribuição do que é produzido ao valor que as pessoas atribuem às ações e aos serviços de cada um.",
       },
       { locator: "p. 16", text: "é preciso corrigir, ao menos em parte, a desigualdade decorrente da distribuição desigual de talentos e habilidades" },
+      {
+        locator: "p. 16",
+        text: "Para ele, qualquer princípio padronizado de distribuição tende a ser subvertido por atos voluntários de indivíduos isolados (NOZICK, 1981).",
+      },
+      {
+        locator: "p. 16",
+        text: "Na prática, a tributação, o confisco ou coisa que o valha para fim de um princípio distributivo significa obrigar pessoas a trabalhar certo tempo sem remuneração.",
+      },
+      { locator: "p. 17", text: "Por um lado, a tentativa de minimizar as desigualdades não pode prescindir da supressão de parte da liberdade." },
+      { locator: "p. 17", text: "Por outro lado, dificilmente consegue-se privilegiar a liberdade sem aumentar a tolerância com a desigualdade." },
     ],
   },
   {
@@ -210,8 +429,13 @@ export const IDEAS_SOURCES: SeedSource[] = [
     reuseKind: "OPEN_LICENSE",
     reuseCondition: REUSE.ccBy,
     scopeNote: "Artigo de periódico de universidade pública (autor em formação de graduação). Interpretação do autor sobre o conservadorismo clássico e brasileiro.",
+    accessedOn: REVISED_ON,
     excerpts: [
       { locator: "Resumo", text: "enquanto Burke fundara as bases do pensamento conservador clássico na manutenção de determinadas instituições e tradições pretéritas" },
+      {
+        locator: "Resumo",
+        text: "o incipiente pensamento conservador brasileiro – que teve como seus principais expoentes, por exemplo, José da Silva Lisboa (1756-1835) – se baseou essencialmente na negação do passado colonial pautado na tentativa de conciliação entre o advento do liberalismo econômico internacional e a manutenção interna do sistema escravocrata enquanto forma de prevenção à uma possível revolução",
+      },
     ],
   },
   {

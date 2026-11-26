@@ -84,6 +84,7 @@ export function IconChip({ icon, tone = "mint", size = 48 }: { icon: IconName; t
  * modules, or the lessons when there is a single module), counts and one link
  * to the filtered catalog, stretched over the whole tile. `featured` marks the
  * common starting point (wide tile, contents listed beside the introduction).
+ * Long lists (one module per reference current) become compact chips.
  */
 export function TopicTile({
   area,
@@ -133,7 +134,18 @@ export function TopicTile({
         </h3>
         <p className="mt-2 max-w-md text-body text-ink-soft">{meta.description}</p>
       </div>
-      {highlights.length ? (
+      {highlights.length > 4 ? (
+        <ul className={cn("mt-5 flex flex-wrap content-start gap-2", featured ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center" : "flex-1")}>
+          {highlights.map((item) => (
+            <li key={item} className="inline-flex items-center gap-1.5 rounded-full bg-surface py-1 pr-3 pl-1.5 text-meta text-ink">
+              <span className={cn("inline-flex h-5 w-5 flex-none items-center justify-center rounded-full", meta.bg, meta.ink)} aria-hidden="true">
+                <Icon name="book" size={11} />
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : highlights.length ? (
         <ul className={cn("mt-5 flex flex-col gap-2.5", featured ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center" : "flex-1")}>
           {highlights.map((item) => (
             <li key={item} className="flex items-center gap-3 text-meta text-ink">

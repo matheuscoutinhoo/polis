@@ -64,7 +64,7 @@ cp .env.example .env            # no Windows: copy .env.example .env
 # edite BETTER_AUTH_SECRET (qualquer texto longo e aleatório)
 
 npm run db:local                # terminal 1: PostgreSQL local (bancos polis e polis_test, UTF-8)
-npm run db:migrate:deploy       # terminal 2: aplica as migrations e, num banco novo, carrega o conteúdo editorial
+npm run db:migrate:deploy       # terminal 2: aplica as migrations e carrega o conteúdo editorial (de novo só quando ele muda)
 npm run db:seed                 # atualiza fontes, lições, acontecimentos e fóruns oficiais (idempotente; opcional no primeiro uso)
 npm run dev                     # http://localhost:3000
 ```
@@ -84,7 +84,7 @@ npm run dev                     # http://localhost:3000
 | `npm run test` / `test:unit` / `test:integration` | Vitest (unitários e integração com banco) |
 | `npm run test:e2e` | build de produção + Playwright (desktop e 360 px) |
 | `npm run db:local` | PostgreSQL embutido para desenvolvimento |
-| `npm run db:migrate:dev` / `db:migrate:deploy` | criar migration (dev) / aplicar migrations (produção, sem apagar dados) e, se o banco ainda não tiver módulos, carregar o seed editorial |
+| `npm run db:migrate:dev` / `db:migrate:deploy` | criar migration (dev) / aplicar migrations (produção, sem apagar dados) e aplicar o seed editorial quando a versão do conteúdo mudou (`seed --if-outdated`; acontecimentos já existentes são preservados) |
 | `npm run db:seed` | seed editorial explícito e idempotente (atualiza o conteúdo já carregado) |
 | `npm run check:content` | validação editorial das lições (estrutura, fontes, citações literais, exemplo, exercícios) |
 | `npm run check:catalog` | validação do catálogo de fontes e dos acontecimentos (URLs, trechos, portão de publicação) |
@@ -104,12 +104,12 @@ npm run test:e2e                # cria e reinicia o banco polis_e2e, aplica migr
 
 Cobertura proporcional ao risco:
 
-- **Questionário**: pontuação, direção dos itens, “Não sei” fora do cálculo, mínimos por dimensão, empates, padrões mistos, reprodutibilidade (resultado salvo idêntico ao recalculado), pausa e retomada, refazer substituindo o resultado, revogação apagando os dados.
+- **Questionário**: pontuação, direção dos itens, “Não sei” fora do cálculo, mínimos por dimensão, empates, padrões mistos, reprodutibilidade (resultado salvo idêntico ao recalculado), afinidades recalculadas quando os perfis mudam, pausa e retomada, nova versão da autorização exigida para responder de novo, histórico de resultados (o mais recente ordena a trilha; leitura e exclusão só pela própria pessoa), revogação apagando os dados.
 - **Autorização entre contas**: isolamento de respostas e resultados; ninguém edita ou exclui conteúdo de outra pessoa; publicação exige e-mail confirmado e conta sem suspensão; área administrativa inacessível para não administradores.
 - **XP idempotente**: requisições simultâneas e repetidas não duplicam pontos (índice único + inserções idempotentes).
 - **Recuperação de acesso**: aceite dos termos obrigatório no cadastro, token de redefinição de uso único, mesma resposta para e-mail cadastrado ou não, sessões encerradas após a troca.
 - **IA**: referências inválidas, números ausentes das evidências, recomendações e instruções embutidas (unitários com provedor falso).
-- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado → lição → XP sem duplicação → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê avisos no lugar das listas e prévias nas páginas de conteúdo, sem receber o que fica oculto; conta nova é levada ao questionário antes do conteúdo; telas principais a 360 px sem rolagem horizontal.
+- **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado com a trilha em fluxo → lição → XP sem duplicação → refazer o questionário → histórico e comparação → resultado anterior → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê avisos no lugar das listas e prévias nas páginas de conteúdo, sem receber o que fica oculto; conta nova é levada ao questionário antes do conteúdo; telas principais a 360 px sem rolagem horizontal.
 
 ## Deploy no Railway
 
@@ -133,13 +133,13 @@ A configuração está em [`.railway/railway.ts`](.railway/railway.ts) (Infraest
 3. Revise e aplique a configuração: `railway config plan` e `railway config apply`. Isso cria o PostgreSQL e o serviço `polis`.
    - **Windows com a CLI instalada pelo npm**: antes desses comandos, rode `$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"` no PowerShell. Sem isso, o SDK não encontra o executável e acusa, por engano, "requires Railway CLI 5.42.1 or newer".
 4. **Gere o domínio público antes do primeiro deploy**: `railway domain --service polis`. `BETTER_AUTH_URL` vale `https://${{RAILWAY_PUBLIC_DOMAIN}}` e só é resolvida no deploy.
-5. Publique: `railway up --service polis` (envia a pasta respeitando o `.gitignore`). Se preferir deploy automático a cada push, envie o código para um repositório GitHub privado e conecte-o em **polis → Settings → Source**. Cada deploy executa `npm run build`, depois `npm run db:migrate:deploy` (pre-deploy: aplica as migrations e, no primeiro deploy, carrega o conteúdo editorial; se falhar, a versão no ar continua) e `npm run start` (`0.0.0.0:$PORT`).
+5. Publique: `railway up --service polis` (envia a pasta respeitando o `.gitignore`). Se preferir deploy automático a cada push, envie o código para um repositório GitHub privado e conecte-o em **polis → Settings → Source**. Cada deploy executa `npm run build`, depois `npm run db:migrate:deploy` (pre-deploy: aplica as migrations e carrega o conteúdo editorial no primeiro deploy e sempre que ele mudar; se falhar, a versão no ar continua) e `npm run start` (`0.0.0.0:$PORT`).
 6. Confira `https://SEU-DOMINIO/api/health`. O esperado é `"status":"ok"`, `"database":"ok"`, `"auth":"configured"` e `"mail":"configured"`.
-7. **Conteúdo inicial**: o primeiro deploy já carrega fontes, lições, acontecimentos e fóruns oficiais (o log do pre-deploy mostra `Polis · seed editorial`). Os deploys seguintes não mexem nesse conteúdo, para preservar edições feitas na administração.
+7. **Conteúdo editorial**: o primeiro deploy já carrega fontes, lições, acontecimentos e fóruns oficiais (o log do pre-deploy mostra `Polis · seed editorial`). Nos deploys seguintes, o seed roda de novo só quando o conteúdo de `prisma/seed-data` mudou (a versão aplicada fica na tabela `editorial_releases`): fontes, módulos, lições e fóruns são atualizados, lições reorganizadas mantêm o progresso (`previous` no seed), e acontecimentos já existentes e trechos de fontes cadastrados na administração não são sobrescritos.
 8. **Administrador**: crie sua conta no site, confirme o e-mail e, via `railway ssh --service polis`, rode `npm run admin:promote -- seu@email.org`. Saia e entre de novo para ver `/admin`.
 9. Ative **Backups** no serviço PostgreSQL (veja abaixo).
 
-Para atualizar, rode `railway up --service polis` de novo (ou faça push, se conectou o GitHub). As migrations novas são aplicadas no pre-deploy. Quando mudar o conteúdo editorial do seed, rode `npm run db:seed` via `railway ssh --service polis` (ele atualiza o conteúdo já carregado). Se a máquina não tiver SSH, rode o seed ou o promote localmente com `DATABASE_URL` igual à `DATABASE_PUBLIC_URL` do serviço Postgres (aba *Variables*).
+Para atualizar, rode `railway up --service polis` de novo (ou faça push, se conectou o GitHub). As migrations novas e o conteúdo editorial alterado são aplicados no pre-deploy. Para forçar a atualização completa, inclusive de acontecimentos já publicados, rode `npm run db:seed` via `railway ssh --service polis`. Se a máquina não tiver SSH, rode o seed ou o promote localmente com `DATABASE_URL` igual à `DATABASE_PUBLIC_URL` do serviço Postgres (aba *Variables*).
 
 **Domínio próprio**: adicione `domains: ["polis.seu-dominio.org"]` ao serviço em `.railway/railway.ts`, troque `BETTER_AUTH_URL` para `https://polis.seu-dominio.org` e rode `railway config apply`. Crie os registros DNS indicados por `railway domain status polis.seu-dominio.org`.
 
@@ -166,15 +166,15 @@ O healthcheck responde `200` com o estado do banco e se autenticação, IA e e-m
 
 ## Metodologia do questionário
 
-A descrição completa, gerada a partir do código, está na página **`/fontes-e-metodo`**. Resumo (banco `2026.11-v1`, cálculo `2026.11-v1`, perfis `2026.11-v2`):
+A descrição completa, gerada a partir do código, está na página **`/fontes-e-metodo`**. Resumo (banco `2026.11-v1`, cálculo `2026.11-v1`, perfis `2026.11-v3`):
 
 - **50 situações** completas em **5 blocos de 10**, uma por dimensão: economia, mercado e redistribuição; liberdades civis e exercício da autoridade; costumes, tradição e mudança social; participação política e organização do poder; desenvolvimento e prioridades socioambientais. As dimensões são uma modelagem editorial inicial e se sobrepõem; isso é explicado na página de método.
 - Escala de concordância de cinco pontos (−2 a +2) e a opção separada **“Não sei / preciso entender melhor”, que não conta como neutra**: fica fora do cálculo.
 - Cada item tem **direção** (+1/−1; cinco em cada direção por dimensão, para reduzir a concordância automática) e **peso**. Escore da dimensão = Σ(valor × direção × peso) ÷ (2 × Σ pesos válidos), em −1..+1.
 - **Mínimo de 6 respostas válidas** por dimensão; afinidades exigem pelo menos 2 dimensões válidas.
-- **Perfis de referência por faixas** (não pontos) para liberalismos, conservadorismos, social-democracia, socialismos e comunismo, anarquismos e libertarianismos. Cada faixa traz justificativa, a fonte e se a sustentação é **direta** ou **inferência editorial explicitada**; dimensões sem posição sustentada pelo acervo ficam indefinidas e não entram no cálculo.
+- **Perfis de referência por faixas** (não pontos) para liberalismos, conservadorismos, social-democracia, socialismos, comunismo, anarquismos e libertarianismos (socialismos e comunismo têm perfis separados desde a versão `2026.11-v3`). Cada faixa traz justificativa, a fonte e se a sustentação é **direta** ou **inferência editorial explicitada**; dimensões sem posição sustentada pelo acervo ficam indefinidas e não entram no cálculo.
 - **Índice de proximidade** = 1 − (distância média às faixas ÷ 2), apenas nas dimensões comparáveis; comparações com menos de 3 dimensões são marcadas como limitadas. Não é probabilidade nem diagnóstico. Empates são exibidos como empate; a ordem editorial fixa desempata a trilha.
-- O resultado mostra dimensões separadas, tensões (“Você apresentou posições diferentes nestes temas...”) e a contribuição de cada resposta. Refazer substitui o resultado ativo sem guardar histórico.
+- O resultado mostra dimensões separadas, tensões (“Você apresentou posições diferentes nestes temas...”) e a contribuição de cada resposta. Refazer guarda um novo resultado: o mais recente ordena a trilha e os anteriores ficam num histórico privado (`/conta/resultados`), com comparação lado a lado por dimensão e por corrente, até a pessoa apagá-los. Resultados salvos com uma versão anterior dos perfis têm as afinidades recalculadas a partir dos escores guardados.
 - A IA **não participa** do cálculo. Nada do questionário é enviado à OpenAI. Cliques, leituras, quizzes e fóruns não alteram o resultado.
 
 ## Trilha, XP e conquistas
@@ -197,8 +197,8 @@ Fóruns sobre correntes, ideias e acontecimentos (título, descrição, categori
 
 ## Privacidade e segurança
 
-- Respostas e afinidades são **dados sensíveis** (LGPD, art. 5º, II): autorização específica, separada dos termos, com finalidade, versão e data registradas, revogável a qualquer momento (a revogação apaga respostas e resultado). Responder é condição para usar lições, acontecimentos e fóruns, o que é informado com destaque antes da autorização (art. 9º, § 3º).
-- A pessoa exporta todos os seus dados em JSON, apaga as respostas do questionário e exclui a conta em `/conta/privacidade`. Na exclusão, escolhe manter os textos publicados sem vínculo (“Participante removido”) ou apagá-los.
+- Respostas e afinidades são **dados sensíveis** (LGPD, art. 5º, II): autorização específica, separada dos termos, com finalidade, versão e data registradas, revogável a qualquer momento (a revogação apaga respostas e resultados). A versão `questionario-2026-11-v2` da autorização inclui o histórico de resultados; quem autorizou a versão anterior confirma a nova antes de responder de novo, sem perder o acesso ao resultado já calculado. Responder é condição para usar lições, acontecimentos e fóruns, o que é informado com destaque antes da autorização (art. 9º, § 3º).
+- A pessoa exporta todos os seus dados em JSON, apaga um resultado do histórico (`/conta/resultados`) ou todas as respostas do questionário e exclui a conta em `/conta/privacidade`. Na exclusão, escolhe manter os textos publicados sem vínculo (“Participante removido”) ou apagá-los.
 - Sessões e senhas gerenciadas pelo Better Auth (cookies `httpOnly`, seguros em HTTPS; proteção de origem/CSRF), senha mínima de 10 caracteres, recuperação com token de uso único e expiração de 1 hora, sem revelar se o e-mail existe; limites de tentativa persistentes no PostgreSQL.
 - Autorização no servidor em todas as ações (sessão, propriedade do registro e papel de administrador). Validação com Zod e limites de tamanho; consultas parametrizadas pelo Prisma.
 - Fontes só de editores aprovados, por domínio exato e caminho (HTTPS, sem IP, credenciais ou portas não padrão). A aplicação não busca URLs enviadas por usuários.
@@ -222,18 +222,20 @@ Com conta, o **questionário é obrigatório**: enquanto não houver um resultad
 
 O catálogo completo (editores, domínios aceitos, fontes, o que cada uma sustenta, limites e condição de reutilização) está em **[`docs/catalogo-de-fontes.md`](docs/catalogo-de-fontes.md)** (gerado por `npm run docs:catalog`) e na página `/fontes-e-metodo` (para quem tem conta). Editores aprovados incluem Presidência da República (legislação e notícias), Câmara dos Deputados, Senado Federal e ILB, Congresso Nacional, STF, TSE, Banco Central, IBGE, Ipea, ministérios (MEC e Portal Domínio Público, MMA, Fazenda, Receita Federal, Tesouro, Secom, MJSP), ANPD, Arquivo Nacional, CGU, Casa Civil, CAPES/eduCAPES e o Portal de Periódicos da UFMG.
 
-Todas as fontes do seed foram conferidas nas páginas oficiais durante a implementação (consulta em 21/11/2026), com trechos literais. Quando a condição de reutilização não é informada, a Polis apenas referencia e cita trechos curtos com atribuição. Origem oficial não significa endosso.
+Todas as fontes do seed foram conferidas nas páginas oficiais durante a implementação (consulta em 21/11/2026), com trechos literais. Os trechos dos livros didáticos e artigos usados nas lições de correntes foram reconferidos no texto integral em 25/11/2026 (a data aparece em cada fonte do catálogo). Quando a condição de reutilização não é informada, a Polis apenas referencia e cita trechos curtos com atribuição. Origem oficial não significa endosso.
 
 ## Conteúdo inicial e lacunas documentais
 
-**Dez módulos com duas lições cada** (3 a 7 minutos, exemplo concreto, conceitos relacionados, fontes e verificação com explicação): Fundamentos da política · Como o Brasil se organiza · Leis, eleições e partidos · Economia no debate público · Liberalismos e conservadorismos · Social-democracia, socialismos e comunismo · Anarquismos e libertarianismos · Temas transversais · História política do Brasil · Leitura crítica.
+**Catorze módulos com duas lições cada** (3 a 7 minutos, exemplo concreto, conceitos relacionados, fontes e verificação com explicação): Fundamentos da política · Como o Brasil se organiza · Leis, eleições e partidos · Economia no debate público · Liberalismos · Conservadorismos · Social-democracia · Socialismos · Comunismo · Anarquismos · Libertarianismos · Temas transversais · História política do Brasil · Leitura crítica. Cada corrente tem um módulo próprio, com ideias centrais na primeira lição e trajetória, variações e debates na segunda, para que a trilha por afinidade possa ordená-las uma a uma. Endereços antigos dos módulos combinados redirecionam para os novos.
 
 **Cinco acontecimentos reais**, com datas e fontes oficiais verificadas: Lei 15.270/2025 (isenção do IR até R$ 5 mil e tributação mínima de altas rendas), Lei 15.100/2025 (celulares nas escolas), Lei 15.190/2025 (licenciamento ambiental e vetos), Lei 15.211/2025 (proteção de crianças e adolescentes em ambientes digitais) e eleições gerais de 2026. **Fóruns oficiais** iniciais, sem usuários nem atividade fictícia.
 
 Lacunas registradas (também exibidas em `/fontes-e-metodo` e nas próprias lições):
 
 - **Progressismo**: nenhuma fonte aprovada define o termo; a lição de temas transversais registra a ausência.
-- **Anarquismos**: o acervo cobre a vertente apresentada por Bakunin e um estudo histórico brasileiro; o anarcocapitalismo não tem fonte e não é descrito.
+- **Conservadorismos**: o acervo traz a descrição de uma obra, o resumo de um artigo e menções em livro didático; não há textos de autores conservadores.
+- **Socialismos**: o acervo detalha a formulação de Marx e o Estado socialista do século XX; socialismos que se apresentam como democráticos não são descritos.
+- **Anarquismos**: o acervo cobre a vertente apresentada por Bakunin, um estudo histórico brasileiro e menções em livros didáticos; o anarcocapitalismo não tem fonte e não é descrito.
 - **Ambientalismo e nacionalismo** aparecem no acervo como temas de políticas públicas e estudos históricos, não como correntes definidas.
 - Algumas faixas dos perfis de referência são **inferências editoriais** explicitadas, não sustentação direta.
 - **TSE**: o portal bloqueou a verificação automatizada; dados eleitorais vieram de notícias oficiais da Câmara, do Senado e do STF. Documentos do TSE só entram após conferência manual.

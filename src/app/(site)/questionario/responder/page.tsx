@@ -5,14 +5,14 @@ import { requireUser } from "@/lib/session";
 import { DIMENSIONS } from "@/modules/diagnostic/dimensions";
 import { QUESTIONS } from "@/modules/diagnostic/question-bank";
 import type { AnswerChoice } from "@/modules/diagnostic/scale";
-import { getActiveConsent, getCompletedAttempt, startAttempt } from "@/modules/diagnostic/service";
+import { getActiveConsent, getCompletedAttempt, isCurrentConsent, startAttempt } from "@/modules/diagnostic/service";
 
 export const metadata: Metadata = { title: "Responder questionário" };
 
 export default async function AnswerPage() {
   const user = await requireUser("/questionario/responder");
   const consent = await getActiveConsent(user.id);
-  if (!consent) redirect("/questionario");
+  if (!isCurrentConsent(consent)) redirect("/questionario");
   const [attempt, completed] = await Promise.all([startAttempt(user.id), getCompletedAttempt(user.id)]);
   const initialAnswers = Object.fromEntries(attempt.answers.map((a) => [a.questionId, a.choice as AnswerChoice]));
 

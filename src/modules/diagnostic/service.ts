@@ -3,12 +3,12 @@ import { logger } from "@/lib/logger";
 import { QUESTIONNAIRE_CONSENT_PURPOSE, QUESTIONNAIRE_CONSENT_VERSION } from "@/modules/account/consent-texts";
 import { QUESTIONS, QUESTION_BANK_VERSION, QUESTION_BY_ID } from "./question-bank";
 import { isAnswerChoice, type AnswerChoice } from "./scale";
-import { computeResult, type AnswerMap, type QuestionnaireResult } from "./scoring";
+import { computeResult, withCurrentProfiles, type AnswerMap, type QuestionnaireResult } from "./scoring";
 
 export class QuestionnaireError extends Error {
   constructor(
     message: string,
-    readonly code: "NO_CONSENT" | "INVALID_QUESTION" | "INVALID_CHOICE" | "NO_ATTEMPT" | "INCOMPLETE",
+    readonly code: "NO_CONSENT" | "OUTDATED_CONSENT" | "INVALID_QUESTION" | "INVALID_CHOICE" | "NO_ATTEMPT" | "INCOMPLETE",
   ) {
     super(message);
     this.name = "QuestionnaireError";
@@ -20,6 +20,11 @@ export async function getActiveConsent(userId: string) {
     where: { userId, kind: "QUESTIONNAIRE", revokedAt: null },
     orderBy: { grantedAt: "desc" },
   });
+}
+
+/** New answers need the current consent version (earlier versions did not cover keeping a history). */
+export function isCurrentConsent(consent: { version: string } | null): boolean {
+  return consent?.version === QUESTIONNAIRE_CONSENT_VERSION;
 }
 
 export async function grantQuestionnaireConsent(userId: string) {
@@ -55,23 +60,67 @@ export async function deleteQuestionnaireData(userId: string) {
 
 export async function getInProgressAttempt(userId: string) {
   return db.questionnaireAttempt.findUnique({
-    where: { userId_status: { userId, status: "IN_PROGRESS" } },
+    where: { inProgressFor: userId },
     include: { answers: { select: { questionId: true, choice: true } } },
   });
 }
 
+/** The most recent completed attempt: its result is the active one, used to order the path. */
 export async function getCompletedAttempt(userId: string) {
-  return db.questionnaireAttempt.findUnique({ where: { userId_status: { userId, status: "COMPLETED" } } });
+  return db.questionnaireAttempt.findFirst({ where: { userId, status: "COMPLETED" }, orderBy: [{ completedAt: "desc" }, { id: "desc" }] });
+}
+
+function readResult(stored: unknown): QuestionnaireResult | null {
+  return stored ? withCurrentProfiles(stored as QuestionnaireResult) : null;
 }
 
 export async function getActiveResult(userId: string): Promise<QuestionnaireResult | null> {
   const attempt = await getCompletedAttempt(userId);
-  return (attempt?.result as QuestionnaireResult | null) ?? null;
+  return readResult(attempt?.result);
+}
+
+export type StoredResult = { id: string; completedAt: Date; result: QuestionnaireResult; active: boolean };
+
+/** Completed results of this person, most recent (active) first. */
+export async function listResults(userId: string): Promise<StoredResult[]> {
+  const attempts = await db.questionnaireAttempt.findMany({
+    where: { userId, status: "COMPLETED" },
+    orderBy: [{ completedAt: "desc" }, { id: "desc" }],
+    select: { id: true, completedAt: true, result: true },
+  });
+  return attempts.flatMap((attempt, index) => {
+    const result = readResult(attempt.result);
+    return result && attempt.completedAt ? [{ id: attempt.id, completedAt: attempt.completedAt, result, active: index === 0 }] : [];
+  });
+}
+
+/** One completed result, only if it belongs to this person. */
+export async function getResult(userId: string, attemptId: string): Promise<StoredResult | null> {
+  const [attempt, latest] = await Promise.all([
+    db.questionnaireAttempt.findFirst({ where: { id: attemptId, userId, status: "COMPLETED" }, select: { id: true, completedAt: true, result: true } }),
+    getCompletedAttempt(userId),
+  ]);
+  const result = readResult(attempt?.result);
+  if (!attempt?.completedAt || !result) return null;
+  return { id: attempt.id, completedAt: attempt.completedAt, result, active: latest?.id === attempt.id };
+}
+
+/** Deletes one completed result of this person; the next most recent one becomes active. */
+export async function deleteResult(userId: string, attemptId: string): Promise<boolean> {
+  const { count } = await db.questionnaireAttempt.deleteMany({ where: { id: attemptId, userId, status: "COMPLETED" } });
+  if (count === 0) return false;
+  const active = await getActiveResult(userId);
+  if (!active || active.affinityStatus !== "OK") await db.user.update({ where: { id: userId }, data: { pathMode: "GENERAL" } });
+  logger.info("questionnaire.result_deleted");
+  return true;
 }
 
 async function requireConsent(userId: string) {
   const consent = await getActiveConsent(userId);
   if (!consent) throw new QuestionnaireError("Autorize o tratamento das respostas para usar o questionário.", "NO_CONSENT");
+  if (!isCurrentConsent(consent)) {
+    throw new QuestionnaireError("A autorização do questionário foi atualizada. Confirme a nova versão para continuar.", "OUTDATED_CONSENT");
+  }
 }
 
 export async function startAttempt(userId: string) {
@@ -81,7 +130,7 @@ export async function startAttempt(userId: string) {
   if (existing) await db.questionnaireAttempt.delete({ where: { id: existing.id } });
   try {
     return await db.questionnaireAttempt.create({
-      data: { userId, bankVersion: QUESTION_BANK_VERSION, status: "IN_PROGRESS" },
+      data: { userId, inProgressFor: userId, bankVersion: QUESTION_BANK_VERSION, status: "IN_PROGRESS" },
       include: { answers: { select: { questionId: true, choice: true } } },
     });
   } catch (error) {
@@ -119,8 +168,8 @@ export function answersToMap(answers: Array<{ questionId: string; choice: Answer
 }
 
 /**
- * Completes the in-progress attempt. The previous result is replaced (not kept
- * as history) to avoid accumulating unnecessary sensitive data.
+ * Completes the in-progress attempt. Earlier results stay in the private history
+ * (the person can compare and delete them); the new one becomes active.
  */
 export async function completeAttempt(userId: string, now = new Date()): Promise<QuestionnaireResult> {
   await requireConsent(userId);
@@ -133,10 +182,9 @@ export async function completeAttempt(userId: string, now = new Date()): Promise
   }
   const result = computeResult(answers, now);
   await db.$transaction([
-    db.questionnaireAttempt.deleteMany({ where: { userId, status: "COMPLETED" } }),
     db.questionnaireAttempt.update({
       where: { id: attempt.id },
-      data: { status: "COMPLETED", completedAt: now, scoringVersion: result.scoringVersion, result: result as unknown as object },
+      data: { status: "COMPLETED", inProgressFor: null, completedAt: now, scoringVersion: result.scoringVersion, result: result as unknown as object },
     }),
     db.user.update({
       where: { id: userId },

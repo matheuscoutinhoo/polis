@@ -4,7 +4,9 @@ type ChoiceRowProps = {
   name: string;
   value: string;
   label: string;
-  checked: boolean;
+  /** Controlled selection; use `defaultChecked` instead when a form reset must restore the saved choice. */
+  checked?: boolean;
+  defaultChecked?: boolean;
   onChange: (value: string) => void;
   description?: string;
   disabled?: boolean;
@@ -16,10 +18,10 @@ type ChoiceRowProps = {
  * clickable and the visible check is an SVG path drawn in 180 ms. The same
  * selected style applies to every answer.
  */
-export function ChoiceRow({ name, value, label, checked, onChange, description, disabled, className }: ChoiceRowProps) {
+export function ChoiceRow({ name, value, label, checked, defaultChecked, onChange, description, disabled, className }: ChoiceRowProps) {
   return (
     <label className={cn("choice-row", className)}>
-      <input type="radio" name={name} value={value} checked={checked} disabled={disabled} onChange={() => onChange(value)} />
+      <input type="radio" name={name} value={value} checked={checked} defaultChecked={defaultChecked} disabled={disabled} onChange={() => onChange(value)} />
       <span className="flex min-w-0 flex-col">
         <span className="text-body text-ink">{label}</span>
         {description ? <span className="text-meta text-ink-soft">{description}</span> : null}

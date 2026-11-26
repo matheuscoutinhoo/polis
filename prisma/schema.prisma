@@ -170,6 +170,9 @@ model QuestionnaireAttempt {
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   bankVersion    String
   status         AttemptStatus @default(IN_PROGRESS)
+  // Igual a userId enquanto a tentativa está em andamento (null depois de concluída):
+  // garante no máximo uma tentativa em andamento por pessoa.
+  inProgressFor  String?       @unique
   startedAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   completedAt    DateTime?
@@ -177,8 +180,8 @@ model QuestionnaireAttempt {
   result         Json?
   answers        QuestionnaireAnswer[]
 
-  // No máximo uma tentativa em andamento e um resultado ativo por pessoa.
-  @@unique([userId, status])
+  // Resultados concluídos formam o histórico da pessoa; o mais recente ordena a trilha.
+  @@index([userId, status, completedAt])
   @@map("questionnaire_attempts")
 }
 
@@ -274,6 +277,9 @@ model SourceExcerpt {
   source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   locator   String
   text      String
+  // Created by the editorial seed. The seed only removes its own excerpts, so
+  // excerpts added in the administration area survive content updates.
+  fromSeed  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -346,6 +352,15 @@ model Lesson {
   @@unique([moduleId, slug])
   @@unique([moduleId, number])
   @@map("lessons")
+}
+
+// Versões do conteúdo editorial (seed) já aplicadas a este banco. O deploy
+// aplica o seed de novo só quando a versão do conteúdo muda (seed --if-outdated).
+model EditorialRelease {
+  version   String   @id
+  appliedAt DateTime @default(now())
+
+  @@map("editorial_releases")
 }
 
 model LessonSource {

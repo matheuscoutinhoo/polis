@@ -6,7 +6,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Icon } from "@/components/ui/icon";
 import { Notice } from "@/components/ui/notice";
 import { db } from "@/lib/db";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, plural } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { deleteQuestionnaireDataAction, revokeQuestionnaireConsentAction } from "@/modules/diagnostic/actions";
 import { getActiveConsent } from "@/modules/diagnostic/service";
@@ -16,11 +16,11 @@ export const metadata: Metadata = { title: "Privacidade e dados" };
 const NOTICES: Record<string, { tone: "success" | "info"; text: string }> = {
   "questionario-apagado": {
     tone: "success",
-    text: "Respostas e resultado do questionário apagados. Para voltar a usar lições, acontecimentos e fóruns, responda ao questionário de novo.",
+    text: "Respostas e resultados do questionário apagados. Para voltar a usar lições, acontecimentos e fóruns, responda ao questionário de novo.",
   },
   "consentimento-revogado": {
     tone: "success",
-    text: "Autorização revogada. Respostas e resultado foram apagados. Para voltar a usar lições, acontecimentos e fóruns, autorize e responda ao questionário de novo.",
+    text: "Autorização revogada. Respostas e resultados foram apagados. Para voltar a usar lições, acontecimentos e fóruns, autorize e responda ao questionário de novo.",
   },
 };
 
@@ -40,6 +40,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
   ]);
   const notice = aviso ? NOTICES[aviso] : undefined;
   const hasQuestionnaireData = attempts.length > 0;
+  const completedCount = attempts.filter((a) => a.status === "COMPLETED").length;
+  const inProgressAnswers = attempts.find((a) => a.status === "IN_PROGRESS")?._count.answers ?? null;
   const [topicCount, commentCount] = contentCounts;
 
   return (
@@ -71,8 +73,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             Questionário de afinidades
           </h2>
           <p className="mt-1 text-meta text-ink-soft">
-            Respostas e resultado são dados sensíveis: ficam privados, não são enviados a serviços de IA e servem apenas para ordenar sua trilha. Responder é condição para usar
-            lições, acontecimentos e fóruns.
+            Respostas e resultados são dados sensíveis: ficam privados, não são enviados a serviços de IA e servem apenas para ordenar sua trilha e para você comparar seus
+            resultados. Responder é condição para usar lições, acontecimentos e fóruns.
           </p>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
@@ -90,22 +92,37 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             <div>
               <dt className="text-meta text-ink-soft">Dados guardados</dt>
               <dd className="mt-1 text-body">
-                {hasQuestionnaireData
-                  ? attempts
-                      .map((a) => (a.status === "COMPLETED" ? `resultado concluído (${a._count.answers} respostas)` : `tentativa em andamento (${a._count.answers} respostas)`))
-                      .join("; ")
-                  : "Nenhuma resposta guardada."}
+                {hasQuestionnaireData ? (
+                  <>
+                    {[
+                      completedCount ? plural(completedCount, "resultado concluído", "resultados concluídos") : null,
+                      inProgressAnswers !== null ? `tentativa em andamento (${inProgressAnswers} respostas)` : null,
+                    ]
+                      .filter(Boolean)
+                      .join("; ")}
+                    {completedCount ? (
+                      <>
+                        {" · "}
+                        <Link href="/conta/resultados" className="text-link">
+                          ver histórico
+                        </Link>
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  "Nenhuma resposta guardada."
+                )}
               </dd>
             </div>
           </dl>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {hasQuestionnaireData ? (
               <ConfirmDialog
-                triggerLabel="Apagar respostas e resultado"
+                triggerLabel="Apagar respostas e resultados"
                 triggerVariant="secondary"
                 triggerIcon="trash"
-                title="Apagar respostas e resultado?"
-                description="As respostas, o resultado e a tentativa em andamento serão apagados. A autorização continua ativa. Para voltar a usar lições, acontecimentos e fóruns, será preciso responder ao questionário de novo."
+                title="Apagar respostas e resultados?"
+                description="As respostas, todos os resultados do histórico e a tentativa em andamento serão apagados. A autorização continua ativa. Para voltar a usar lições, acontecimentos e fóruns, será preciso responder ao questionário de novo."
                 confirmLabel="Apagar dados do questionário"
                 pendingLabel="Apagando..."
                 action={deleteQuestionnaireDataAction}
@@ -116,7 +133,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
                 triggerLabel="Revogar autorização"
                 triggerVariant="secondary"
                 title="Revogar a autorização do questionário?"
-                description="O tratamento é interrompido: respostas e resultado são apagados imediatamente. Como o questionário é condição para usar lições, acontecimentos e fóruns, o acesso a eles fica suspenso até você autorizar e responder de novo. O registro da autorização e da revogação, com data e versão, é mantido como comprovação."
+                description="O tratamento é interrompido: respostas e resultados são apagados imediatamente. Como o questionário é condição para usar lições, acontecimentos e fóruns, o acesso a eles fica suspenso até você autorizar e responder de novo. O registro da autorização e da revogação, com data e versão, é mantido como comprovação."
                 confirmLabel="Revogar e apagar"
                 pendingLabel="Revogando..."
                 action={revokeQuestionnaireConsentAction}
@@ -159,7 +176,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             Exportar meus dados
           </h2>
           <p className="mt-1 text-body text-ink-soft">
-            Arquivo JSON com conta, autorizações, respostas e resultado do questionário, progresso, XP, conquistas, fóruns seguidos, publicações e denúncias feitas por você. Guarde o
+            Arquivo JSON com conta, autorizações, respostas e resultados do questionário, progresso, XP, conquistas, fóruns seguidos, publicações e denúncias feitas por você. Guarde o
             arquivo com cuidado: ele contém dados sensíveis.
           </p>
           <a href="/api/conta/exportar" className="btn btn-secondary mt-4" download>
@@ -172,7 +189,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             Excluir conta
           </h2>
           <ul className="mt-3 flex list-disc flex-col gap-1.5 pl-5 text-body">
-            <li>Apagamos respostas e resultado do questionário, autorizações, progresso, XP, conquistas, fóruns seguidos e sessões.</li>
+            <li>Apagamos respostas e resultados do questionário, autorizações, progresso, XP, conquistas, fóruns seguidos e sessões.</li>
             <li>
               Você tem {topicCount} {topicCount === 1 ? "tópico publicado" : "tópicos publicados"} e {commentCount} {commentCount === 1 ? "comentário" : "comentários"}. Você escolhe se
               os textos ficam nas discussões sem vínculo com você (autor exibido como “Participante removido”) ou se são apagados.

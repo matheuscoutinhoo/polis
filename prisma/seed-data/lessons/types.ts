@@ -14,6 +14,10 @@ export type SeedLesson = {
   quiz: z.input<typeof quizSchema>;
   /** Every source key cited in the content must be listed here, with what it supports. */
   sources: Array<{ key: string; supports: string }>;
+  /** Editorial review date, when later than ACCESSED_ON. */
+  reviewedOn?: string;
+  /** Where the lesson was published before a reorganization; the seed moves that row so progress is kept. */
+  previous?: { module: string; lesson: string };
 };
 
 export type SeedModule = {

@@ -9,6 +9,7 @@ import {
   computeResult,
   rankAffinities,
   scoreDimension,
+  withCurrentProfiles,
   type AnswerMap,
   type DimensionResult,
 } from "@/modules/diagnostic/scoring";
@@ -137,6 +138,20 @@ describe("result and affinities", () => {
     expect(ranked.map((a) => a.rank)).toEqual([1, 1]);
     expect(ranked[0].tiedWith).toEqual(["conservadorismos"]);
     expect(ranked[1].tiedWith).toEqual(["liberalismos"]);
+  });
+
+  it("re-reads a result saved with older profiles: same scores, affinities recomputed with the current currents", () => {
+    const current = computeResult({ ...answersToward("economia", 2), ...answersToward("liberdades", 1), ...answersToward("costumes", 2) }, FIXED_DATE);
+    // Before v3, socialisms and communism shared a single profile.
+    const stored = { ...current, profilesVersion: "2026.11-v2", affinities: current.affinities.filter((a) => a.key !== "comunismo"), closest: [] };
+
+    const reread = withCurrentProfiles(stored);
+    expect(reread.dimensions).toEqual(current.dimensions);
+    expect(reread.affinities).toEqual(current.affinities);
+    expect(reread.affinities.find((a) => a.key === "comunismo")?.comparable).toBe(true);
+    expect(reread.closest).toEqual(current.closest);
+    expect(reread.computedWithProfilesVersion).toBe("2026.11-v2");
+    expect(withCurrentProfiles(current)).toBe(current);
   });
 
   it("marks a profile as not comparable when too few of its dimensions are valid", () => {
