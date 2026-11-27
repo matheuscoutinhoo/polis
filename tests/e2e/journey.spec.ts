@@ -26,17 +26,20 @@ test("cadastro, questionário completo, resultado, primeira lição com XP sem d
       await page.getByRole("button", { name: `Continuar para o bloco ${(i + 1) / 10 + 1}` }).click();
     }
     if (i === 24) {
-      // Pause and resume: answers are kept on the server.
+      // Pause and resume: the answers and the situations drawn for the attempt are kept on the server.
+      await expect(page.getByText("Pergunta 26 de 50")).toBeVisible();
+      const statement = await page.locator("fieldset legend").innerText();
       await page.getByRole("link", { name: "Pausar" }).click();
       await page.waitForURL(/pausado=1/);
       await page.getByRole("link", { name: "Continuar de onde parou" }).click();
       await expect(page.getByText("Pergunta 26 de 50")).toBeVisible();
+      await expect(page.locator("fieldset legend")).toHaveText(statement);
     }
   }
   await page.getByRole("button", { name: "Ver resultado" }).click();
   await page.waitForURL(/\/questionario\/resultado/);
   await expect(page.getByRole("heading", { name: "O que suas respostas indicam" })).toBeVisible();
-  await expect(page.getByText(/Suas respostas (se aproximam|não se aproximam)/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Síntese" }).getByText(/Suas respostas (se aproximam|não se aproximam)/)).toBeVisible();
   // The path is drawn as a flow of modules, starting with the common foundations.
   const foundations = page.getByRole("list", { name: "Fundamentos em comum" });
   await expect(foundations.getByRole("link").first()).toContainText(MODULES[0].title);
@@ -85,6 +88,8 @@ test("cadastro, questionário completo, resultado, primeira lição com XP sem d
   await page.getByRole("link", { name: "Comparar seus 2 resultados" }).first().click();
   await page.waitForURL(/\/conta\/resultados/);
   await expect(page.getByRole("heading", { name: "Comparar dois resultados" })).toBeVisible();
+  // Each attempt draws its own situations; the comparison says how many both results share.
+  await expect(page.getByText(/se repetem nos dois resultados|vêm das mesmas situações/)).toBeVisible();
   await expect(page.getByRole("table", { name: "Índice de proximidade de cada corrente, antes e depois" })).toBeVisible();
   await page.getByRole("link", { name: "Ver detalhes" }).nth(1).click();
   await page.waitForURL(/\/questionario\/resultado\/[^/]+$/);

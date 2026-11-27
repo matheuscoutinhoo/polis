@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { attemptQuestionIds } from "@/modules/diagnostic/question-bank";
 import { displayNameSchema } from "./validation";
 
 // Account deletion policy (shown to the user before confirming):
@@ -31,7 +32,16 @@ export async function exportUserData(userId: string) {
       suspensionReason: true,
       consents: { select: { kind: true, version: true, purpose: true, grantedAt: true, revokedAt: true } },
       attempts: {
-        select: { status: true, bankVersion: true, scoringVersion: true, startedAt: true, completedAt: true, result: true, answers: { select: { questionId: true, choice: true, updatedAt: true } } },
+        select: {
+          status: true,
+          bankVersion: true,
+          questionIds: true,
+          scoringVersion: true,
+          startedAt: true,
+          completedAt: true,
+          result: true,
+          answers: { select: { questionId: true, choice: true, updatedAt: true } },
+        },
       },
       lessonProgress: { select: { lesson: { select: { slug: true, title: true } }, readAt: true, understoodAt: true, completedAt: true, attempts: true } },
       xpEvents: { select: { kind: true, refId: true, amount: true, createdAt: true } },
@@ -50,6 +60,8 @@ export async function exportUserData(userId: string) {
     notice:
       "Exportação dos dados pessoais mantidos pela Polis. As respostas ao questionário e o mapa de afinidades são dados sensíveis: guarde este arquivo com cuidado.",
     ...user,
+    // Situations shown in each attempt, in order (attempts saved before the draw used the first version of every theme).
+    attempts: user.attempts.map((attempt) => ({ ...attempt, questionIds: attemptQuestionIds(attempt.questionIds) })),
   };
 }
 

@@ -2,7 +2,7 @@
 
 Plataforma web de educação política para pessoas sem conhecimento prévio. A Polis explica instituições, ideias, correntes e acontecimentos brasileiros com **fontes oficiais aprovadas** e diferentes perspectivas, apresentadas com os mesmos critérios. Ela **explica, mas não conduz**: não recomenda voto, partido, candidato, movimento ou corrente.
 
-Este repositório contém o MVP completo: contas e privacidade, questionário de 50 situações com cálculo determinístico, trilha de aprendizado com gamificação simples, acontecimentos explicados com fontes e apoio de IA (OpenAI, somente no servidor), fóruns com moderação e uma área administrativa mínima.
+Este repositório contém o MVP completo: contas e privacidade, questionário de 50 situações sorteadas de um banco de 100, com cálculo determinístico, trilha de aprendizado com gamificação simples, acontecimentos explicados com fontes e apoio de IA (OpenAI, somente no servidor), fóruns com moderação e uma área administrativa mínima.
 
 - [Visão geral da arquitetura](#arquitetura)
 - [Execução local](#execução-local)
@@ -33,7 +33,7 @@ src/
   lib/                 infraestrutura: db, auth, sessão (DAL), e-mail, logs, limites de frequência
   modules/
     account/           conta, consentimentos, exportação e exclusão de dados
-    diagnostic/        banco de 50 perguntas, escala, pontuação, perfis de referência, serviço
+    diagnostic/        banco de 100 situações (50 sorteadas por tentativa), escala, pontuação, perfis de referência, serviço
     learning/          lições (esquema e validação editorial), trilha (estratégias), progresso e XP
     sources/           política de URLs de editores aprovados, cadastro e revisão de fontes
     events/            estrutura da análise, portão de publicação, consultas públicas e administrativas
@@ -104,7 +104,7 @@ npm run test:e2e                # cria e reinicia o banco polis_e2e, aplica migr
 
 Cobertura proporcional ao risco:
 
-- **Questionário**: pontuação, direção dos itens, “Não sei” fora do cálculo, mínimos por dimensão, empates, padrões mistos, reprodutibilidade (resultado salvo idêntico ao recalculado), afinidades recalculadas quando os perfis mudam, pausa e retomada, nova versão da autorização exigida para responder de novo, histórico de resultados (o mais recente ordena a trilha; leitura e exclusão só pela própria pessoa), revogação apagando os dados.
+- **Questionário**: pontuação, direção dos itens, sorteio das situações (uma versão de cada tema, cinco em cada direção por bloco; tentativa pausada mantém o sorteio; resposta fora do sorteio é recusada; tentativas anteriores ao sorteio seguem com as situações originais), “Não sei” fora do cálculo, mínimos por dimensão, empates, padrões mistos, reprodutibilidade (resultado salvo idêntico ao recalculado), afinidades recalculadas quando os perfis mudam, pausa e retomada, nova versão da autorização exigida para responder de novo, histórico de resultados (o mais recente ordena a trilha; leitura e exclusão só pela própria pessoa), revogação apagando os dados.
 - **Autorização entre contas**: isolamento de respostas e resultados; ninguém edita ou exclui conteúdo de outra pessoa; publicação exige e-mail confirmado e conta sem suspensão; área administrativa inacessível para não administradores.
 - **XP idempotente**: requisições simultâneas e repetidas não duplicam pontos (índice único + inserções idempotentes).
 - **Recuperação de acesso**: aceite dos termos obrigatório no cadastro, token de redefinição de uso único, mesma resposta para e-mail cadastrado ou não, sessões encerradas após a troca.
@@ -166,15 +166,16 @@ O healthcheck responde `200` com o estado do banco e se autenticação, IA e e-m
 
 ## Metodologia do questionário
 
-A descrição completa, gerada a partir do código, está na página **`/fontes-e-metodo`**. Resumo (banco `2026.11-v1`, cálculo `2026.11-v1`, perfis `2026.11-v3`):
+A descrição completa, gerada a partir do código, está na página **`/fontes-e-metodo`**. Resumo (banco `2026.11-v2`, cálculo `2026.11-v1`, perfis `2026.11-v3`):
 
-- **50 situações** completas em **5 blocos de 10**, uma por dimensão: economia, mercado e redistribuição; liberdades civis e exercício da autoridade; costumes, tradição e mudança social; participação política e organização do poder; desenvolvimento e prioridades socioambientais. As dimensões são uma modelagem editorial inicial e se sobrepõem; isso é explicado na página de método.
+- **50 situações por tentativa**, em **5 blocos de 10**, um por dimensão: economia, mercado e redistribuição; liberdades civis e exercício da autoridade; costumes, tradição e mudança social; participação política e organização do poder; desenvolvimento e prioridades socioambientais. As dimensões são uma modelagem editorial inicial e se sobrepõem; isso é explicado na página de método.
+- **Banco de 100 situações com sorteio**: cada bloco tem 10 temas, e cada tema tem versões em contextos diferentes com a mesma dimensão, direção e peso (hoje, duas). A tentativa sorteia uma versão de cada tema, embaralha a ordem dentro do bloco e guarda os ids sorteados (`questionIds`); a tentativa pausada continua com as mesmas situações. Tentativas anteriores ao sorteio usaram a primeira versão de cada tema. Para ampliar o banco, acrescente versões em `question-bank.ts` sem mudar o sentido de ids existentes e suba `QUESTION_BANK_VERSION`.
 - Escala de concordância de cinco pontos (−2 a +2) e a opção separada **“Não sei / preciso entender melhor”, que não conta como neutra**: fica fora do cálculo.
-- Cada item tem **direção** (+1/−1; cinco em cada direção por dimensão, para reduzir a concordância automática) e **peso**. Escore da dimensão = Σ(valor × direção × peso) ÷ (2 × Σ pesos válidos), em −1..+1.
+- Cada item tem **direção** (+1/−1; cinco em cada direção por bloco em toda tentativa, para reduzir a concordância automática) e **peso**. Escore da dimensão = Σ(valor × direção × peso) ÷ (2 × Σ pesos válidos), em −1..+1.
 - **Mínimo de 6 respostas válidas** por dimensão; afinidades exigem pelo menos 2 dimensões válidas.
 - **Perfis de referência por faixas** (não pontos) para liberalismos, conservadorismos, social-democracia, socialismos, comunismo, anarquismos e libertarianismos (socialismos e comunismo têm perfis separados desde a versão `2026.11-v3`). Cada faixa traz justificativa, a fonte e se a sustentação é **direta** ou **inferência editorial explicitada**; dimensões sem posição sustentada pelo acervo ficam indefinidas e não entram no cálculo.
 - **Índice de proximidade** = 1 − (distância média às faixas ÷ 2), apenas nas dimensões comparáveis; comparações com menos de 3 dimensões são marcadas como limitadas. Não é probabilidade nem diagnóstico. Empates são exibidos como empate; a ordem editorial fixa desempata a trilha.
-- O resultado mostra dimensões separadas, tensões (“Você apresentou posições diferentes nestes temas...”) e a contribuição de cada resposta. Refazer guarda um novo resultado: o mais recente ordena a trilha e os anteriores ficam num histórico privado (`/conta/resultados`), com comparação lado a lado por dimensão e por corrente, até a pessoa apagá-los. Resultados salvos com uma versão anterior dos perfis têm as afinidades recalculadas a partir dos escores guardados.
+- O resultado mostra dimensões separadas, tensões (“Você apresentou posições diferentes nestes temas...”) e a contribuição de cada resposta. Refazer guarda um novo resultado: o mais recente ordena a trilha e os anteriores ficam num histórico privado (`/conta/resultados`), com comparação lado a lado por dimensão e por corrente (indicando quantas situações os dois resultados têm em comum), até a pessoa apagá-los. Resultados salvos com uma versão anterior dos perfis têm as afinidades recalculadas a partir dos escores guardados.
 - A IA **não participa** do cálculo. Nada do questionário é enviado à OpenAI. Cliques, leituras, quizzes e fóruns não alteram o resultado.
 
 ## Trilha, XP e conquistas

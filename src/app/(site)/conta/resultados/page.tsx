@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AffinityCompare, CompareLegend, DimensionCompare } from "@/components/questionnaire/result-compare";
+import { AffinityCompare, CompareLegend, DimensionCompare, SituationsNote } from "@/components/questionnaire/result-compare";
 import { joinNames } from "@/components/questionnaire/result-report";
 import { DeleteResultButton } from "@/components/questionnaire/result-shell";
 import { Badge } from "@/components/ui/badge";
@@ -140,7 +140,7 @@ export default async function ResultsHistoryPage({ searchParams }: { searchParam
                   <CompareLegend earlier={pair[0]} later={pair[1]} />
                 </div>
                 <h3 className="mt-6 text-lead font-semibold">Dimensões</h3>
-                <p className="mt-1 text-meta text-ink-soft">Os escores vão de −1 a +1. Mudanças pequenas são comuns quando as mesmas situações são respondidas de novo.</p>
+                <SituationsNote earlier={pair[0]} later={pair[1]} />
                 <div className="mt-4">
                   <DimensionCompare earlier={pair[0]} later={pair[1]} />
                 </div>

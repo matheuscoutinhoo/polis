@@ -14,6 +14,7 @@ import {
   startRetakeAction,
 } from "@/modules/diagnostic/actions";
 import { DIMENSIONS } from "@/modules/diagnostic/dimensions";
+import { QUESTIONS } from "@/modules/diagnostic/question-bank";
 import { getActiveConsent, getCompletedAttempt, getInProgressAttempt, isCurrentConsent } from "@/modules/diagnostic/service";
 
 export const metadata: Metadata = { title: "Questionário de afinidades" };
@@ -23,7 +24,8 @@ function Explanation() {
     <section className="reading-measure">
       <h2 className="text-h3 font-semibold">Para que serve</h2>
       <p className="mt-2 text-body">
-        São 50 situações do cotidiano, em cinco blocos de dez. Suas respostas mostram como você pondera valores em cinco dimensões e ordenam sua trilha: depois dos fundamentos
+        São 50 situações do cotidiano, em cinco blocos de dez, sorteadas de um banco de {QUESTIONS.length} a cada vez que você responde. Suas respostas mostram como você
+        pondera valores em cinco dimensões e ordenam sua trilha: depois dos fundamentos
         em comum, as lições começam pelas perspectivas mais próximas das suas respostas e seguem para as demais.
       </p>
       <h2 className="mt-6 text-h3 font-semibold">O que ele não faz</h2>

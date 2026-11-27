@@ -14,6 +14,38 @@ function signed(value: number) {
   return `${value > 0 ? "+" : "−"}${formatDecimal(Math.abs(value), 2)}`;
 }
 
+function situationIds(item: ComparedResult) {
+  return new Set(item.result.dimensions.flatMap((dimension) => dimension.contributions.map((c) => c.questionId)));
+}
+
+/** How many situations both results share: each attempt draws one version of every theme of the bank. */
+export function sharedSituations(earlier: ComparedResult, later: ComparedResult) {
+  const before = situationIds(earlier);
+  const after = situationIds(later);
+  return { shared: [...after].filter((id) => before.has(id)).length, total: after.size };
+}
+
+/** Reading note for the dimension comparison: differences may come from the situations drawn. */
+export function SituationsNote({ earlier, later }: { earlier: ComparedResult; later: ComparedResult }) {
+  const { shared, total } = sharedSituations(earlier, later);
+  return (
+    <p className="mt-1 text-meta text-ink-soft">
+      Os escores vão de −1 a +1.{" "}
+      {shared === total ? (
+        "Os dois resultados vêm das mesmas situações; mudanças pequenas são comuns quando elas são respondidas de novo."
+      ) : (
+        <>
+          <strong className="font-semibold text-ink">
+            {shared} de {total} situações
+          </strong>{" "}
+          se repetem nos dois resultados; as demais tratam dos mesmos temas em outras versões, sorteadas a cada tentativa. Parte da diferença pode vir das situações, e não de
+          uma mudança de opinião.
+        </>
+      )}
+    </p>
+  );
+}
+
 /** Legend shared by the comparison views: hollow marker = earlier, filled = later. */
 export function CompareLegend({ earlier, later }: { earlier: ComparedResult; later: ComparedResult }) {
   return (

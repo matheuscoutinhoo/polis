@@ -9,7 +9,7 @@ import { formatDate, formatDecimal, formatPartialDate } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { DIMENSIONS, DIMENSION_BY_KEY, type DimensionKey } from "@/modules/diagnostic/dimensions";
 import { PROFILES_VERSION, RANGE_SUPPORT_LABEL, REFERENCE_PROFILES } from "@/modules/diagnostic/profiles";
-import { QUESTIONS, QUESTION_BANK_VERSION } from "@/modules/diagnostic/question-bank";
+import { QUESTIONS, QUESTION_BANK_VERSION, QUESTION_SLOTS } from "@/modules/diagnostic/question-bank";
 import { ANSWER_OPTIONS, CHOICE_VALUE } from "@/modules/diagnostic/scale";
 import {
   BAND_HIGH,
@@ -218,6 +218,18 @@ export default async function SourcesAndMethodPage() {
             ))}
           </ul>
 
+          <h3 className="mt-6 text-h3 font-semibold">Banco de situações e sorteio</h3>
+          <p className="mt-3 text-body">
+            O banco tem {QUESTIONS.length} situações, organizadas em {QUESTION_SLOTS.length} temas, dez por bloco. Cada tema tem versões em contextos diferentes, com a mesma
+            dimensão, direção e peso. A cada tentativa, sorteamos uma versão de cada tema e embaralhamos a ordem dentro de cada bloco: você sempre responde a{" "}
+            {QUESTION_SLOTS.length} situações, dez por bloco, cinco em cada direção.
+          </p>
+          <p className="mt-2 text-body">
+            As versões de um tema tratam do mesmo conflito de valores; por isso, resultados de tentativas diferentes podem ser comparados. Ainda assim, parte da diferença entre
+            dois resultados pode vir das situações sorteadas, e não de uma mudança de opinião: a comparação mostra quantas situações os dois têm em comum. As tentativas feitas antes
+            do sorteio usaram a primeira versão de cada tema.
+          </p>
+
           <h3 className="mt-6 text-h3 font-semibold">Escala e cálculo</h3>
           <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-body">
             <li>
@@ -228,8 +240,8 @@ export default async function SourcesAndMethodPage() {
               . “Não sei / preciso entender melhor” não é posição neutra: fica fora do cálculo.
             </li>
             <li>
-              Cada situação tem uma direção (+1 quando concordar aproxima do polo +1; −1 no caso contrário) e um peso. Em cada dimensão há cinco situações em cada direção, para
-              reduzir a tendência de concordar com tudo.
+              Cada situação tem uma direção (+1 quando concordar aproxima do polo +1; −1 no caso contrário) e um peso. Cada tentativa tem cinco situações em cada direção em cada
+              bloco, para reduzir a tendência de concordar com tudo.
             </li>
             <li>Escore da dimensão = soma de (valor × direção × peso) ÷ (2 × soma dos pesos das respostas válidas). O resultado fica entre −1 e +1, com duas casas decimais.</li>
             <li>
@@ -253,13 +265,14 @@ export default async function SourcesAndMethodPage() {
               fixa dos perfis.
             </li>
             <li>
-              Ao refazer o questionário, o novo resultado passa a ordenar a trilha; os anteriores ficam no seu histórico, privados, para comparação, até você apagá-los. Quando os
-              perfis de referência mudam de versão, as afinidades dos resultados guardados são recalculadas a partir dos escores salvos, sem alterar respostas nem escores.
+              Ao refazer o questionário, as situações são sorteadas de novo e o novo resultado passa a ordenar a trilha; os anteriores ficam no seu histórico, privados, para
+              comparação, até você apagá-los. Quando os perfis de referência mudam de versão, as afinidades dos resultados guardados são recalculadas a partir dos escores salvos, sem
+              alterar respostas nem escores.
             </li>
           </ol>
 
-          <h3 className="mt-6 text-h3 font-semibold">As 50 situações</h3>
-          <p className="mt-2 text-meta text-ink-soft">Direção e peso de cada item, para conferência.</p>
+          <h3 className="mt-6 text-h3 font-semibold">As {QUESTIONS.length} situações do banco</h3>
+          <p className="mt-2 text-meta text-ink-soft">Temas de cada bloco, com direção, peso e versões, para conferência.</p>
           <div className="mt-3 flex flex-col gap-2">
             {DIMENSIONS.map((d) => (
               <details key={d.key} className="surface-card p-4">
@@ -268,13 +281,21 @@ export default async function SourcesAndMethodPage() {
                   <Icon name="chevronDown" size={18} className="details-chevron" />
                 </summary>
                 <ol className="mt-3 flex flex-col divide-y divide-line-soft">
-                  {QUESTIONS.filter((q) => q.dimension === d.key).map((q) => (
-                    <li key={q.id} className="py-3 text-meta">
-                      <p className="font-semibold text-ink">{q.title}</p>
-                      <p className="mt-1">{q.statement}</p>
-                      <p className="mt-1 text-ink-soft">
-                        Concordar aproxima de “{(q.direction === 1 ? d.positivePole : d.negativePole).toLowerCase()}” · peso {n(q.weight)}
+                  {QUESTION_SLOTS.filter((slot) => slot.dimension === d.key).map((slot, index) => (
+                    <li key={slot.slot} className="py-3 text-meta">
+                      <p className="text-ink-soft">
+                        Tema {index + 1} · concordar aproxima de “{(slot.direction === 1 ? d.positivePole : d.negativePole).toLowerCase()}” · peso {n(slot.weight)}
                       </p>
+                      <ul className="mt-2 flex flex-col gap-2.5">
+                        {slot.versions.map((version, v) => (
+                          <li key={version.id}>
+                            <p className="font-semibold text-ink">
+                              Versão {String.fromCharCode(65 + v)} · {version.title}
+                            </p>
+                            <p className="mt-0.5">{version.statement}</p>
+                          </li>
+                        ))}
+                      </ul>
                     </li>
                   ))}
                 </ol>

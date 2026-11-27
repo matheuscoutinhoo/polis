@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { QUESTIONNAIRE_CONSENT_PURPOSE, QUESTIONNAIRE_CONSENT_VERSION } from "@/modules/account/consent-texts";
-import { QUESTIONS, QUESTION_BANK_VERSION, QUESTION_BY_ID } from "./question-bank";
+import { QUESTION_BANK_VERSION, QUESTION_BY_ID, attemptQuestionIds, attemptQuestions, drawQuestionIds } from "./question-bank";
 import { isAnswerChoice, type AnswerChoice } from "./scale";
 import { computeResult, withCurrentProfiles, type AnswerMap, type QuestionnaireResult } from "./scoring";
 
@@ -123,14 +123,19 @@ async function requireConsent(userId: string) {
   }
 }
 
+/**
+ * The in-progress attempt, or a new one with its own draw of situations. An open
+ * attempt is kept while all of its situations are still in the bank, so a new
+ * bank version does not discard answers already given.
+ */
 export async function startAttempt(userId: string) {
   await requireConsent(userId);
   const existing = await getInProgressAttempt(userId);
-  if (existing && existing.bankVersion === QUESTION_BANK_VERSION) return existing;
+  if (existing && attemptQuestions(existing.questionIds)) return existing;
   if (existing) await db.questionnaireAttempt.delete({ where: { id: existing.id } });
   try {
     return await db.questionnaireAttempt.create({
-      data: { userId, inProgressFor: userId, bankVersion: QUESTION_BANK_VERSION, status: "IN_PROGRESS" },
+      data: { userId, inProgressFor: userId, bankVersion: QUESTION_BANK_VERSION, questionIds: drawQuestionIds(), status: "IN_PROGRESS" },
       include: { answers: { select: { questionId: true, choice: true } } },
     });
   } catch (error) {
@@ -147,11 +152,18 @@ export async function discardInProgressAttempt(userId: string) {
   await db.questionnaireAttempt.deleteMany({ where: { userId, status: "IN_PROGRESS" } });
 }
 
+/** Saves an answer to a situation drawn for the in-progress attempt (the questionnaire page starts the attempt). */
 export async function saveAnswer(userId: string, questionId: string, choice: unknown) {
   if (!QUESTION_BY_ID.has(questionId)) throw new QuestionnaireError("Pergunta inexistente.", "INVALID_QUESTION");
   if (!isAnswerChoice(choice)) throw new QuestionnaireError("Opção de resposta inválida.", "INVALID_CHOICE");
   await requireConsent(userId);
-  const attempt = await startAttempt(userId);
+  const attempt = await getInProgressAttempt(userId);
+  if (!attempt) {
+    throw new QuestionnaireError("Este questionário não está mais em andamento. Recarregue a página para continuar.", "NO_ATTEMPT");
+  }
+  if (!attemptQuestionIds(attempt.questionIds).includes(questionId)) {
+    throw new QuestionnaireError("Esta situação não faz parte da sua tentativa atual. Recarregue a página para continuar.", "INVALID_QUESTION");
+  }
   await db.questionnaireAnswer.upsert({
     where: { attemptId_questionId: { attemptId: attempt.id, questionId } },
     create: { attemptId: attempt.id, questionId, choice },
@@ -175,12 +187,14 @@ export async function completeAttempt(userId: string, now = new Date()): Promise
   await requireConsent(userId);
   const attempt = await getInProgressAttempt(userId);
   if (!attempt) throw new QuestionnaireError("Não há questionário em andamento.", "NO_ATTEMPT");
+  const questions = attemptQuestions(attempt.questionIds);
+  if (!questions) throw new QuestionnaireError("O questionário foi atualizado. Recarregue a página para começar de novo.", "NO_ATTEMPT");
   const answers = answersToMap(attempt.answers as Array<{ questionId: string; choice: AnswerChoice }>);
-  const pending = QUESTIONS.filter((q) => !answers[q.id]);
+  const pending = questions.filter((q) => !answers[q.id]);
   if (pending.length > 0) {
     throw new QuestionnaireError(`Ainda faltam ${pending.length} situações. Você pode escolher "Não sei" quando precisar.`, "INCOMPLETE");
   }
-  const result = computeResult(answers, now);
+  const result = computeResult(answers, questions, now);
   await db.$transaction([
     db.questionnaireAttempt.update({
       where: { id: attempt.id },

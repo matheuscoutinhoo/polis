@@ -1,9 +1,10 @@
 import { DIMENSIONS, type DimensionKey } from "./dimensions";
-import { QUESTIONS, QUESTION_BANK_VERSION, type Question } from "./question-bank";
+import { QUESTION_BANK_VERSION, type Question } from "./question-bank";
 import { REFERENCE_PROFILES, PROFILES_VERSION, type CurrentKey, type ReferenceProfile } from "./profiles";
 import { CHOICE_VALUE, type AnswerChoice } from "./scale";
 
-// Cálculo determinístico e versionado. A IA não participa da classificação.
+// Cálculo determinístico e versionado, sobre as situações da tentativa (uma
+// versão de cada tema do banco). A IA não participa da classificação.
 //
 // 1. Cada resposta vale −2..+2 ("Não sei" é excluída, não é neutra).
 // 2. Valor direcionado = valor × direção do item × peso.
@@ -96,7 +97,7 @@ function directedValue(question: Question, choice: AnswerChoice | undefined): nu
   return value * question.direction + 0;
 }
 
-export function scoreDimension(key: DimensionKey, answers: AnswerMap, questions: Question[] = QUESTIONS): DimensionResult {
+export function scoreDimension(key: DimensionKey, answers: AnswerMap, questions: Question[]): DimensionResult {
   const items = questions.filter((q) => q.dimension === key);
   let weighted = 0;
   let weightSum = 0;
@@ -213,7 +214,7 @@ function affinitiesFor(dimensions: DimensionResult[]) {
   return { validDimensionCount, affinityStatus, affinities, closest };
 }
 
-export function computeResult(answers: AnswerMap, now: Date = new Date(), questions: Question[] = QUESTIONS): QuestionnaireResult {
+export function computeResult(answers: AnswerMap, questions: Question[], now: Date = new Date()): QuestionnaireResult {
   const dimensions = DIMENSIONS.map((d) => scoreDimension(d.key, answers, questions));
   const answeredCount = questions.filter((q) => answers[q.id]).length;
   const unknownCount = questions.filter((q) => answers[q.id] === "UNKNOWN").length;

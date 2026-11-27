@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { exportUserData } from "@/modules/account/privacy";
 import { CommunityError, createComment, createForum, createTopic, deleteOwnComment, deleteOwnTopic, editComment, editTopic } from "@/modules/community/service";
-import { QUESTIONS } from "@/modules/diagnostic/question-bank";
-import { completeAttempt, deleteQuestionnaireData, getActiveResult, grantQuestionnaireConsent, QuestionnaireError, saveAnswer } from "@/modules/diagnostic/service";
+import { QUESTIONS, QUESTION_SLOTS } from "@/modules/diagnostic/question-bank";
+import { completeAttempt, deleteQuestionnaireData, getActiveResult, grantQuestionnaireConsent, QuestionnaireError, saveAnswer, startAttempt } from "@/modules/diagnostic/service";
 import { createUser, resetDatabase } from "../support/fixtures";
 
 async function answerAll(userId: string) {
   await grantQuestionnaireConsent(userId);
-  for (const question of QUESTIONS) await saveAnswer(userId, question.id, "AGREE");
+  const attempt = await startAttempt(userId);
+  for (const id of attempt.questionIds) await saveAnswer(userId, id, "AGREE");
   return completeAttempt(userId);
 }
 
@@ -33,6 +34,8 @@ describe("Autorização entre contas", () => {
     const exported = await exportUserData(b.id);
     expect(exported?.attempts).toEqual([]);
     expect(JSON.stringify(exported)).not.toContain(a.id);
+    // A's own export lists the situations drawn for the attempt.
+    expect((await exportUserData(a.id))?.attempts[0].questionIds).toHaveLength(QUESTION_SLOTS.length);
 
     // Without its own consent, B cannot write answers (and never into A's attempt).
     await expect(saveAnswer(b.id, QUESTIONS[0].id, "DISAGREE")).rejects.toMatchObject({ code: "NO_CONSENT" });
@@ -40,7 +43,7 @@ describe("Autorização entre contas", () => {
 
     await deleteQuestionnaireData(b.id);
     expect(await db.questionnaireAttempt.count({ where: { userId: a.id } })).toBe(1);
-    expect(await db.questionnaireAnswer.count()).toBe(QUESTIONS.length);
+    expect(await db.questionnaireAnswer.count()).toBe(QUESTION_SLOTS.length);
   });
 
   it("ninguém edita ou exclui tópicos e comentários de outra pessoa", async () => {

@@ -169,6 +169,9 @@ model QuestionnaireAttempt {
   userId         String
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   bankVersion    String
+  // Situações sorteadas para a tentativa, na ordem exibida. Vazio nas tentativas
+  // anteriores ao sorteio, que usaram a primeira versão de cada tema.
+  questionIds    String[]      @default([])
   status         AttemptStatus @default(IN_PROGRESS)
   // Igual a userId enquanto a tentativa está em andamento (null depois de concluída):
   // garante no máximo uma tentativa em andamento por pessoa.
