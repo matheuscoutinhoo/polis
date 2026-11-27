@@ -74,11 +74,11 @@ export function DimensionCompare({ earlier, later }: { earlier: ComparedResult; 
         const after = dimension.score;
         const change = before !== null && after !== null ? Math.round((after - before) * 100) / 100 : null;
         return (
-          <article key={dimension.key} className="surface-card p-5" aria-labelledby={`cmp-${dimension.key}`}>
+          <article key={dimension.key} className="surface-card row-span-4 grid grid-rows-subgrid gap-y-3 p-5" aria-labelledby={`cmp-${dimension.key}`}>
             <h3 id={`cmp-${dimension.key}`} className="text-lead font-semibold">
               {meta.title}
             </h3>
-            <div className="mt-5" aria-hidden="true">
+            <div className="pt-1" aria-hidden="true">
               <div className="relative h-2 rounded-full bg-track">
                 <span className="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-control" style={{ left: "50%" }} />
                 {before !== null && after !== null && before !== after ? (
@@ -102,15 +102,17 @@ export function DimensionCompare({ earlier, later }: { earlier: ComparedResult; 
                 <span className="max-w-[45%] text-right">{meta.positivePole}</span>
               </div>
             </div>
-            <p className="mt-4 text-meta">
-              <span className="text-ink-soft">Antes:</span> {earlierDimension ? leanText(earlierDimension) : "sem dados"}
-              {before !== null ? <span className="text-ink-soft"> ({formatDecimal(before, 2)})</span> : null}
-            </p>
-            <p className="mt-1 text-meta">
-              <span className="text-ink-soft">Depois:</span> {leanText(dimension)}
-              {after !== null ? <span className="text-ink-soft"> ({formatDecimal(after, 2)})</span> : null}
-            </p>
-            <p className="mt-2 text-meta font-semibold">
+            <div className="text-meta">
+              <p>
+                <span className="text-ink-soft">Antes:</span> {earlierDimension ? leanText(earlierDimension) : "sem dados"}
+                {before !== null ? <span className="text-ink-soft"> ({formatDecimal(before, 2)})</span> : null}
+              </p>
+              <p className="mt-1">
+                <span className="text-ink-soft">Depois:</span> {leanText(dimension)}
+                {after !== null ? <span className="text-ink-soft"> ({formatDecimal(after, 2)})</span> : null}
+              </p>
+            </div>
+            <p className="border-t border-line-soft pt-3 text-meta font-semibold">
               {change === null
                 ? "Sem comparação nesta dimensão."
                 : Math.abs(change) < MEANINGFUL_CHANGE

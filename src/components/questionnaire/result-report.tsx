@@ -3,8 +3,8 @@ import { AffinityList, DimensionScale, LEVEL_LABEL, joinList, proximityPoints } 
 import { Icon, type IconName } from "@/components/ui/icon";
 import { formatDecimal } from "@/lib/format";
 import { DIMENSION_BY_KEY } from "@/modules/diagnostic/dimensions";
-import { PROFILE_BY_KEY, PROFILES_VERSION } from "@/modules/diagnostic/profiles";
-import { BAND_MODERATE, MEANINGFUL_CHANGE, MIN_VALID_PER_DIMENSION, SCORING_VERSION, leanOf, type QuestionnaireResult } from "@/modules/diagnostic/scoring";
+import { PROFILE_BY_KEY } from "@/modules/diagnostic/profiles";
+import { BAND_MODERATE, MEANINGFUL_CHANGE, MIN_VALID_PER_DIMENSION, leanOf, type QuestionnaireResult } from "@/modules/diagnostic/scoring";
 
 export function joinNames(keys: string[]) {
   return joinList(keys.map((k) => PROFILE_BY_KEY[k as keyof typeof PROFILE_BY_KEY]?.name ?? k));
@@ -71,10 +71,6 @@ function ResultSummary({ result }: { result: QuestionnaireResult }) {
 
 /** Summary, the five dimensions and the reference currents of one result. */
 export function ResultReport({ result }: { result: QuestionnaireResult }) {
-  const savedWith = [
-    result.computedWithScoringVersion ? `a versão ${result.computedWithScoringVersion} do método` : "",
-    result.computedWithProfilesVersion ? `a versão ${result.computedWithProfilesVersion} dos perfis` : "",
-  ].filter(Boolean);
   return (
     <>
       <section aria-labelledby="sintese" className="mt-10 max-w-3xl">
@@ -111,15 +107,6 @@ export function ResultReport({ result }: { result: QuestionnaireResult }) {
             </Link>
             . A ordem vai da mais próxima à mais distante das suas respostas. Todas as correntes continuam disponíveis no catálogo.
           </p>
-          {savedWith.length ? (
-            <p className="mt-3 flex items-start gap-2 rounded-card bg-blue px-4 py-3 text-meta text-ink">
-              <Icon name="info" size={18} className="mt-0.5 flex-none text-blue-ink" />
-              <span>
-                Proximidades recalculadas com a versão atual do método ({SCORING_VERSION}) e dos perfis de referência ({PROFILES_VERSION}); este resultado foi salvo com{" "}
-                {joinList(savedWith)}. Suas respostas e os escores das dimensões não mudam.
-              </span>
-            </p>
-          ) : null}
           <div className="mt-5">
             <AffinityList affinities={result.affinities} />
           </div>

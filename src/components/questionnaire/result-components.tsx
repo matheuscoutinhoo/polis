@@ -77,7 +77,7 @@ function levelBand(score: number): [number, number] {
 function ScoreScale({ score, dimension }: { score: number; dimension: Dimension }) {
   const [from, to] = levelBand(score);
   return (
-    <div className="mt-4">
+    <div>
       <div className="relative h-3 rounded-full bg-track" aria-hidden="true">
         <span className="absolute inset-y-0 rounded-full bg-action/25" style={{ left: scalePosition(from), width: `${((to - from) / 2) * 100}%` }} />
         {LEVEL_LIMITS.map((limit) => (
@@ -107,7 +107,7 @@ function AnswerSplit({ breakdown, dimension }: { breakdown: AnswerBreakdown; dim
   ];
   const outside = breakdown.unknown + breakdown.missing;
   return (
-    <div className="mt-5">
+    <div>
       <p className="text-meta font-semibold text-ink">Como suas respostas se dividiram</p>
       <div className="mt-2 flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-track" aria-hidden="true">
         {parts
@@ -146,7 +146,7 @@ function AnswerDetails({ result, dimension }: { result: DimensionResult; dimensi
   const sum = valid.reduce((total, c) => total + (c.directed ?? 0) * weightOf(c.questionId), 0);
   const max = valid.reduce((total, c) => total + 2 * weightOf(c.questionId), 0);
   return (
-    <details className="mt-4 border-t border-line-soft pt-3">
+    <details className="border-t border-line-soft pt-3">
       <summary className="details-summary flex min-h-[44px] items-center justify-between font-semibold text-action">
         <span>Ver cada resposta e o cálculo</span>
         <Icon name="chevronDown" size={18} className="details-chevron" />
@@ -178,38 +178,38 @@ function AnswerDetails({ result, dimension }: { result: DimensionResult; dimensi
   );
 }
 
-/** One dimension: the level in words, the position on a neutral scale, how the answers split and each answer. */
+/**
+ * One dimension: the level in words, the position on a neutral scale, how the answers split and each answer.
+ * The card spans five rows of the parent grid (subgrid), so each part lines up with the card beside it.
+ */
 export function DimensionScale({ result }: { result: DimensionResult }) {
   const dimension = DIMENSION_BY_KEY[result.key];
-  const scored = result.status === "OK" && result.score !== null;
   return (
-    <article className="surface-card flex flex-col p-5 md:p-6" aria-labelledby={`dim-${result.key}`}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <article className="surface-card row-span-5 grid grid-rows-subgrid gap-y-4 p-5 md:p-6" aria-labelledby={`dim-${result.key}`}>
+      <div>
         <h3 id={`dim-${result.key}`} className="text-h3 font-semibold">
           {dimension.title}
         </h3>
-        <Badge tone={scored ? "mint" : "warning"}>
+        <Badge tone={result.status === "OK" ? "mint" : "warning"} className="mt-2">
           {result.validCount} de {result.total} respostas válidas
         </Badge>
       </div>
-      {scored && result.score !== null ? (
-        <>
-          <p className="mt-3 text-lead font-semibold text-ink">{leanText(result, dimension)}</p>
-          <ScoreScale score={result.score} dimension={dimension} />
-        </>
+      <p className="text-lead font-semibold text-ink">{leanText(result, dimension)}</p>
+      {result.status === "OK" && result.score !== null ? (
+        <ScoreScale score={result.score} dimension={dimension} />
       ) : (
-        <p className="mt-3 text-body">
-          Respostas válidas insuficientes (o mínimo é {MIN_VALID_PER_DIMENSION}). Esta dimensão não entra no cálculo das afinidades.
-        </p>
+        <p className="text-body">Com menos de {MIN_VALID_PER_DIMENSION} respostas válidas, esta dimensão não entra no cálculo das afinidades.</p>
       )}
-      <AnswerSplit breakdown={answerBreakdown(result)} dimension={dimension} />
-      {result.tension ? (
-        <p className="mt-4 rounded-card bg-sand px-4 py-3 text-meta">
-          <span className="font-semibold text-sand-ink">Respostas firmes nas duas direções.</span> {result.tension.towardPositive.length} respostas moderadas ou fortes
-          foram para “{dimension.positiveShort}” e {result.tension.towardNegative.length} para “{dimension.negativeShort}”. Combinar posições em temas diferentes é comum e
-          não indica erro.
-        </p>
-      ) : null}
+      <div>
+        <AnswerSplit breakdown={answerBreakdown(result)} dimension={dimension} />
+        {result.tension ? (
+          <p className="mt-4 rounded-card bg-sand px-4 py-3 text-meta">
+            <span className="font-semibold text-sand-ink">Respostas firmes nas duas direções.</span> {result.tension.towardPositive.length} respostas moderadas ou
+            fortes foram para “{dimension.positiveShort}” e {result.tension.towardNegative.length} para “{dimension.negativeShort}”. Combinar posições em temas diferentes é
+            comum e não indica erro.
+          </p>
+        ) : null}
+      </div>
       <AnswerDetails result={result} dimension={dimension} />
     </article>
   );
