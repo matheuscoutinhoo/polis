@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { QUESTIONNAIRE_CONSENT_PURPOSE, QUESTIONNAIRE_CONSENT_VERSION } from "@/modules/account/consent-texts";
 import { QUESTION_BANK_VERSION, QUESTION_BY_ID, attemptQuestionIds, attemptQuestions, drawQuestionIds } from "./question-bank";
 import { isAnswerChoice, type AnswerChoice } from "./scale";
-import { computeResult, withCurrentProfiles, type AnswerMap, type QuestionnaireResult } from "./scoring";
+import { computeResult, withCurrentMethod, type AnswerMap, type QuestionnaireResult } from "./scoring";
 
 export class QuestionnaireError extends Error {
   constructor(
@@ -71,7 +71,7 @@ export async function getCompletedAttempt(userId: string) {
 }
 
 function readResult(stored: unknown): QuestionnaireResult | null {
-  return stored ? withCurrentProfiles(stored as QuestionnaireResult) : null;
+  return stored ? withCurrentMethod(stored as QuestionnaireResult) : null;
 }
 
 export async function getActiveResult(userId: string): Promise<QuestionnaireResult | null> {
@@ -194,7 +194,7 @@ export async function completeAttempt(userId: string, now = new Date()): Promise
   if (pending.length > 0) {
     throw new QuestionnaireError(`Ainda faltam ${pending.length} situações. Você pode escolher "Não sei" quando precisar.`, "INCOMPLETE");
   }
-  const result = computeResult(answers, questions, now);
+  const result: QuestionnaireResult = { ...computeResult(answers, questions, now), bankVersion: attempt.bankVersion };
   await db.$transaction([
     db.questionnaireAttempt.update({
       where: { id: attempt.id },

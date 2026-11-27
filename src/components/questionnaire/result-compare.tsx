@@ -1,6 +1,7 @@
+import { leanText, proximityPoints } from "@/components/questionnaire/result-components";
 import { DIMENSION_BY_KEY } from "@/modules/diagnostic/dimensions";
 import { PROFILE_BY_KEY, REFERENCE_PROFILES } from "@/modules/diagnostic/profiles";
-import type { QuestionnaireResult } from "@/modules/diagnostic/scoring";
+import { MEANINGFUL_CHANGE, type QuestionnaireResult } from "@/modules/diagnostic/scoring";
 import { cn, formatDateTime, formatDecimal } from "@/lib/format";
 
 export type ComparedResult = { completedAt: Date; result: QuestionnaireResult };
@@ -38,7 +39,7 @@ export function SituationsNote({ earlier, later }: { earlier: ComparedResult; la
           <strong className="font-semibold text-ink">
             {shared} de {total} situações
           </strong>{" "}
-          se repetem nos dois resultados; as demais tratam dos mesmos temas em outras versões, sorteadas a cada tentativa. Parte da diferença pode vir das situações, e não de
+          se repetem nos dois resultados; as demais tratam dos mesmos temas em outras versões ou redações. Parte da diferença pode vir das situações, e não de
           uma mudança de opinião.
         </>
       )}
@@ -68,7 +69,8 @@ export function DimensionCompare({ earlier, later }: { earlier: ComparedResult; 
     <div className="grid gap-4 lg:grid-cols-2">
       {later.result.dimensions.map((dimension) => {
         const meta = DIMENSION_BY_KEY[dimension.key];
-        const before = earlier.result.dimensions.find((d) => d.key === dimension.key)?.score ?? null;
+        const earlierDimension = earlier.result.dimensions.find((d) => d.key === dimension.key);
+        const before = earlierDimension?.score ?? null;
         const after = dimension.score;
         const change = before !== null && after !== null ? Math.round((after - before) * 100) / 100 : null;
         return (
@@ -101,13 +103,18 @@ export function DimensionCompare({ earlier, later }: { earlier: ComparedResult; 
               </div>
             </div>
             <p className="mt-4 text-meta">
-              Antes: {before !== null ? formatDecimal(before, 2) : "respostas válidas insuficientes"} · Depois: {after !== null ? formatDecimal(after, 2) : "respostas válidas insuficientes"}
+              <span className="text-ink-soft">Antes:</span> {earlierDimension ? leanText(earlierDimension) : "sem dados"}
+              {before !== null ? <span className="text-ink-soft"> ({formatDecimal(before, 2)})</span> : null}
             </p>
-            <p className="mt-1 text-meta font-semibold">
+            <p className="mt-1 text-meta">
+              <span className="text-ink-soft">Depois:</span> {leanText(dimension)}
+              {after !== null ? <span className="text-ink-soft"> ({formatDecimal(after, 2)})</span> : null}
+            </p>
+            <p className="mt-2 text-meta font-semibold">
               {change === null
                 ? "Sem comparação nesta dimensão."
-                : change === 0
-                  ? "Sem mudança."
+                : Math.abs(change) < MEANINGFUL_CHANGE
+                  ? `Variação pequena (${signed(change)}), dentro do que costuma acontecer ao responder de novo.`
                   : `Mudança de ${signed(change)}, na direção de “${(change > 0 ? meta.positivePole : meta.negativePole).toLowerCase()}”.`}
             </p>
           </article>
@@ -117,13 +124,16 @@ export function DimensionCompare({ earlier, later }: { earlier: ComparedResult; 
   );
 }
 
-/** Proximity index of each reference current in both results (current profiles). */
+/** Proximity of each reference current in both results, on a 0 to 100 scale (current profiles and method). */
 export function AffinityCompare({ earlier, later }: { earlier: ComparedResult; later: ComparedResult }) {
-  const indexOf = (item: ComparedResult, key: string) => item.result.affinities.find((a) => a.key === key && a.comparable)?.index ?? null;
+  const pointsOf = (item: ComparedResult, key: string) => {
+    const index = item.result.affinities.find((a) => a.key === key && a.comparable)?.index;
+    return index === undefined || index === null ? null : proximityPoints(index);
+  };
   return (
     <div className="surface-card overflow-x-auto p-2 md:p-4">
       <table className="w-full text-left text-meta">
-        <caption className="sr-only">Índice de proximidade de cada corrente, antes e depois</caption>
+        <caption className="sr-only">Proximidade de cada corrente, de 0 a 100, antes e depois</caption>
         <thead>
           <tr className="border-b border-line-soft text-ink-soft">
             <th scope="col" className="px-2 py-2 font-semibold sm:px-3">
@@ -142,9 +152,9 @@ export function AffinityCompare({ earlier, later }: { earlier: ComparedResult; l
         </thead>
         <tbody>
           {REFERENCE_PROFILES.map((profile) => {
-            const before = indexOf(earlier, profile.key);
-            const after = indexOf(later, profile.key);
-            const change = before !== null && after !== null ? Math.round((after - before) * 100) / 100 : null;
+            const before = pointsOf(earlier, profile.key);
+            const after = pointsOf(later, profile.key);
+            const change = before !== null && after !== null ? after - before : null;
             const closest = later.result.closest.includes(profile.key);
             return (
               <tr key={profile.key} className="border-b border-line-soft last:border-0">
@@ -152,16 +162,18 @@ export function AffinityCompare({ earlier, later }: { earlier: ComparedResult; l
                   {PROFILE_BY_KEY[profile.key].name}
                   {closest ? <span className="mt-1 block w-fit rounded-[6px] bg-mint px-1.5 py-0.5 text-label font-semibold text-action">mais próxima depois</span> : null}
                 </th>
-                <td className="px-2 py-2.5 text-right tabular-nums sm:px-3">{before !== null ? formatDecimal(before, 2) : "—"}</td>
-                <td className="px-2 py-2.5 text-right tabular-nums sm:px-3">{after !== null ? formatDecimal(after, 2) : "—"}</td>
-                <td className={cn("px-2 py-2.5 text-right tabular-nums sm:px-3", change ? "font-semibold" : "text-ink-soft")}>{change !== null ? signed(change) : "—"}</td>
+                <td className="px-2 py-2.5 text-right tabular-nums sm:px-3">{before !== null ? before : "—"}</td>
+                <td className="px-2 py-2.5 text-right tabular-nums sm:px-3">{after !== null ? after : "—"}</td>
+                <td className={cn("px-2 py-2.5 text-right tabular-nums sm:px-3", change ? "font-semibold" : "text-ink-soft")}>
+                  {change !== null ? (change === 0 ? "0" : `${change > 0 ? "+" : "−"}${Math.abs(change)}`) : "—"}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
       <p className="px-2 pt-2 pb-1 text-meta text-ink-soft sm:px-3">
-        Índice de 0 a 1, calculado com a versão atual dos perfis de referência para os dois resultados. “—” indica comparação indisponível.
+        Proximidade de 0 a 100, calculada com a versão atual do método e dos perfis de referência para os dois resultados. “—” indica comparação indisponível.
       </p>
     </div>
   );

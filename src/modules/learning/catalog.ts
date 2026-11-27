@@ -51,6 +51,15 @@ export async function getLearningPath(user: { pathMode: "GENERAL" | "AFFINITY" }
   return buildLearningPath(lessons, { mode, affinity: affinityIndexByCurrent(result), closest: result?.closest ?? [] });
 }
 
+/** Both orders of the path for a result, to preview the choice: the general one and, when available, the one by affinity. */
+export async function getLearningPathOptions(result: QuestionnaireResult | null): Promise<{ GENERAL: LearningPath; AFFINITY: LearningPath | null }> {
+  const lessons = await getPublishedPathLessons();
+  return {
+    GENERAL: buildLearningPath(lessons, { mode: "GENERAL" }),
+    AFFINITY: result?.affinityStatus === "OK" ? buildLearningPath(lessons, { mode: "AFFINITY", affinity: affinityIndexByCurrent(result), closest: result.closest }) : null,
+  };
+}
+
 export async function getModuleBySlug(slug: string) {
   return db.module.findUnique({
     where: { slug },

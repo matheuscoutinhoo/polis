@@ -1,17 +1,32 @@
+"use client";
+
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { Icon } from "@/components/ui/icon";
 import { areaMeta } from "@/components/ui/topic";
 import { cn, plural } from "@/lib/format";
 import { STAGE_LABEL, pathModules, type LearningPath } from "@/modules/learning/path";
 
-type Progress = Map<string, { completedAt: Date | null; readAt: Date | null }>;
+/** Transition type of a change in the path order: only these transitions animate the trail. */
+export const TRAIL_TRANSITION = "trilha";
+
+// Stations keep their name across orders, so the browser moves each one to its new place;
+// stage labels that appear or disappear fade. Other transitions (navigation) do not animate them.
+const MOVE = { [TRAIL_TRANSITION]: "trilha-move", default: "none" };
+const ENTER = { [TRAIL_TRANSITION]: "trilha-enter", default: "none" };
+const EXIT = { [TRAIL_TRANSITION]: "trilha-exit", default: "none" };
+
+function transitionName(...parts: string[]) {
+  return `trilha-${parts.join("-").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+}
 
 /**
  * The path drawn as a flow of its contents: one station per module, in the
  * order the person will study it, with lesson progress. Stages only label the
  * line; every station links to its module.
  */
-export function TrailFlow({ path, progress, nextLessonId }: { path: LearningPath; progress: Progress; nextLessonId: string | null }) {
+export function TrailFlow({ path, completed, nextLessonId }: { path: LearningPath; completed: string[]; nextLessonId: string | null }) {
+  const done = new Set(completed);
   return (
     <div className="relative">
       <span aria-hidden="true" className="absolute top-4 bottom-[30px] left-[21px] w-0.5 rounded-full bg-line" />
@@ -20,56 +35,58 @@ export function TrailFlow({ path, progress, nextLessonId }: { path: LearningPath
           const stage = STAGE_LABEL[step.stage];
           return (
             <li key={step.stage}>
-              <p className="flex items-center gap-4 py-2 text-label font-semibold uppercase tracking-wider text-ink-soft">
-                <span aria-hidden="true" className="ml-[15px] h-3.5 w-3.5 flex-none rotate-45 rounded-[3px] border-2 border-control bg-surface" />
-                <span className="pl-1">{stage.title}</span>
-              </p>
+              <ViewTransition name={transitionName("etapa", step.stage)} enter={ENTER} exit={EXIT} update={MOVE} share={MOVE} default="none">
+                <p className="flex items-center gap-4 py-2 text-label font-semibold uppercase tracking-wider text-ink-soft">
+                  <span aria-hidden="true" className="ml-[15px] h-3.5 w-3.5 flex-none rotate-45 rounded-[3px] border-2 border-control bg-surface" />
+                  <span className="pl-1">{stage.title}</span>
+                </p>
+              </ViewTransition>
               <ol aria-label={stage.title} className="flex flex-col gap-1">
                 {pathModules(step.lessons).map((node) => {
                   const meta = node.area ? areaMeta[node.area] : null;
-                  const completed = node.lessons.filter((l) => progress.get(l.id)?.completedAt).length;
-                  const done = completed === node.lessons.length;
+                  const completedCount = node.lessons.filter((l) => done.has(l.id)).length;
+                  const allDone = completedCount === node.lessons.length;
                   const isNext = node.lessons.some((l) => l.id === nextLessonId);
                   const minutes = node.lessons.reduce((sum, l) => sum + l.minutes, 0);
+                  const key = `${node.slug}-${node.lessons[0].id}`;
                   return (
-                    <li key={node.slug}>
-                      <Link
-                        href={`/aprender/${node.slug}`}
-                        className="group flex min-h-[60px] items-center gap-4 rounded-card py-2 pr-3 transition-colors hover:bg-paper focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-action)]"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "relative flex h-11 w-11 flex-none items-center justify-center rounded-full border-[3px] border-surface",
-                            done
-                              ? "bg-action text-white"
-                              : isNext
-                                ? "bg-surface text-action shadow-[0_0_0_2px_var(--color-action),0_0_0_7px_var(--color-selected)]"
-                                : cn(meta?.bg ?? "bg-mint", meta?.ink ?? "text-action"),
-                          )}
+                    <li key={key}>
+                      <ViewTransition name={transitionName(key)} enter={ENTER} exit={EXIT} update={MOVE} share={MOVE} default="none">
+                        <Link
+                          href={`/aprender/${node.slug}`}
+                          className="group flex min-h-[60px] items-center gap-4 rounded-card py-2 pr-3 transition-colors hover:bg-paper focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-action)]"
                         >
-                          <Icon name={done ? "check" : (meta?.icon ?? "book")} size={20} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold group-hover:text-action-hover">
-                            {node.title}
-                            {isNext ? <span className="rounded-[6px] bg-mint px-2 py-0.5 text-label font-semibold text-action">Próxima</span> : null}
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              "relative flex h-11 w-11 flex-none items-center justify-center rounded-full border-[3px] border-surface",
+                              allDone
+                                ? "bg-action text-white"
+                                : isNext
+                                  ? "bg-surface text-action shadow-[0_0_0_2px_var(--color-action),0_0_0_7px_var(--color-selected)]"
+                                  : cn(meta?.bg ?? "bg-mint", meta?.ink ?? "text-action"),
+                            )}
+                          >
+                            <Icon name={allDone ? "check" : (meta?.icon ?? "book")} size={20} />
                           </span>
-                          <span className="block text-meta text-ink-soft">
-                            {plural(node.lessons.length, "lição", "lições")} · {minutes} min
-                            {done ? " · concluído" : completed ? ` · ${completed} de ${node.lessons.length} concluídas` : ""}
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold group-hover:text-action-hover">
+                              {node.title}
+                              {isNext ? <span className="rounded-[6px] bg-mint px-2 py-0.5 text-label font-semibold text-action">Próxima</span> : null}
+                            </span>
+                            <span className="block text-meta text-ink-soft">
+                              {plural(node.lessons.length, "lição", "lições")} · {minutes} min
+                              {allDone ? " · concluído" : completedCount ? ` · ${completedCount} de ${node.lessons.length} concluídas` : ""}
+                            </span>
                           </span>
-                        </span>
-                        <span className="hidden flex-none items-center gap-1.5 sm:flex" aria-hidden="true">
-                          {node.lessons.map((lesson) => (
-                            <span
-                              key={lesson.id}
-                              className={cn("h-2.5 w-2.5 rounded-full", progress.get(lesson.id)?.completedAt ? "bg-action" : "border-2 border-control")}
-                            />
-                          ))}
-                        </span>
-                        <Icon name="chevronRight" size={18} className="flex-none text-control transition-colors group-hover:text-action" />
-                      </Link>
+                          <span className="hidden flex-none items-center gap-1.5 sm:flex" aria-hidden="true">
+                            {node.lessons.map((lesson) => (
+                              <span key={lesson.id} className={cn("h-2.5 w-2.5 rounded-full", done.has(lesson.id) ? "bg-action" : "border-2 border-control")} />
+                            ))}
+                          </span>
+                          <Icon name="chevronRight" size={18} className="flex-none text-control transition-colors group-hover:text-action" />
+                        </Link>
+                      </ViewTransition>
                     </li>
                   );
                 })}

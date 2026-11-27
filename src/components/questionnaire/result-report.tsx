@@ -1,45 +1,87 @@
 import Link from "next/link";
-import { AffinityList, DimensionScale } from "@/components/questionnaire/result-components";
+import { AffinityList, DimensionScale, LEVEL_LABEL, joinList, proximityPoints } from "@/components/questionnaire/result-components";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { formatDecimal } from "@/lib/format";
+import { DIMENSION_BY_KEY } from "@/modules/diagnostic/dimensions";
 import { PROFILE_BY_KEY, PROFILES_VERSION } from "@/modules/diagnostic/profiles";
-import { MIN_VALID_PER_DIMENSION, type QuestionnaireResult } from "@/modules/diagnostic/scoring";
+import { BAND_MODERATE, MEANINGFUL_CHANGE, MIN_VALID_PER_DIMENSION, SCORING_VERSION, leanOf, type QuestionnaireResult } from "@/modules/diagnostic/scoring";
 
 export function joinNames(keys: string[]) {
-  const names = keys.map((k) => PROFILE_BY_KEY[k as keyof typeof PROFILE_BY_KEY]?.name ?? k);
-  if (names.length <= 1) return names.join("");
-  return `${names.slice(0, -1).join(", ")} e ${names.at(-1)}`;
+  return joinList(keys.map((k) => PROFILE_BY_KEY[k as keyof typeof PROFILE_BY_KEY]?.name ?? k));
+}
+
+/** The result in a few sentences: closest currents, marked inclinations, divided and insufficient dimensions. */
+function ResultSummary({ result }: { result: QuestionnaireResult }) {
+  const comparable = result.affinities.filter((a) => a.comparable && a.index !== null);
+  const closest = comparable.filter((a) => result.closest.includes(a.key));
+  const points = (index: number | null) => (index === null ? "—" : `${proximityPoints(index)}`);
+  const marked = result.dimensions.flatMap((d) => {
+    if (d.score === null || d.pattern === "MIXED") return [];
+    const lean = leanOf(d.score);
+    if (!lean.side || (lean.level !== "MODERATE" && lean.level !== "STRONG")) return [];
+    const dimension = DIMENSION_BY_KEY[d.key];
+    const pole = lean.side === "POSITIVE" ? dimension.positiveShort : dimension.negativeShort;
+    return [`${LEVEL_LABEL[lean.level].replace("Inclinação ", "")} para “${pole}” (${dimension.shortTitle})`];
+  });
+  const divided = result.dimensions.filter((d) => d.pattern === "MIXED").map((d) => DIMENSION_BY_KEY[d.key].shortTitle);
+  const insufficient = result.dimensions.filter((d) => d.status !== "OK").map((d) => DIMENSION_BY_KEY[d.key].shortTitle);
+
+  return (
+    <div className="mt-3 flex flex-col gap-3 text-reading">
+      {result.affinityStatus !== "OK" ? (
+        <p>
+          Há respostas válidas suficientes em menos de duas dimensões, por isso não calculamos afinidades. A trilha segue a ordem geral; você pode refazer o questionário quando
+          quiser.
+        </p>
+      ) : closest.length === 1 ? (
+        <p>
+          Suas respostas ficam mais próximas de <strong>{joinNames([closest[0].key])}</strong>: proximidade {points(closest[0].index)} de 100, dentro da faixa da corrente em{" "}
+          {closest[0].dimensions.filter((d) => d.distance === 0).length} de {closest[0].dimensions.length} dimensões comparadas.
+        </p>
+      ) : closest.length > 1 ? (
+        <p>
+          Suas respostas ficam mais próximas de <strong>{joinNames(closest.map((a) => a.key))}</strong>, com proximidades muito parecidas (
+          {joinList(closest.map((a) => points(a.index)))} de 100).
+        </p>
+      ) : comparable.length === 0 ? (
+        <p>
+          Nenhuma corrente de referência pôde ser comparada: as dimensões com respostas válidas suficientes não são as dimensões em que as correntes têm faixa definida. A trilha
+          segue a ordem geral.
+        </p>
+      ) : (
+        <p>
+          Nenhuma corrente de referência ficou próxima das suas respostas: todas ficaram abaixo de {Math.round(BAND_MODERATE * 100)} de 100. As menos distantes foram{" "}
+          {joinNames(comparable.slice(0, 2).map((a) => a.key))} ({joinList(comparable.slice(0, 2).map((a) => points(a.index)))} de 100).
+        </p>
+      )}
+      <p>
+        {marked.length
+          ? `Inclinações mais marcadas: ${joinList(marked)}.`
+          : "Nenhuma dimensão teve inclinação moderada ou forte: suas respostas ficaram mais perto do equilíbrio entre os polos."}
+      </p>
+      {divided.length ? <p>Posições divididas em {joinList(divided)}: respostas firmes nas duas direções, que se compensam.</p> : null}
+      {insufficient.length ? (
+        <p>
+          Sem respostas válidas suficientes em {joinList(insufficient)}, {insufficient.length > 1 ? "que ficam" : "que fica"} fora das afinidades.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 /** Summary, the five dimensions and the reference currents of one result. */
 export function ResultReport({ result }: { result: QuestionnaireResult }) {
-  const comparable = result.affinities.filter((a) => a.comparable);
+  const savedWith = [
+    result.computedWithScoringVersion ? `a versão ${result.computedWithScoringVersion} do método` : "",
+    result.computedWithProfilesVersion ? `a versão ${result.computedWithProfilesVersion} dos perfis` : "",
+  ].filter(Boolean);
   return (
     <>
       <section aria-labelledby="sintese" className="mt-10 max-w-3xl">
         <h2 id="sintese" className="text-h2 font-semibold">
           Síntese
         </h2>
-        {result.affinityStatus === "OK" ? (
-          <div className="mt-3 flex flex-col gap-3 text-reading">
-            {result.closest.length ? (
-              <p>
-                Suas respostas se aproximam de <strong>{joinNames(result.closest)}</strong>
-                {result.closest.length > 1 ? ", com índices de proximidade muito parecidos" : ""}. Essa aproximação considera apenas as dimensões em que cada corrente tem
-                posição de referência.
-              </p>
-            ) : (
-              <p>
-                Suas respostas não se aproximam fortemente de nenhuma das correntes de referência. As mais próximas foram {joinNames(comparable.slice(0, 2).map((a) => a.key))}.
-              </p>
-            )}
-            {result.tensionDimensions.length ? <p>Você apresentou posições diferentes em alguns temas; os detalhes estão em cada dimensão abaixo.</p> : null}
-          </div>
-        ) : (
-          <p className="mt-3 text-reading">
-            Há respostas válidas suficientes em menos de duas dimensões, por isso não calculamos afinidades. A trilha segue a ordem geral; você pode refazer o questionário
-            quando quiser.
-          </p>
-        )}
+        <ResultSummary result={result} />
       </section>
 
       <section aria-labelledby="dimensoes" className="mt-10">
@@ -47,7 +89,8 @@ export function ResultReport({ result }: { result: QuestionnaireResult }) {
           Cinco dimensões independentes
         </h2>
         <p className="mt-2 max-w-3xl text-body text-ink-soft">
-          Cada dimensão é calculada separadamente. Os dois polos não são “certo” e “errado”, nem esquerda e direita: são ênfases diferentes diante de dilemas reais.
+          Cada dimensão é calculada separadamente. Os dois polos não são “certo” e “errado”, nem esquerda e direita: são ênfases diferentes diante de dilemas reais. Na escala, a
+          faixa destacada mostra o nível da inclinação (intermediária, leve, moderada ou forte); abaixo dela, veja como suas respostas se dividiram.
         </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {result.dimensions.map((dimension) => (
@@ -66,14 +109,14 @@ export function ResultReport({ result }: { result: QuestionnaireResult }) {
             <Link href="/fontes-e-metodo#perfis" className="text-link">
               Fontes e método
             </Link>
-            . Todas as correntes continuam disponíveis no catálogo.
+            . A ordem vai da mais próxima à mais distante das suas respostas. Todas as correntes continuam disponíveis no catálogo.
           </p>
-          {result.computedWithProfilesVersion ? (
+          {savedWith.length ? (
             <p className="mt-3 flex items-start gap-2 rounded-card bg-blue px-4 py-3 text-meta text-ink">
               <Icon name="info" size={18} className="mt-0.5 flex-none text-blue-ink" />
               <span>
-                Afinidades recalculadas com a versão atual dos perfis de referência ({PROFILES_VERSION}); este resultado foi salvo com a versão{" "}
-                {result.computedWithProfilesVersion}. Suas respostas e os escores das dimensões não mudam.
+                Proximidades recalculadas com a versão atual do método ({SCORING_VERSION}) e dos perfis de referência ({PROFILES_VERSION}); este resultado foi salvo com{" "}
+                {joinList(savedWith)}. Suas respostas e os escores das dimensões não mudam.
               </span>
             </p>
           ) : null}
@@ -88,8 +131,13 @@ export function ResultReport({ result }: { result: QuestionnaireResult }) {
 
 const LIMITS: Array<{ icon: IconName; title: string; text: string }> = [
   { icon: "document", title: "Modelagem editorial", text: "As dimensões e as faixas das correntes são uma escolha documentada da Polis, não um teste validado." },
+  {
+    icon: "scale",
+    title: "Resultado aproximado",
+    text: `Com 10 situações por dimensão, diferenças menores que ${formatDecimal(MEANINGFUL_CHANGE, 1)} no escore não indicam uma mudança real de posição.`,
+  },
   { icon: "info", title: "“Não sei” fica de fora", text: `Não conta como posição. Dimensões com menos de ${MIN_VALID_PER_DIMENSION} respostas válidas não entram nas afinidades.` },
-  { icon: "scale", title: "Empate é empate", text: "Índices iguais aparecem empatados; para ordenar a trilha, vale a ordem editorial fixa." },
+  { icon: "layers", title: "Empate é empate", text: "Proximidades iguais aparecem empatadas; para ordenar a trilha, vale a ordem editorial fixa." },
   { icon: "lock", title: "Só suas respostas contam", text: "Leituras, cliques, exercícios e fóruns nunca alteram este resultado." },
 ];
 

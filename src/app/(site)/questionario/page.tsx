@@ -69,7 +69,7 @@ export default async function QuestionnairePage({
       <div className="page-frame py-8 md:py-12">
         <p className="eyebrow">Questionário de afinidades</p>
         <h1 className="mt-2 text-display-sm font-semibold md:text-display">Como você vê estas situações?</h1>
-        <p className="mt-3 max-w-2xl text-lead text-ink-soft">É o primeiro passo depois de criar a conta e leva cerca de 15 minutos.</p>
+        <p className="mt-3 max-w-2xl text-lead text-ink-soft">É o primeiro passo depois de criar a conta e leva cerca de 20 minutos.</p>
         <SignupBanner path="/questionario" title="Crie uma conta para responder" className="mt-6">
           As respostas ficam salvas na sua conta, para você pausar e continuar depois.
         </SignupBanner>
@@ -107,7 +107,7 @@ export default async function QuestionnairePage({
           <p className="eyebrow">Questionário de afinidades · primeiro passo</p>
           <h1 className="mt-2 text-display-sm font-semibold md:text-display">Como você vê estas situações?</h1>
           <p className="mt-3 max-w-2xl text-lead text-ink-soft">
-            Leva cerca de 15 minutos e é obrigatório para usar a Polis. Você pode pausar, voltar e revisar respostas; tudo é salvo automaticamente.
+            Leva cerca de 20 minutos e é obrigatório para usar a Polis. Você pode pausar, voltar e revisar respostas; tudo é salvo automaticamente.
           </p>
         </div>
 

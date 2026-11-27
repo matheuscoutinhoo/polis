@@ -17,9 +17,13 @@ import {
   CLOSEST_MARGIN,
   FULL_COMPARISON_OVERLAP,
   INTERMEDIATE_THRESHOLD,
+  LEAN_MODERATE,
+  LEAN_STRONG,
+  MEANINGFUL_CHANGE,
   MIN_OVERLAP_FOR_PROFILE,
   MIN_VALID_DIMENSIONS_FOR_AFFINITY,
   MIN_VALID_PER_DIMENSION,
+  PROXIMITY_ZERO_DISTANCE,
   SCORING_VERSION,
 } from "@/modules/diagnostic/scoring";
 import { listPublicCatalog } from "@/modules/sources/service";
@@ -229,6 +233,11 @@ export default async function SourcesAndMethodPage() {
             dois resultados pode vir das situações sorteadas, e não de uma mudança de opinião: a comparação mostra quantas situações os dois têm em comum. As tentativas feitas antes
             do sorteio usaram a primeira versão de cada tema.
           </p>
+          <p className="mt-2 text-body">
+            Na redação, cada situação descreve uma decisão concreta, com o que está em jogo, e apresenta o argumento principal de cada lado, com peso parecido; a ordem dos lados
+            alterna entre as versões. A afirmação expressa uma única posição, sem adjetivos que antecipem a resposta. Quando uma situação é reescrita, ela ganha um novo
+            identificador, e a redação anterior continua guardada para exibir os resultados de quem respondeu a ela.
+          </p>
 
           <h3 className="mt-6 text-h3 font-semibold">Escala e cálculo</h3>
           <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-body">
@@ -248,26 +257,30 @@ export default async function SourcesAndMethodPage() {
               Uma dimensão precisa de pelo menos {MIN_VALID_PER_DIMENSION} respostas válidas (de 10). Com menos, ela aparece como insuficiente e não entra nas afinidades.
             </li>
             <li>
-              Escores com valor absoluto menor que {n(INTERMEDIATE_THRESHOLD)} são descritos como intermediários. Quando há pelo menos duas respostas fortes ou moderadas em cada
-              direção, mostramos “posições diferentes nestes temas”, sem tratar isso como erro.
+              Leitura do escore: posição intermediária abaixo de {n(INTERMEDIATE_THRESHOLD)} em valor absoluto; inclinação leve de {n(INTERMEDIATE_THRESHOLD)} a{" "}
+              {n(LEAN_MODERATE)}; moderada de {n(LEAN_MODERATE)} a {n(LEAN_STRONG)}; forte a partir de {n(LEAN_STRONG)}. Quando há pelo menos duas respostas fortes ou
+              moderadas em cada direção, mostramos “respostas firmes nas duas direções” (e “posições divididas” se elas se compensam), sem tratar isso como erro. O resultado também
+              mostra quantas respostas foram para cada polo, quantas foram neutras e quantas ficaram fora do cálculo.
             </li>
             <li>
               As afinidades só são calculadas com pelo menos {MIN_VALID_DIMENSIONS_FOR_AFFINITY} dimensões válidas. Para cada corrente, usamos apenas as dimensões em que ela tem
               faixa definida e você tem escore válido (mínimo de {MIN_OVERLAP_FOR_PROFILE}; abaixo de {FULL_COMPARISON_OVERLAP}, a comparação é marcada como limitada).
             </li>
             <li>
-              Distância em cada dimensão = 0 se o seu escore está dentro da faixa da corrente; senão, a distância até a borda mais próxima. Índice de proximidade = 1 − (distância
-              média ÷ 2), entre 0 e 1. Não é probabilidade, porcentagem de acerto nem diagnóstico.
+              Proximidade em cada dimensão: 100 se o seu escore está dentro da faixa da corrente; fora dela, cai {Math.round(10 / PROXIMITY_ZERO_DISTANCE)} pontos a cada 0,1 de
+              distância até a borda mais próxima, até chegar a 0 (a {n(PROXIMITY_ZERO_DISTANCE)} de distância). A proximidade com a corrente é a média dessas dimensões, de 0 a
+              100. Não é probabilidade, porcentagem de acerto nem diagnóstico.
             </li>
             <li>
-              Faixas de leitura: proximidade alta a partir de {n(BAND_HIGH)}; moderada a partir de {n(BAND_MODERATE)}; baixa abaixo disso. As correntes mais próximas são as que
-              ficam a até {n(CLOSEST_MARGIN)} do maior índice, se ele for pelo menos moderado. Índices iguais são exibidos como empate; para ordenar a trilha, vale a ordem editorial
-              fixa dos perfis.
+              Faixas de leitura: proximidade alta a partir de {Math.round(BAND_HIGH * 100)}; moderada a partir de {Math.round(BAND_MODERATE * 100)}; baixa abaixo disso. As
+              correntes mais próximas são as que ficam a até {Math.round(CLOSEST_MARGIN * 100)} pontos da maior proximidade, se ela for pelo menos moderada. Proximidades iguais são
+              exibidas como empate; para ordenar a trilha, vale a ordem editorial fixa dos perfis.
             </li>
             <li>
               Ao refazer o questionário, as situações são sorteadas de novo e o novo resultado passa a ordenar a trilha; os anteriores ficam no seu histórico, privados, para
-              comparação, até você apagá-los. Quando os perfis de referência mudam de versão, as afinidades dos resultados guardados são recalculadas a partir dos escores salvos, sem
-              alterar respostas nem escores.
+              comparação, até você apagá-los. Na comparação, diferenças de escore menores que {n(MEANINGFUL_CHANGE)} são tratadas como variação pequena. Quando os perfis de
+              referência ou o método das afinidades mudam de versão, as afinidades dos resultados guardados são recalculadas a partir dos escores salvos, sem alterar respostas nem
+              escores.
             </li>
           </ol>
 

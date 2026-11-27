@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
+import { RETIRED_QUESTIONS } from "@/modules/diagnostic/question-archive";
 import { QUESTIONS, QUESTION_BANK_VERSION, attemptQuestionIds, attemptQuestions } from "@/modules/diagnostic/question-bank";
 import type { AnswerChoice } from "@/modules/diagnostic/scale";
 import { computeResult } from "@/modules/diagnostic/scoring";
@@ -93,7 +94,26 @@ describe("Questionário persistido", () => {
     for (const id of original.slice(1)) await saveAnswer(user.id, id, "DISAGREE");
     const result = await completeAttempt(user.id, FIXED);
     expect(result.answeredCount).toBe(50);
+    expect(result.bankVersion).toBe("2026.11-v1");
     expect(result.dimensions.flatMap((d) => d.contributions.map((c) => c.questionId)).sort()).toEqual([...original].sort());
+  });
+
+  it("conclui tentativas sorteadas com uma redação anterior do banco, que continua guardada", async () => {
+    const user = await createUser();
+    await grantQuestionnaireConsent(user.id);
+    const previousDraw = RETIRED_QUESTIONS.filter((q) => q.id !== q.slot).map((q) => q.id);
+    const attempt = await db.questionnaireAttempt.create({ data: { userId: user.id, bankVersion: "2026.11-v2", questionIds: previousDraw, status: "IN_PROGRESS" } });
+
+    const resumed = await startAttempt(user.id);
+    expect(resumed.id).toBe(attempt.id);
+    expect(resumed.questionIds).toEqual(previousDraw);
+    for (const id of previousDraw) await saveAnswer(user.id, id, "AGREE");
+    const result = await completeAttempt(user.id, FIXED);
+    expect(result.bankVersion).toBe("2026.11-v2");
+    expect(result.answeredCount).toBe(50);
+    // A new attempt draws only from the current texts.
+    const next = await startAttempt(user.id);
+    expect(next.questionIds.every((id) => QUESTIONS.some((q) => q.id === id))).toBe(true);
   });
 
   it("mantém a tentativa em andamento coerente mesmo quando gravada pela versão anterior do código", async () => {

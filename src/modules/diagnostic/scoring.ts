@@ -12,24 +12,36 @@ import { CHOICE_VALUE, type AnswerChoice } from "./scale";
 //    válidos), em −1..+1, arredondado a duas casas.
 // 4. Dimensão com menos de MIN_VALID_PER_DIMENSION respostas válidas é
 //    considerada insuficiente e não entra nas afinidades.
-// 5. Afinidade com um perfil = 1 − (distância média até as faixas do perfil ÷ 2),
-//    considerando só dimensões válidas e definidas no perfil (mínimo de
-//    MIN_OVERLAP_FOR_PROFILE). Não é probabilidade nem precisão científica.
-// 6. Empates (mesmo índice arredondado) são exibidos como empate; para ordenar a
+// 5. Leitura do escore (só exibição): intermediária abaixo de
+//    INTERMEDIATE_THRESHOLD em valor absoluto; inclinação leve até
+//    LEAN_MODERATE, moderada até LEAN_STRONG e forte a partir daí.
+// 6. Proximidade com um perfil, em cada dimensão comparável: 1 quando o escore
+//    está dentro da faixa do perfil; cai linearmente com a distância até a
+//    faixa e chega a 0 em PROXIMITY_ZERO_DISTANCE. A proximidade com a corrente
+//    é a média dessas dimensões (só dimensões válidas e definidas no perfil, no
+//    mínimo MIN_OVERLAP_FOR_PROFILE). Não é probabilidade nem precisão científica.
+// 7. Empates (mesmo índice arredondado) são exibidos como empate; para ordenar a
 //    trilha, usa-se a ordem editorial fixa dos perfis.
-// 7. Resultados guardados mantêm os escores calculados; quando os perfis de
-//    referência mudam de versão, as afinidades são recalculadas a partir desses
-//    escores (withCurrentProfiles), sem alterar respostas nem escores.
+// 8. Resultados guardados mantêm respostas e escores; quando os perfis ou o
+//    método das afinidades mudam de versão, as afinidades são recalculadas a
+//    partir desses escores (withCurrentMethod).
 
-export const SCORING_VERSION = "2026.11-v1";
+// v2: proximidade linear por dimensão (antes, 1 − distância média ÷ 2, que
+// deixava quase todas as correntes entre 0,8 e 1) e leitura por níveis.
+export const SCORING_VERSION = "2026.11-v2";
 export const MIN_VALID_PER_DIMENSION = 6;
 export const MIN_VALID_DIMENSIONS_FOR_AFFINITY = 2;
 export const MIN_OVERLAP_FOR_PROFILE = 2;
 export const FULL_COMPARISON_OVERLAP = 3;
 export const INTERMEDIATE_THRESHOLD = 0.2;
-export const CLOSEST_MARGIN = 0.03;
+export const LEAN_MODERATE = 0.45;
+export const LEAN_STRONG = 0.7;
+export const PROXIMITY_ZERO_DISTANCE = 1;
+export const CLOSEST_MARGIN = 0.05;
 export const BAND_HIGH = 0.9;
-export const BAND_MODERATE = 0.75;
+export const BAND_MODERATE = 0.7;
+/** Score changes below this between two results are within what answering again usually produces. */
+export const MEANINGFUL_CHANGE = 0.2;
 
 export type AnswerMap = Partial<Record<string, AnswerChoice>>;
 
@@ -65,7 +77,7 @@ export type AffinityResult = {
   band: AffinityBand | null;
   rank: number | null;
   tiedWith: CurrentKey[];
-  dimensions: Array<{ key: DimensionKey; userScore: number; min: number; max: number; distance: number }>;
+  dimensions: Array<{ key: DimensionKey; userScore: number; min: number; max: number; distance: number; proximity: number }>;
 };
 
 export type QuestionnaireResult = {
@@ -83,6 +95,8 @@ export type QuestionnaireResult = {
   tensionDimensions: DimensionKey[];
   /** Set when the affinities were recomputed: profiles version used when the result was saved. */
   computedWithProfilesVersion?: string;
+  /** Set when the affinities were recomputed: method version used when the result was saved. */
+  computedWithScoringVersion?: string;
 };
 
 export function round2(value: number): number {
@@ -160,14 +174,14 @@ export function computeAffinity(profile: ReferenceProfile, dimensions: Dimension
     const range = profile.ranges[dimension.key];
     if (!range || dimension.status !== "OK" || dimension.score === null) continue;
     const score = dimension.score;
-    const distance = score < range.min ? range.min - score : score > range.max ? score - range.max : 0;
-    compared.push({ key: dimension.key, userScore: score, min: range.min, max: range.max, distance: round2(distance) });
+    const distance = round2(score < range.min ? range.min - score : score > range.max ? score - range.max : 0);
+    const proximity = round2(Math.max(0, 1 - distance / PROXIMITY_ZERO_DISTANCE));
+    compared.push({ key: dimension.key, userScore: score, min: range.min, max: range.max, distance, proximity });
   }
   if (compared.length < MIN_OVERLAP_FOR_PROFILE) {
     return { key: profile.key, comparable: false, limited: false, index: null, band: null, rank: null, tiedWith: [], dimensions: compared };
   }
-  const meanDistance = compared.reduce((sum, d) => sum + d.distance, 0) / compared.length;
-  const index = round2(1 - meanDistance / 2);
+  const index = round2(compared.reduce((sum, d) => sum + d.proximity, 0) / compared.length);
   return {
     key: profile.key,
     comparable: true,
@@ -233,18 +247,43 @@ export function computeResult(answers: AnswerMap, questions: Question[], now: Da
 }
 
 /**
- * A stored result as it reads today: when the reference profiles changed after it
- * was saved, the affinities are recomputed from its dimension scores, so names,
- * comparisons and the path always use the current profiles.
+ * A stored result as it reads today: when the reference profiles or the affinity
+ * method changed after it was saved, the affinities are recomputed from its
+ * dimension scores (answers and scores never change), so names, comparisons and
+ * the path always use the current profiles and method.
  */
-export function withCurrentProfiles(result: QuestionnaireResult): QuestionnaireResult {
-  if (result.profilesVersion === PROFILES_VERSION) return result;
-  return {
-    ...result,
-    ...affinitiesFor(result.dimensions),
-    profilesVersion: PROFILES_VERSION,
-    computedWithProfilesVersion: result.computedWithProfilesVersion ?? result.profilesVersion,
-  };
+export function withCurrentMethod(result: QuestionnaireResult): QuestionnaireResult {
+  const profilesChanged = result.profilesVersion !== PROFILES_VERSION;
+  const methodChanged = result.scoringVersion !== SCORING_VERSION;
+  if (!profilesChanged && !methodChanged) return result;
+  const current: QuestionnaireResult = { ...result, ...affinitiesFor(result.dimensions), profilesVersion: PROFILES_VERSION, scoringVersion: SCORING_VERSION };
+  if (profilesChanged) current.computedWithProfilesVersion = result.computedWithProfilesVersion ?? result.profilesVersion;
+  if (methodChanged) current.computedWithScoringVersion = result.computedWithScoringVersion ?? result.scoringVersion;
+  return current;
+}
+
+export type LeanLevel = "INTERMEDIATE" | "LIGHT" | "MODERATE" | "STRONG";
+
+/** Reading of a dimension score in levels, for display (thresholds in rule 5 above). */
+export function leanOf(score: number): { level: LeanLevel; side: "NEGATIVE" | "POSITIVE" | null } {
+  const size = Math.abs(score);
+  if (size < INTERMEDIATE_THRESHOLD) return { level: "INTERMEDIATE", side: null };
+  return { level: size >= LEAN_STRONG ? "STRONG" : size >= LEAN_MODERATE ? "MODERATE" : "LIGHT", side: score > 0 ? "POSITIVE" : "NEGATIVE" };
+}
+
+export type AnswerBreakdown = { towardNegative: number; neutral: number; towardPositive: number; unknown: number; missing: number };
+
+/** How the answers of a dimension split: toward each pole, neutral, and outside the calculation. */
+export function answerBreakdown(result: DimensionResult): AnswerBreakdown {
+  const breakdown: AnswerBreakdown = { towardNegative: 0, neutral: 0, towardPositive: 0, unknown: 0, missing: 0 };
+  for (const contribution of result.contributions) {
+    if (contribution.choice === null) breakdown.missing += 1;
+    else if (contribution.directed === null) breakdown.unknown += 1;
+    else if (contribution.directed > 0) breakdown.towardPositive += 1;
+    else if (contribution.directed < 0) breakdown.towardNegative += 1;
+    else breakdown.neutral += 1;
+  }
+  return breakdown;
 }
 
 /** Affinity index per current, used only to order perspective lessons. */

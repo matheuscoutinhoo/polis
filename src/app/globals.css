@@ -534,6 +534,38 @@
   }
 }
 
+/* View transitions: the trail moves each station to its new place when the
+   path order changes (TRAIL_TRANSITION); stage labels fade out and in. */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(.trilha-move) {
+  animation-duration: 460ms;
+  animation-timing-function: var(--ease-polis);
+}
+::view-transition-old(.trilha-exit) {
+  animation: 140ms ease-in both polis-fade-out;
+}
+::view-transition-new(.trilha-enter) {
+  animation: 280ms var(--ease-polis) 140ms both polis-rise-in;
+}
+
+@keyframes polis-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes polis-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -552,5 +584,12 @@
   }
   .choice-check path {
     transition: none;
+  }
+  /* View transitions swap instantly. */
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

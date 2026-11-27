@@ -39,17 +39,29 @@ test("cadastro, questionário completo, resultado, primeira lição com XP sem d
   await page.getByRole("button", { name: "Ver resultado" }).click();
   await page.waitForURL(/\/questionario\/resultado/);
   await expect(page.getByRole("heading", { name: "O que suas respostas indicam" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Síntese" }).getByText(/Suas respostas (se aproximam|não se aproximam)/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Síntese" }).getByText(/Suas respostas ficam mais próximas de|Nenhuma corrente de referência ficou próxima/)).toBeVisible();
   // The path is drawn as a flow of modules, starting with the common foundations.
   const foundations = page.getByRole("list", { name: "Fundamentos em comum" });
   await expect(foundations.getByRole("link").first()).toContainText(MODULES[0].title);
-  // Path choice: the save button appears only after a change and confirms the saved option.
+  // Path choice: choosing an option previews the trail in that order; the save button appears only after a change.
   const pathForm = page.locator("form").filter({ has: page.getByRole("radio", { name: /Trilha geral/ }) });
   await expect(pathForm.getByRole("button", { name: "Salvar escolha" })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Temas próximos" })).toBeVisible();
+  await pathForm.getByRole("radio", { name: /Trilha geral/ }).check();
+  await expect(page.getByRole("list", { name: "Perspectivas", exact: true })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Temas próximos" })).toHaveCount(0);
+  await expect(page.getByText("Pré-visualização da trilha geral: salve a escolha para seguir esta ordem.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continuar aprendendo" })).toHaveCount(0);
+  // Keeping the saved option shows the saved order again.
+  await pathForm.getByRole("button", { name: "Manter trilha por afinidade" }).click();
+  await expect(page.getByRole("list", { name: "Temas próximos" })).toBeVisible();
+  await expect(pathForm.getByRole("radio", { name: /Trilha por afinidade/ })).toBeChecked();
   await pathForm.getByRole("radio", { name: /Trilha geral/ }).check();
   await pathForm.getByRole("button", { name: "Salvar escolha" }).click();
   await expect(pathForm.getByText("Escolha salva: trilha geral.")).toBeVisible();
   await expect(pathForm.getByRole("radio", { name: /Trilha geral/ })).toBeChecked();
+  await expect(page.getByRole("list", { name: "Perspectivas", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continuar aprendendo" })).toBeVisible();
 
   // First lesson of the path (common foundations for everyone).
   const first = MODULES.find((m) => m.stage === "FOUNDATIONS")!;
@@ -90,7 +102,7 @@ test("cadastro, questionário completo, resultado, primeira lição com XP sem d
   await expect(page.getByRole("heading", { name: "Comparar dois resultados" })).toBeVisible();
   // Each attempt draws its own situations; the comparison says how many both results share.
   await expect(page.getByText(/se repetem nos dois resultados|vêm das mesmas situações/)).toBeVisible();
-  await expect(page.getByRole("table", { name: "Índice de proximidade de cada corrente, antes e depois" })).toBeVisible();
+  await expect(page.getByRole("table", { name: "Proximidade de cada corrente, de 0 a 100, antes e depois" })).toBeVisible();
   await page.getByRole("link", { name: "Ver detalhes" }).nth(1).click();
   await page.waitForURL(/\/questionario\/resultado\/[^/]+$/);
   await expect(page.getByText("Este é um resultado anterior")).toBeVisible();

@@ -12,6 +12,9 @@ export type Dimension = {
   negativePole: string;
   /** Polo associado a valores positivos (+1). */
   positivePole: string;
+  /** Nomes curtos dos polos, para contagens e legendas. */
+  negativeShort: string;
+  positiveShort: string;
   description: string;
   overlaps: string;
 };
@@ -24,6 +27,8 @@ export const DIMENSIONS: Dimension[] = [
     shortTitle: "Economia",
     negativePole: "Ênfase no mercado e na iniciativa privada",
     positivePole: "Ênfase na redistribuição e na ação pública",
+    negativeShort: "mercado",
+    positiveShort: "redistribuição",
     description:
       "Como você pondera concorrência, iniciativa privada e equilíbrio das contas públicas em relação a tributos, serviços públicos e proteção social.",
     overlaps:
@@ -36,6 +41,8 @@ export const DIMENSIONS: Dimension[] = [
     shortTitle: "Liberdades e autoridade",
     negativePole: "Ênfase nas liberdades e garantias individuais",
     positivePole: "Ênfase na autoridade e na ordem pública",
+    negativeShort: "liberdades",
+    positiveShort: "autoridade",
     description:
       "Como você equilibra privacidade, liberdade de expressão e garantias contra o poder do Estado com segurança, prevenção e ordem.",
     overlaps:
@@ -48,6 +55,8 @@ export const DIMENSIONS: Dimension[] = [
     shortTitle: "Costumes",
     negativePole: "Ênfase na preservação de tradições",
     positivePole: "Ênfase na mudança de costumes",
+    negativeShort: "tradição",
+    positiveShort: "mudança",
     description:
       "Como você vê a preservação de tradições, valores familiares e religiosos na vida pública em relação a mudanças nos costumes.",
     overlaps:
@@ -60,6 +69,8 @@ export const DIMENSIONS: Dimension[] = [
     shortTitle: "Participação e poder",
     negativePole: "Ênfase na representação e em instituições estáveis",
     positivePole: "Ênfase na participação direta e no poder distribuído",
+    negativeShort: "representação",
+    positiveShort: "participação direta",
     description:
       "Como você prefere que decisões coletivas sejam tomadas: por representantes eleitos, órgãos técnicos e contrapesos estáveis, ou com mais participação direta e descentralização.",
     overlaps:
@@ -72,6 +83,8 @@ export const DIMENSIONS: Dimension[] = [
     shortTitle: "Desenvolvimento e ambiente",
     negativePole: "Ênfase na expansão produtiva",
     positivePole: "Ênfase na proteção socioambiental",
+    negativeShort: "expansão produtiva",
+    positiveShort: "proteção",
     description:
       "Como você pondera crescimento, empregos e infraestrutura em relação à proteção ambiental e aos direitos de comunidades afetadas.",
     overlaps:

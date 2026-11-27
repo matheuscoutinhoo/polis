@@ -1,4 +1,5 @@
 import { DIMENSIONS, type DimensionKey } from "./dimensions";
+import { RETIRED_QUESTIONS } from "./question-archive";
 
 // Banco versionado de situações, em cinco blocos (um por dimensão). Cada bloco
 // tem 10 temas; cada tema tem versões em contextos diferentes, com a mesma
@@ -8,21 +9,27 @@ import { DIMENSIONS, type DimensionKey } from "./dimensions";
 // direction = −1: concordar aproxima do polo negativo. Em cada dimensão há
 // 5 temas em cada direção, para reduzir respostas automáticas de concordância;
 // assim, toda tentativa tem cinco situações em cada direção por bloco.
+//
+// Critérios de redação (2026.11-v3): cada situação apresenta uma decisão
+// concreta, com o que está em jogo, e o argumento principal de cada lado, com
+// peso parecido (a ordem dos lados alterna entre as versões); a afirmação
+// expressa uma única posição, sem adjetivos que antecipem a resposta.
+//
 // Qualquer alteração de texto, direção ou peso exige uma nova versão do banco.
 // Uma situação nunca muda de sentido sob o mesmo id: as tentativas guardam os
-// ids sorteados, e as respostas, os ids respondidos.
+// ids sorteados, e as respostas, os ids respondidos. Ao reescrever, use ids
+// novos e mova os textos anteriores para question-archive.ts.
 
-export const QUESTION_BANK_VERSION = "2026.11-v2";
+export const QUESTION_BANK_VERSION = "2026.11-v3";
 
 export type QuestionText = { id: string; title: string; situation: string; statement: string };
 
 export type QuestionSlot = {
-  /** Theme id, equal to the id of its first version. */
+  /** Theme id, stable across rewrites of its versions. */
   slot: string;
   dimension: DimensionKey;
   direction: 1 | -1;
   weight: number;
-  /** The first version is the situation used before the draw existed. */
   versions: QuestionText[];
 };
 
@@ -37,18 +44,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-01",
-        title: "Imposto sobre imóveis de maior valor para creches",
+        id: "eco-01-2a",
+        title: "Imposto maior sobre imóveis de alto valor",
         situation:
-          "Uma cidade precisa de recursos para abrir mais vagas em creches públicas. Uma proposta aumenta o imposto apenas sobre imóveis de maior valor; os demais continuariam pagando o mesmo.",
-        statement: "Eu apoiaria aumentar o imposto só sobre os imóveis de maior valor para financiar as creches.",
+          "Uma cidade quer abrir 3 mil vagas em creches aumentando em 30% o imposto dos imóveis acima de R$ 1 milhão; os demais continuam pagando o mesmo. Quem defende diz que quem tem mais patrimônio pode contribuir mais e que faltam vagas hoje. Quem critica diz que o aumento acaba repassado aos aluguéis e que a prefeitura deveria cortar gastos antes de cobrar mais.",
+        statement: "Eu apoiaria aumentar o imposto dos imóveis de alto valor para abrir as vagas.",
       },
       {
-        id: "eco-01b",
-        title: "Imposto maior sobre heranças de alto valor",
+        id: "eco-01-2b",
+        title: "Imposto maior sobre grandes heranças",
         situation:
-          "Um estado precisa de recursos para ampliar as escolas de ensino em tempo integral. Uma proposta aumenta o imposto apenas sobre heranças de valor elevado; as demais continuariam pagando o mesmo.",
-        statement: "Eu apoiaria aumentar o imposto só sobre as heranças de valor elevado para ampliar as escolas em tempo integral.",
+          "Para ampliar as escolas de tempo integral, um estado propõe dobrar, de 4% para 8%, o imposto sobre heranças acima de R$ 2 milhões; as menores não mudam. Quem critica diz que esse patrimônio já pagou impostos quando foi formado e que famílias ricas levariam seus bens para outros estados. Quem defende diz que grandes heranças concentram riqueza de geração em geração e podem contribuir mais.",
+        statement: "Eu apoiaria dobrar o imposto sobre as heranças acima de R$ 2 milhões.",
       },
     ],
   },
@@ -59,18 +66,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-02",
-        title: "Transporte por aplicativo com regras mínimas",
+        id: "eco-02-2a",
+        title: "Limite de motoristas de aplicativo",
         situation:
-          "Uma cidade limita o número de táxis por meio de licenças. Um aplicativo de transporte quer operar ali. A prefeitura pode liberar o serviço com regras mínimas de segurança ou limitar a quantidade de motoristas.",
-        statement: "A prefeitura deveria liberar o serviço com regras mínimas de segurança e deixar a concorrência definir preços e número de motoristas.",
+          "Taxistas pedem que a prefeitura limite o número de motoristas de aplicativo, como já faz com as licenças de táxi. Quem defende o limite diz que, sem ele, a renda de todos os motoristas cai e o trânsito piora. Quem é contra diz que o limite encarece as corridas e fecha uma fonte de renda para quem precisa trabalhar.",
+        statement: "A prefeitura não deveria limitar o número de motoristas de aplicativo.",
       },
       {
-        id: "eco-02b",
-        title: "Aluguel por temporada sem limite de imóveis",
+        id: "eco-02-2b",
+        title: "Limite para o aluguel por temporada",
         situation:
-          "Em uma cidade turística, muitos apartamentos passaram a ser alugados por temporada em aplicativos. Hotéis e parte dos moradores pedem um limite para o número de imóveis, alegando concorrência desigual e aluguéis mais caros; os proprietários querem apenas regras de cadastro e segurança.",
-        statement: "A prefeitura deveria exigir apenas cadastro e regras de segurança e deixar o mercado definir quantos imóveis são alugados por temporada.",
+          "Em uma cidade turística, um em cada cinco apartamentos do centro passou a ser alugado por temporada em aplicativos. Os proprietários dizem que esse aluguel completa a renda deles e traz turistas que movimentam o comércio. Hotéis e associações de moradores pedem um limite, dizendo que os aluguéis para quem mora na cidade subiram muito.",
+        statement: "A prefeitura não deveria limitar o número de imóveis alugados por temporada.",
       },
     ],
   },
@@ -81,17 +88,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-03",
+        id: "eco-03-2a",
         title: "Renda mensal para famílias de baixa renda",
         situation:
-          "Um governo estadual avalia criar um programa que paga uma quantia mensal a famílias de baixa renda. Para isso, teria de reduzir outros gastos ou aumentar tributos.",
-        statement: "Eu apoiaria criar o programa, mesmo com a necessidade de reduzir outros gastos ou aumentar tributos.",
+          "Um estado avalia pagar R$ 300 por mês a 200 mil famílias de baixa renda. Para isso, teria de adiar obras em estradas ou aumentar um imposto estadual. Quem defende diz que o dinheiro garante comida na mesa e circula no comércio local. Quem critica diz que as estradas também geram empregos e que benefícios permanentes desestimulam a busca por trabalho.",
+        statement: "Eu apoiaria criar o benefício mensal para essas famílias.",
       },
       {
-        id: "eco-03b",
+        id: "eco-03-2b",
         title: "Desconto na conta de luz para famílias de baixa renda",
-        situation: "Um governo estadual avalia pagar parte da conta de luz de famílias de baixa renda. Para isso, teria de adiar algumas obras ou aumentar tributos.",
-        statement: "Eu apoiaria o desconto na conta de luz, mesmo com o adiamento de obras ou o aumento de tributos.",
+        situation:
+          "Um estado avalia pagar metade da conta de luz de famílias de baixa renda, cobrindo o custo com um aumento na tarifa dos demais consumidores. Quem critica diz que a conta ficaria mais cara para pequenos comércios e para famílias que ganham pouco, mas estão acima do limite do programa. Quem defende diz que a energia é essencial e pesa muito no orçamento das famílias mais pobres.",
+        statement: "Eu apoiaria o desconto na conta de luz dessas famílias.",
       },
     ],
   },
@@ -102,18 +110,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-04",
-        title: "Concessão do serviço de água a empresa privada",
+        id: "eco-04-2a",
+        title: "Concessão do serviço de água a uma empresa",
         situation:
-          "A empresa pública de água de uma cidade tem dívidas e atende mal alguns bairros. Uma proposta concede o serviço a uma empresa privada por 30 anos, com metas de cobertura fiscalizadas por uma agência pública.",
-        statement: "Eu apoiaria conceder o serviço à empresa privada com essas metas e essa fiscalização.",
+          "A empresa pública de água de uma cidade não tem dinheiro para levar esgoto a todos os bairros. Uma empresa privada assumiria o serviço por 30 anos, com metas de investimento fiscalizadas por uma agência. Quem defende diz que a empresa privada tem capital para fazer as obras mais rápido. Quem critica diz que a tarifa tende a subir e que água não deveria gerar lucro.",
+        statement: "Eu apoiaria conceder o serviço de água à empresa privada.",
       },
       {
-        id: "eco-04b",
-        title: "Concessão de parques municipais a uma empresa",
+        id: "eco-04-2b",
+        title: "Concessão de parques a uma empresa",
         situation:
-          "Uma cidade não consegue manter bem os seus parques. Uma proposta concede a gestão de dois deles a uma empresa privada por 20 anos: a entrada continuaria gratuita, e a empresa ganharia dinheiro com restaurantes, estacionamento e eventos, sob fiscalização da prefeitura.",
-        statement: "Eu apoiaria conceder a gestão dos parques à empresa nessas condições.",
+          "Uma cidade gasta pouco com seus parques. A proposta concede dois deles a uma empresa por 20 anos: a entrada segue gratuita, e a empresa lucra com restaurantes, estacionamento e eventos. Quem critica diz que o espaço público vira negócio e que eventos pagos restringem o uso pelos moradores. Quem defende diz que a prefeitura economiza e os parques ficam mais bem cuidados.",
+        statement: "Eu apoiaria conceder os parques à empresa.",
       },
     ],
   },
@@ -124,18 +132,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-05",
-        title: "Aumento do salário mínimo acima da inflação",
+        id: "eco-05-2a",
+        title: "Salário mínimo acima da inflação",
         situation:
-          "O governo federal discute o valor do salário mínimo do próximo ano. Uma proposta prevê aumento acima da inflação. Parte dos pequenos negócios afirma que teria mais dificuldade para contratar.",
-        statement: "Eu apoiaria o aumento acima da inflação, mesmo com essa dificuldade para alguns pequenos negócios.",
+          "O governo federal propõe que o salário mínimo do próximo ano suba 5% acima da inflação. Quem defende diz que o aumento melhora a vida de milhões de trabalhadores e aposentados e movimenta o comércio. Quem critica diz que pequenos negócios teriam de demitir ou deixar de contratar e que as contas da previdência ficariam mais pesadas.",
+        statement: "Eu apoiaria o aumento de 5% acima da inflação.",
       },
       {
-        id: "eco-05b",
-        title: "Jornada menor sem redução de salário",
+        id: "eco-05-2b",
+        title: "Jornada de 40 horas sem corte de salário",
         situation:
-          "Uma proposta reduz a jornada máxima de trabalho de 44 para 40 horas por semana, sem redução de salário. Parte das empresas afirma que os custos aumentariam e que contrataria menos.",
-        statement: "Eu apoiaria reduzir a jornada sem redução de salário, mesmo com o aumento de custos para as empresas.",
+          "Uma proposta reduz a jornada máxima de trabalho de 44 para 40 horas semanais, sem redução de salário. Quem critica diz que o custo de cada hora trabalhada sobe, o que pode levar a demissões e a preços mais altos. Quem defende diz que as pessoas ganhariam tempo para a família e o descanso e que as empresas tenderiam a contratar mais.",
+        statement: "Eu apoiaria reduzir a jornada para 40 horas sem redução de salário.",
       },
     ],
   },
@@ -146,18 +154,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-06",
-        title: "Menos exigências para abrir pequenos negócios",
+        id: "eco-06-2a",
+        title: "Abrir um negócio antes da vistoria",
         situation:
-          "Para abrir uma padaria, uma pessoa precisa de várias licenças e cadastros, e o processo leva meses. Uma proposta elimina parte dessas exigências e deixa a fiscalização para depois da abertura.",
-        statement: "Eu apoiaria eliminar parte das exigências, mesmo com menos fiscalização antes da abertura dos negócios.",
+          "Abrir uma padaria exige várias licenças e pode levar meses. A proposta permite começar a funcionar com uma declaração do dono, deixando a vistoria para depois, com multa para quem descumprir as regras. Quem defende diz que a demora trava empregos e empurra pessoas para a informalidade. Quem critica diz que falhas de higiene e de segurança só apareceriam depois de alguém ser prejudicado.",
+        statement: "Eu apoiaria permitir que o negócio abra antes da vistoria.",
       },
       {
-        id: "eco-06b",
-        title: "Comércio livre para escolher dias e horários",
+        id: "eco-06-2b",
+        title: "Comércio aberto aos domingos e feriados",
         situation:
-          "Uma cidade exige autorização especial para que lojas abram aos domingos e feriados. Uma proposta deixa cada comerciante decidir seus dias e horários; sindicatos de trabalhadores do comércio temem jornadas mais longas.",
-        statement: "Cada comerciante deveria poder decidir livremente seus dias e horários de funcionamento.",
+          "Uma cidade exige autorização especial para as lojas abrirem aos domingos e feriados. A proposta deixa cada comerciante escolher seus dias e horários. Quem critica diz que os comerciários perderiam os domingos com a família e que pequenos lojistas não acompanhariam as grandes redes. Quem defende diz que a regra atual limita vendas e empregos e não combina com a rotina dos consumidores.",
+        statement: "Cada comerciante deveria poder escolher seus dias e horários de funcionamento.",
       },
     ],
   },
@@ -168,18 +176,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-07",
-        title: "Mais profissionais nos postos de saúde públicos",
+        id: "eco-07-2a",
+        title: "Postos públicos ou vales para clínicas particulares",
         situation:
-          "Para reduzir a espera por consultas, um município pode contratar mais profissionais para os postos de saúde públicos ou distribuir vales para consultas em clínicas privadas. O custo das duas opções é parecido.",
-        statement: "O município deveria priorizar a contratação de profissionais para os postos de saúde públicos.",
+          "Para reduzir a fila de consultas, um município pode contratar médicos para os postos de saúde ou dar vales para consultas em clínicas particulares, com custo parecido. Quem prefere os postos diz que eles fortalecem o SUS e também cuidam da prevenção. Quem prefere os vales diz que as clínicas já existem e atenderiam mais rápido.",
+        statement: "O município deveria contratar médicos para os postos públicos em vez de dar os vales.",
       },
       {
-        id: "eco-07b",
-        title: "Creches públicas ou bolsas em creches particulares",
+        id: "eco-07-2b",
+        title: "Creches públicas ou vagas em creches particulares",
         situation:
-          "Faltam vagas em creches em uma cidade. Com o mesmo orçamento, a prefeitura pode construir e manter creches públicas, que levariam mais tempo para abrir, ou pagar bolsas para crianças em creches particulares credenciadas, que atenderiam as famílias mais rápido.",
-        statement: "A prefeitura deveria priorizar a construção e a manutenção de creches públicas.",
+          "Faltam 2 mil vagas em creches. Com o mesmo dinheiro, a prefeitura pode construir creches públicas, prontas em três anos, ou comprar vagas em creches particulares já para o próximo ano. Quem prefere comprar diz que as famílias precisam da vaga agora. Quem prefere construir diz que as creches ficariam para a cidade, com padrão de atendimento garantido.",
+        statement: "A prefeitura deveria construir as creches públicas em vez de comprar as vagas.",
       },
     ],
   },
@@ -190,18 +198,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-08",
-        title: "Tarifas baixas para produtos importados",
+        id: "eco-08-2a",
+        title: "Imposto sobre calçados importados",
         situation:
-          "Uma indústria nacional pede que o governo aumente os impostos sobre produtos importados para proteger empregos no país. A medida tende a encarecer alguns produtos para os consumidores.",
-        statement: "O governo deveria manter os impostos de importação baixos e deixar os produtos importados concorrerem livremente.",
+          "Fábricas de calçados pedem que o governo aumente o imposto sobre calçados importados. Quem defende a medida diz que ela protege milhares de empregos no país. Quem é contra diz que os consumidores pagariam mais caro e que proteger um setor da concorrência reduz o incentivo para que ele melhore.",
+        statement: "O governo deveria manter baixo o imposto sobre calçados importados.",
       },
       {
-        id: "eco-08b",
-        title: "Compras públicas sem exigência de fabricação nacional",
+        id: "eco-08-2b",
+        title: "Peças nacionais nas compras do governo",
         situation:
-          "Um governo vai comprar ônibus e equipamentos para hospitais. Uma proposta exige que parte das peças seja fabricada no país, para gerar empregos; com isso, alguns fornecedores estrangeiros mais baratos ficariam de fora.",
-        statement: "O governo deveria comprar dos fornecedores com melhor preço e qualidade, sem exigir fabricação nacional.",
+          "Um governo vai comprar ônibus e equipamentos hospitalares. A proposta exige que metade das peças seja fabricada no país, mesmo que isso custe mais. Quem critica diz que, pagando mais caro, o governo compraria menos ônibus e equipamentos com o mesmo orçamento. Quem defende diz que o dinheiro público deve gerar empregos e fortalecer a indústria do país.",
+        statement: "O governo deveria comprar pelo melhor preço e qualidade, sem exigir peças fabricadas no país.",
       },
     ],
   },
@@ -212,18 +220,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-09",
+        id: "eco-09-2a",
         title: "Previdência para entregadores de aplicativo",
         situation:
-          "Entregadores que trabalham por aplicativo não têm os mesmos direitos de quem tem carteira assinada. Uma proposta obriga as empresas de aplicativo a contribuir para a previdência desses trabalhadores.",
-        statement: "Eu apoiaria a contribuição obrigatória das empresas, mesmo que o preço das entregas aumente.",
+          "Entregadores de aplicativo não têm aposentadoria nem auxílio em caso de acidente pagos pela empresa. A proposta obriga as plataformas a contribuir para a previdência deles. Quem defende diz que quem trabalha todos os dias precisa de proteção. Quem critica diz que o custo iria para o preço das entregas e que muitos entregadores preferem a flexibilidade de hoje.",
+        statement: "Eu apoiaria obrigar as plataformas a contribuir para a previdência dos entregadores.",
       },
       {
-        id: "eco-09b",
-        title: "Previdência para profissionais de faxina por aplicativo",
+        id: "eco-09-2b",
+        title: "Seguro e previdência para diaristas de aplicativo",
         situation:
-          "Plataformas digitais que intermediam faxinas e pequenos reparos em residências não contribuem para a previdência dos profissionais cadastrados. Uma proposta obriga essas empresas a pagar seguro contra acidentes e contribuição previdenciária para esses trabalhadores.",
-        statement: "Eu apoiaria a obrigação, mesmo que o preço dos serviços aumente.",
+          "Diaristas contratadas por aplicativo trabalham sem seguro contra acidentes nem contribuição para a aposentadoria. A proposta obriga as plataformas a pagar as duas coisas. Quem critica diz que o serviço ficaria mais caro e que parte dos clientes voltaria a contratar fora do aplicativo, sem proteção alguma. Quem defende diz que a empresa que lucra com o serviço deve dividir os riscos.",
+        statement: "Eu apoiaria obrigar as plataformas a pagar o seguro e a previdência das diaristas.",
       },
     ],
   },
@@ -234,17 +242,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "eco-10",
-        title: "Cortar despesas em vez de aumentar tributos",
-        situation: "Um governo gasta mais do que arrecada e precisa equilibrar as contas. As alternativas principais são cortar despesas ou aumentar tributos.",
-        statement: "O governo deveria priorizar o corte de despesas em vez do aumento de tributos.",
+        id: "eco-10-2a",
+        title: "Cortar gastos ou aumentar impostos",
+        situation:
+          "Um estado gasta mais do que arrecada. As saídas principais são cortar despesas, inclusive em programas sociais e obras, ou aumentar impostos. Quem prefere cortar diz que o governo precisa gastar melhor antes de pedir mais dinheiro à população. Quem prefere aumentar impostos diz que os cortes atingem primeiro quem depende dos serviços públicos.",
+        statement: "O estado deveria priorizar o corte de despesas em vez do aumento de impostos.",
       },
       {
-        id: "eco-10b",
-        title: "Limite para o crescimento dos gastos públicos",
+        id: "eco-10-2b",
+        title: "Teto para os gastos do estado",
         situation:
-          "Uma proposta limita, por dez anos, o crescimento dos gastos de um estado à inflação do ano anterior. Áreas como saúde e educação teriam de disputar recursos dentro desse limite.",
-        statement: "Eu apoiaria o limite de gastos, mesmo que saúde e educação tenham de disputar recursos dentro dele.",
+          "A proposta limita, por dez anos, o crescimento dos gastos de um estado à inflação do ano anterior. Quem critica diz que a população cresce e envelhece e que saúde e educação precisariam de mais dinheiro do que o teto permite. Quem defende diz que o teto obriga o governo a escolher prioridades e evita dívidas que ficariam para as próximas gerações.",
+        statement: "Eu apoiaria o teto de gastos por dez anos.",
       },
     ],
   },
@@ -257,17 +266,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-01",
-        title: "Câmeras em espaços públicos",
-        situation: "Uma cidade avalia usar câmeras em espaços públicos para ajudar a prevenir crimes. As gravações teriam regras de acesso e prazo de exclusão.",
-        statement: "Eu apoiaria a medida com essas condições.",
+        id: "lib-01-2a",
+        title: "Câmeras de vigilância nas ruas",
+        situation:
+          "Uma cidade quer instalar 2 mil câmeras nas ruas, com imagens guardadas por 30 dias e acessíveis à polícia. Quem defende diz que as câmeras inibem crimes e ajudam a esclarecer casos. Quem critica diz que toda a população passaria a ser vigiada o tempo todo e que as imagens poderiam ser usadas para outros fins.",
+        statement: "Eu apoiaria a instalação das câmeras.",
       },
       {
-        id: "lib-01b",
-        title: "Reconhecimento facial nas estações de metrô",
+        id: "lib-01-2b",
+        title: "Reconhecimento facial no metrô",
         situation:
-          "Uma cidade quer usar câmeras com reconhecimento facial nas estações de metrô para localizar pessoas com mandado de prisão. Há registros de erros de identificação, e as imagens ficariam guardadas por 30 dias.",
-        statement: "Eu apoiaria o reconhecimento facial nas estações com essas condições.",
+          "Uma cidade quer usar reconhecimento facial nas estações de metrô para encontrar pessoas com mandado de prisão. Quem critica diz que esses sistemas erram e que pessoas inocentes já foram abordadas por engano em outros lugares. Quem defende diz que a tecnologia ajudou a prender foragidos em outras cidades e que cada alerta é conferido por um policial.",
+        statement: "Eu apoiaria o uso de reconhecimento facial nas estações.",
       },
     ],
   },
@@ -278,17 +288,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-02",
-        title: "Críticas ofensivas a uma autoridade",
-        situation: "Uma pessoa publica nas redes sociais críticas duras e ofensivas ao prefeito da cidade, sem ameaças e sem acusações falsas.",
-        statement: "Esse tipo de publicação deve continuar permitido, mesmo sendo ofensivo.",
+        id: "lib-02-2a",
+        title: "Vídeos que ofendem o prefeito",
+        situation:
+          "Uma pessoa chama o prefeito de incompetente e covarde em vídeos nas redes sociais, sem ameaças nem acusações de crime. O prefeito pede à Justiça que os vídeos sejam retirados. Para uns, criticar autoridades com dureza faz parte da democracia. Para outros, ofensa pessoal não é crítica e degrada o debate público.",
+        statement: "Os vídeos devem continuar no ar.",
       },
       {
-        id: "lib-02b",
-        title: "Vídeos de humor que ridicularizam um juiz",
+        id: "lib-02-2b",
+        title: "Sátira sobre um juiz",
         situation:
-          "Um humorista publica vídeos que ridicularizam um juiz conhecido, com imitações e piadas pesadas, sem ameaças e sem acusações falsas. O juiz pede à Justiça que os vídeos sejam retirados do ar.",
-        statement: "Os vídeos devem continuar no ar, mesmo sendo ofensivos ao juiz.",
+          "Um humorista publica vídeos imitando de forma grosseira um juiz conhecido, sem ameaças nem acusações falsas. O juiz pede a retirada dos vídeos. Quem apoia o juiz diz que ridicularizar quem julga enfraquece a confiança na Justiça. Quem apoia o humorista diz que as autoridades precisam tolerar a sátira.",
+        statement: "O humorista deve poder manter os vídeos no ar.",
       },
     ],
   },
@@ -299,18 +310,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-03",
-        title: "Revistas policiais mais frequentes em um bairro",
+        id: "lib-03-2a",
+        title: "Revistas policiais em um bairro",
         situation:
-          "Depois de uma série de assaltos em um bairro, a polícia propõe fazer, durante três meses, abordagens e revistas mais frequentes em pessoas que circulam à noite.",
-        statement: "Eu apoiaria as revistas mais frequentes no bairro durante esse período.",
+          "Depois de uma série de assaltos noturnos em um bairro, a polícia propõe revistar com mais frequência, por três meses, quem circula ali à noite. Quem apoia diz que a presença policial afasta os assaltantes. Quem critica diz que moradores, sobretudo jovens, seriam revistados sem motivo e que isso aumenta a desconfiança em relação à polícia.",
+        statement: "Eu apoiaria as revistas mais frequentes durante esses três meses.",
       },
       {
-        id: "lib-03b",
+        id: "lib-03-2b",
         title: "Toque de recolher para adolescentes",
         situation:
-          "Depois de casos de violência envolvendo jovens à noite, uma cidade propõe que menores de 16 anos não possam circular desacompanhados nas ruas depois das 23h, durante seis meses.",
-        statement: "Eu apoiaria o toque de recolher durante esse período.",
+          "Depois de brigas entre jovens à noite, uma cidade propõe proibir, por seis meses, que menores de 16 anos circulem desacompanhados depois das 23h. Quem critica diz que a medida pune todos os jovens pelo que alguns fizeram e atrapalha quem estuda ou trabalha à noite. Quem defende diz que a medida protege os adolescentes e ajuda as famílias.",
+        statement: "Eu apoiaria o toque de recolher para menores de 16 anos.",
       },
     ],
   },
@@ -321,16 +332,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-04",
-        title: "Acesso a mensagens só com autorização judicial",
-        situation: "Uma proposta permitiria que a polícia acessasse mensagens de celular de pessoas investigadas, em casos urgentes, sem autorização prévia de um juiz.",
-        statement: "O acesso a mensagens deveria sempre depender de autorização prévia de um juiz.",
+        id: "lib-04-2a",
+        title: "Mensagens de celular sem ordem judicial",
+        situation:
+          "Uma proposta permite que a polícia leia as mensagens de celular de suspeitos de sequestro sem esperar a autorização de um juiz, comunicando a Justiça em até 24 horas. Quem defende diz que, nesses casos, algumas horas podem salvar uma vida. Quem critica diz que exceções assim tendem a se ampliar e abrem espaço para abusos.",
+        statement: "O acesso às mensagens deveria depender sempre de autorização prévia de um juiz.",
       },
       {
-        id: "lib-04b",
-        title: "Entrada da polícia em casas a partir de denúncia anônima",
-        situation: "Uma proposta permitiria que a polícia entrasse em uma casa sem mandado judicial com base apenas em uma denúncia anônima de que ali há drogas.",
-        statement: "Nesses casos, a entrada da polícia em uma casa deveria depender de mandado judicial.",
+        id: "lib-04-2b",
+        title: "Entrada em casas a partir de denúncia anônima",
+        situation:
+          "Uma proposta permite que a polícia entre em uma casa sem mandado quando receber uma denúncia anônima de que ali há armas ou drogas. Quem critica diz que qualquer pessoa poderia usar denúncias falsas para provocar a invasão de uma casa. Quem defende diz que, até o mandado sair, as provas desaparecem.",
+        statement: "A entrada da polícia em uma casa, nesses casos, deveria depender de mandado judicial.",
       },
     ],
   },
@@ -341,18 +354,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-05",
-        title: "Detectores de metal e revista de mochilas na escola",
+        id: "lib-05-2a",
+        title: "Detectores de metal na escola",
         situation:
-          "Uma escola pública tem enfrentado brigas frequentes, algumas com objetos cortantes. A direção quer instalar detectores de metal e revistar mochilas na entrada.",
-        statement: "Eu apoiaria os detectores e as revistas de mochilas na escola.",
+          "Uma escola pública teve brigas com objetos cortantes. A direção quer instalar detectores de metal na entrada e revistar a mochila de quem fizer o alarme disparar. Para uns, a medida protege estudantes e professores. Para outros, transforma a escola em um ambiente de suspeita e não resolve as causas da violência.",
+        statement: "Eu apoiaria os detectores de metal na entrada da escola.",
       },
       {
-        id: "lib-05b",
-        title: "Cadastro biométrico de torcedores nos estádios",
+        id: "lib-05-2b",
+        title: "Cadastro biométrico nos estádios",
         situation:
-          "Depois de brigas entre torcidas, um estado passa a exigir cadastro com foto e impressão digital de todos os torcedores para entrar nos estádios. Quem for identificado em brigas ficaria proibido de entrar por um tempo.",
-        statement: "Eu apoiaria o cadastro obrigatório e a proibição de entrada nessas condições.",
+          "Depois de brigas entre torcidas, um estado quer exigir cadastro com foto e impressão digital para a entrada nos estádios. Quem critica diz que milhões de torcedores teriam dados pessoais guardados pelo governo por causa de poucos. Quem defende diz que assim os envolvidos em brigas seriam identificados e impedidos de voltar.",
+        statement: "Eu apoiaria o cadastro biométrico obrigatório nos estádios.",
       },
     ],
   },
@@ -363,17 +376,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-06",
-        title: "Manifestação pacífica que interrompe o trânsito",
-        situation: "Um grupo avisa com antecedência que fará uma manifestação pacífica em uma avenida movimentada. O ato deve interromper o trânsito por algumas horas.",
-        statement: "A manifestação deve ser permitida, mesmo atrapalhando o trânsito.",
+        id: "lib-06-2a",
+        title: "Protesto que fecha uma avenida",
+        situation:
+          "Um grupo anuncia um protesto que vai ocupar uma avenida movimentada por três horas, no horário de pico. Para quem defende o ato, protestar em lugares visíveis é um direito, e algum transtorno faz parte. Para quem critica, milhares de pessoas sem relação com a causa perderiam horas no trânsito, e ambulâncias poderiam ficar presas.",
+        statement: "O protesto deve ser permitido na avenida.",
       },
       {
-        id: "lib-06b",
+        id: "lib-06-2b",
         title: "Acampamento de protesto em uma praça",
         situation:
-          "Um grupo monta barracas em uma praça central para protestar contra uma decisão do governo e anuncia que ficará ali por duas semanas, sem violência. Comerciantes vizinhos reclamam da perda de clientes.",
-        statement: "O acampamento deve ser permitido durante o protesto, mesmo com os transtornos para o comércio.",
+          "Um grupo monta barracas em uma praça central para protestar contra o governo e anuncia que vai ficar duas semanas. Quem critica diz que a praça é de todos e que o comércio do entorno perderia clientes. Quem defende diz que ocupar o espaço público é uma forma legítima de pressão política.",
+        statement: "O acampamento deve ser permitido durante as duas semanas.",
       },
     ],
   },
@@ -384,17 +398,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-07",
-        title: "Remoção rápida de informação falsa em emergência",
-        situation: "Durante uma emergência de saúde, o governo propõe que as plataformas digitais removam rapidamente publicações que um órgão público classificar como falsas.",
-        statement: "Eu apoiaria a remoção rápida dessas publicações durante a emergência.",
+        id: "lib-07-2a",
+        title: "Remoção de publicações durante uma epidemia",
+        situation:
+          "Durante uma epidemia, o governo quer obrigar as redes sociais a remover em até duas horas as publicações que o Ministério da Saúde considerar falsas. Quem defende diz que boatos sobre vacinas e remédios custam vidas. Quem critica diz que o governo passaria a decidir o que é verdade e que informações corretas também poderiam ser apagadas.",
+        statement: "Eu apoiaria obrigar as redes sociais a remover essas publicações.",
       },
       {
-        id: "lib-07b",
-        title: "Suspensão de perfis que espalham boatos em um desastre",
+        id: "lib-07-2b",
+        title: "Suspensão de perfis durante um desastre",
         situation:
-          "Durante uma enchente, circulam mensagens falsas sobre o rompimento de uma barragem, causando pânico. A Defesa Civil propõe que as plataformas suspendam, por alguns dias, os perfis que mais compartilharem esse conteúdo.",
-        statement: "Eu apoiaria a suspensão temporária desses perfis durante a emergência.",
+          "Durante uma enchente, boatos sobre o rompimento de uma barragem causam pânico. A Defesa Civil quer que as redes suspendam por cinco dias os perfis que mais espalharem a mensagem. Quem critica diz que muita gente compartilha por medo, sem má-fé, e que a suspensão é uma punição sem julgamento. Quem defende diz que o pânico pode levar pessoas a sair de áreas seguras para áreas de risco.",
+        statement: "Eu apoiaria suspender esses perfis durante a emergência.",
       },
     ],
   },
@@ -405,17 +420,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-08",
-        title: "Recusa de tratamento médico por adulto",
-        situation: "Uma pessoa adulta e consciente quer recusar um tratamento médico por motivos pessoais. Ela foi informada dos riscos para a própria saúde.",
-        statement: "A decisão dessa pessoa deve ser respeitada, mesmo que a equipe médica discorde.",
+        id: "lib-08-2a",
+        title: "Transfusão recusada por motivo religioso",
+        situation:
+          "Um adulto lúcido recusa uma transfusão de sangue por motivo religioso, sabendo que pode morrer. A equipe médica quer pedir à Justiça autorização para fazer a transfusão mesmo assim. Para uns, cada adulto decide sobre o próprio corpo, mesmo quando a escolha parece errada aos outros. Para outros, o dever de salvar uma vida deve vir antes.",
+        statement: "A recusa dessa pessoa deve ser respeitada.",
       },
       {
-        id: "lib-08b",
-        title: "Saltos em cachoeira proibidos após acidentes",
+        id: "lib-08-2b",
+        title: "Proibição de saltos em uma cachoeira",
         situation:
-          "Uma cidade proíbe os saltos de uma pedra em uma cachoeira, comuns entre os visitantes, depois de acidentes graves. Moradores adultos dizem que conhecem os riscos e querem continuar saltando.",
-        statement: "Adultos informados dos riscos deveriam poder continuar saltando, mesmo depois dos acidentes.",
+          "Depois de acidentes graves, uma cidade proíbe os saltos de uma pedra em uma cachoeira, com multa para quem desobedecer. A prefeitura diz que os resgates custam caro e põem em risco também os bombeiros. Moradores adultos dizem que conhecem os riscos e que a decisão de saltar é deles.",
+        statement: "Adultos deveriam poder continuar saltando, por conta e risco próprios.",
       },
     ],
   },
@@ -426,17 +442,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-09",
-        title: "Penas maiores para furtos repetidos",
-        situation: "Uma proposta aumenta as penas de prisão para pessoas que cometem furtos repetidas vezes.",
-        statement: "Eu apoiaria penas maiores para quem comete furtos repetidamente.",
+        id: "lib-09-2a",
+        title: "Pena maior para furtos repetidos",
+        situation:
+          "Uma proposta dobra a pena de prisão de quem for condenado por furto pela terceira vez. Quem defende diz que poucas pessoas cometem a maioria dos furtos e que a punição precisa crescer com a repetição. Quem critica diz que as prisões já estão lotadas e que manter presos por mais tempo os autores de furtos os aproxima do crime organizado.",
+        statement: "Eu apoiaria dobrar a pena na terceira condenação por furto.",
       },
       {
-        id: "lib-09b",
-        title: "Mais tempo em regime fechado para condenados por roubo",
+        id: "lib-09-2b",
+        title: "Mais tempo em regime fechado",
         situation:
-          "Condenados por roubo podem passar do regime fechado para o semiaberto depois de cumprir uma parte da pena. Uma proposta aumenta essa parte, para que fiquem mais tempo no regime fechado.",
-        statement: "Eu apoiaria aumentar o tempo em regime fechado para esses condenados.",
+          "Condenados por roubo podem passar ao regime semiaberto depois de cumprir parte da pena. A proposta aumenta essa parte, mantendo-os mais tempo no regime fechado. Quem critica diz que o custo das prisões sobe e que a volta gradual ao convívio fica mais difícil, favorecendo a reincidência. Quem defende diz que a sensação de impunidade diminui e que a sociedade fica protegida por mais tempo.",
+        statement: "Eu apoiaria aumentar o tempo em regime fechado para condenados por roubo.",
       },
     ],
   },
@@ -447,17 +464,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "lib-10",
-        title: "Dados de localização compartilhados com a polícia",
+        id: "lib-10-2a",
+        title: "Dados do cartão de transporte para a polícia",
         situation:
-          "O aplicativo do transporte público de uma cidade registra a localização dos passageiros. A prefeitura quer usar esses dados para planejar linhas e também entregá-los à polícia quando ela pedir.",
-        statement: "A entrega desses dados à polícia deveria exigir uma ordem judicial em cada caso.",
+          "O cartão de transporte de uma cidade registra onde e quando cada passageiro embarca. A polícia quer acesso direto a esses dados para localizar suspeitos, sem pedir autorização a um juiz em cada caso. Quem defende diz que isso agilizaria as investigações. Quem critica diz que os deslocamentos de toda a população ficariam expostos, sem controle.",
+        statement: "A polícia só deveria acessar esses dados com ordem judicial em cada caso.",
       },
       {
-        id: "lib-10b",
-        title: "Dados de pacientes acessados pela polícia",
-        situation: "Uma secretaria estadual de saúde quer dar à polícia acesso direto ao cadastro de pacientes da rede pública, para ajudar a localizar pessoas procuradas.",
-        statement: "O acesso da polícia a esses dados deveria depender de ordem judicial em cada caso.",
+        id: "lib-10-2b",
+        title: "Cadastro de pacientes acessado pela polícia",
+        situation:
+          "Uma secretaria de saúde quer dar à polícia acesso direto ao cadastro de pacientes da rede pública, para localizar pessoas procuradas. Quem critica diz que pessoas com mandado deixariam de buscar atendimento e que os dados de saúde de todos ficariam expostos. Quem defende diz que o cadastro tem endereços atualizados que ajudariam a encontrar foragidos.",
+        statement: "A polícia só deveria acessar esse cadastro com ordem judicial em cada caso.",
       },
     ],
   },
@@ -470,18 +488,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-01",
+        id: "cos-01-2a",
         title: "Diferentes formatos de família nas aulas",
         situation:
-          "Uma escola pública propõe incluir, nas aulas sobre convivência, conteúdos sobre diferentes formatos de família, como famílias com avós responsáveis, com um só responsável ou com dois pais ou duas mães.",
-        statement: "Eu apoiaria incluir esse conteúdo nas aulas.",
+          "Uma escola pública quer incluir, nas aulas para crianças de 8 a 10 anos, histórias com diferentes formatos de família, como as criadas por avós, por um só responsável ou por dois pais ou duas mães. Parte das famílias apoia, dizendo que todas as crianças precisam se ver respeitadas na escola. Outra parte é contra, dizendo que o tema cabe às famílias e não deveria ser tratado nessa idade.",
+        statement: "Eu apoiaria incluir essas histórias nas aulas.",
       },
       {
-        id: "cos-01b",
-        title: "Diferentes tipos de família em campanha de adoção",
+        id: "cos-01-2b",
+        title: "Casais do mesmo sexo em campanha de adoção",
         situation:
-          "Uma prefeitura prepara uma campanha para incentivar a adoção de crianças e quer mostrar diferentes tipos de família, incluindo pessoas solteiras e casais do mesmo sexo.",
-        statement: "Eu apoiaria mostrar esses diferentes tipos de família na campanha.",
+          "Uma prefeitura prepara uma campanha para estimular a adoção e quer mostrar diferentes famílias adotantes, incluindo casais do mesmo sexo. Quem critica diz que o dinheiro público não deveria ser usado em um tema que divide a população. Quem defende diz que a campanha deve mostrar as famílias que de fato adotam.",
+        statement: "Eu apoiaria mostrar casais do mesmo sexo na campanha.",
       },
     ],
   },
@@ -492,18 +510,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-02",
-        title: "Símbolos religiosos em prédios públicos",
+        id: "cos-02-2a",
+        title: "Crucifixos no fórum",
         situation:
-          "Em um município, alguns prédios públicos exibem há décadas símbolos de uma religião, como crucifixos. Um grupo pede a retirada; outro defende que fazem parte da tradição local.",
-        statement: "Os símbolos deveriam permanecer, por fazerem parte da tradição local.",
+          "Crucifixos estão pendurados há décadas nas salas de audiência do fórum de uma cidade. Um grupo pede a retirada, porque o Estado é laico e deve tratar todas as crenças da mesma forma. Outro grupo quer mantê-los, porque fazem parte da história e da cultura locais.",
+        statement: "Os crucifixos deveriam permanecer nas salas do fórum.",
       },
       {
-        id: "cos-02b",
+        id: "cos-02-2b",
         title: "Oração no início das sessões da Câmara",
         situation:
-          "Há décadas, as sessões da Câmara Municipal de uma cidade começam com uma oração cristã. Alguns vereadores propõem trocá-la por um minuto de silêncio; outros defendem manter a tradição.",
-        statement: "A oração deveria ser mantida, por fazer parte da tradição da Câmara.",
+          "As sessões da Câmara de uma cidade começam há décadas com uma oração cristã. Alguns vereadores querem manter a oração, porque ela expressa a fé da maioria dos moradores. Outros querem trocá-la por um minuto de silêncio, para incluir quem tem outra religião ou nenhuma.",
+        statement: "A oração deveria ser mantida no início das sessões.",
       },
     ],
   },
@@ -514,18 +532,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-03",
-        title: "Dispensa de aulas por motivos religiosos",
+        id: "cos-03-2a",
+        title: "Dispensa da aula sobre evolução",
         situation:
-          "Uma família pede que a escola dispense o filho de algumas aulas cujos temas contrariam os valores religiosos da família. A escola considera esses conteúdos parte do currículo.",
-        statement: "A escola deveria permitir essa dispensa.",
+          "Uma família pede que a escola dispense o filho das aulas sobre a teoria da evolução, que contrariam a fé da família. Quem apoia o pedido diz que os pais têm o direito de educar os filhos segundo suas crenças. Quem é contra diz que o currículo comum garante que todas as crianças aprendam o mesmo conteúdo científico.",
+        statement: "A escola deveria aceitar o pedido de dispensa.",
       },
       {
-        id: "cos-03b",
+        id: "cos-03-2b",
         title: "Educação dos filhos em casa",
         situation:
-          "Uma família quer educar os filhos em casa, em vez de matriculá-los em uma escola, para transmitir seus próprios valores. Uma proposta permitiria essa opção, com provas anuais para acompanhar o aprendizado.",
-        statement: "As famílias deveriam poder educar os filhos em casa, com essas provas anuais.",
+          "Uma proposta permite que as famílias eduquem os filhos em casa, sem matrícula em escola, com provas anuais para acompanhar o aprendizado. Quem critica diz que as crianças perderiam a convivência com quem pensa diferente e que casos de negligência ficariam mais difíceis de perceber. Quem defende diz que os pais devem poder escolher a educação que dão aos filhos.",
+        statement: "As famílias deveriam poder educar os filhos em casa, com as provas anuais.",
       },
     ],
   },
@@ -536,18 +554,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-04",
-        title: "Licença igual para pais e mães",
+        id: "cos-04-2a",
+        title: "Licença-paternidade igual à das mães",
         situation:
-          "Uma empresa pública propõe que pais tenham licença de quatro meses após o nascimento ou a adoção de um filho, igual à das mães, para incentivar a divisão dos cuidados.",
-        statement: "Eu apoiaria a licença igual para pais e mães.",
+          "Uma proposta amplia a licença-paternidade de 5 dias para 4 meses, igual à das mães. Quem defende diz que isso divide o cuidado com os filhos e reduz a discriminação contra mulheres na contratação. Quem critica diz que os primeiros meses do bebê pedem mais a presença da mãe e que cada família deveria decidir como dividir os cuidados.",
+        statement: "Eu apoiaria a licença de quatro meses para os pais.",
       },
       {
-        id: "cos-04b",
-        title: "Mulheres na direção de empresas públicas",
+        id: "cos-04-2b",
+        title: "Cota para mulheres na direção de estatais",
         situation:
-          "Nas empresas públicas de um estado, poucas mulheres ocupam cargos de direção. Uma proposta exige que pelo menos um terço desses cargos seja ocupado por mulheres.",
-        statement: "Eu apoiaria essa exigência.",
+          "Nas empresas públicas de um estado, 9 em cada 10 diretores são homens. A proposta exige que ao menos um terço das diretorias seja ocupado por mulheres. Quem critica diz que os cargos devem ser ocupados por mérito, sem critério de sexo. Quem defende diz que, sem regra, a desigualdade se mantém por gerações.",
+        statement: "Eu apoiaria a cota de um terço para mulheres nas diretorias.",
       },
     ],
   },
@@ -558,18 +576,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-05",
-        title: "Apoio público a uma festa religiosa tradicional",
+        id: "cos-05-2a",
+        title: "Dinheiro público para uma festa religiosa",
         situation:
-          "Uma festa religiosa tradicional recebe recursos da prefeitura há décadas. Uma proposta corta esse apoio por se tratar de evento ligado a uma religião específica.",
-        statement: "A prefeitura deveria continuar apoiando a festa, por fazer parte da tradição local.",
+          "Uma festa católica tradicional recebe R$ 500 mil da prefeitura todos os anos e atrai turistas. Uma proposta corta esse apoio. Quem defende o corte diz que o Estado não deve financiar eventos de uma religião. Quem defende o apoio diz que a festa é patrimônio cultural da cidade e movimenta a economia local.",
+        statement: "A prefeitura deveria continuar financiando a festa.",
       },
       {
-        id: "cos-05b",
-        title: "Feriado do padroeiro da cidade",
+        id: "cos-05-2b",
+        title: "Feriado do padroeiro",
         situation:
-          "Uma cidade tem um feriado em homenagem ao santo padroeiro. Uma proposta troca o feriado por uma data comemorativa sem folga, argumentando que o Estado é laico e que o comércio perde vendas.",
-        statement: "O feriado do padroeiro deveria ser mantido, por fazer parte da tradição da cidade.",
+          "Uma cidade tem feriado no dia do santo padroeiro. Uma proposta transforma a data em dia comemorativo, sem folga. Quem quer manter o feriado diz que a data faz parte da identidade da cidade há gerações. Quem defende a mudança diz que o Estado é laico e que o comércio perde vendas com o feriado.",
+        statement: "O feriado do padroeiro deveria ser mantido.",
       },
     ],
   },
@@ -580,16 +598,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-06",
-        title: "Nome social na lista de chamada",
-        situation: "Um estudante pede à escola para ser chamado pelo nome social — o nome com que se identifica — nas listas de chamada, com autorização dos responsáveis.",
-        statement: "A escola deveria atender ao pedido.",
+        id: "cos-06-2a",
+        title: "Nome social na escola",
+        situation:
+          "Um estudante de 15 anos, com autorização dos pais, pede para ser chamado na escola pelo nome com que se identifica, diferente do nome de registro. Parte da comunidade escolar apoia, dizendo que isso evita constrangimentos e abandono escolar. Outra parte é contra, dizendo que a escola não deveria tratar de identidade de gênero com adolescentes.",
+        statement: "A escola deveria atender ao pedido do estudante.",
       },
       {
-        id: "cos-06b",
-        title: "Nome social no crachá do trabalho",
-        situation: "Uma funcionária de uma empresa pública pede para usar o nome social — o nome com que se identifica — no crachá e no e-mail de trabalho.",
-        statement: "A empresa deveria atender ao pedido.",
+        id: "cos-06-2b",
+        title: "Nome social no trabalho",
+        situation:
+          "Uma funcionária trans de uma empresa pública pede para usar o nome social no crachá e no e-mail de trabalho. Alguns colegas dizem que documentos de trabalho deveriam seguir o nome de registro. Outros dizem que atender ao pedido é uma questão de respeito.",
+        statement: "A empresa deveria atender ao pedido da funcionária.",
       },
     ],
   },
@@ -600,16 +620,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-07",
-        title: "Prioridade à família formada por pai, mãe e filhos",
-        situation: "Uma proposta de lei estabelece como prioridade das políticas sociais o fortalecimento do casamento e da família formada por pai, mãe e filhos.",
+        id: "cos-07-2a",
+        title: "Família de pai, mãe e filhos como prioridade",
+        situation:
+          "Uma proposta de lei define como prioridade das políticas sociais o fortalecimento da família formada por pai, mãe e filhos. Quem defende diz que essa família é a base da sociedade e a que mais protege as crianças. Quem critica diz que o Estado passaria a valorizar mais umas famílias do que outras, como as de mães que criam os filhos sozinhas.",
         statement: "Eu apoiaria essa prioridade nas políticas sociais.",
       },
       {
-        id: "cos-07b",
-        title: "Programa público para fortalecer casamentos",
-        situation: "Uma prefeitura quer criar cursos e atendimento para casais, com o objetivo de reduzir os divórcios e fortalecer o casamento.",
-        statement: "Eu apoiaria usar recursos públicos nesse programa.",
+        id: "cos-07-2b",
+        title: "Programa público para evitar divórcios",
+        situation:
+          "Uma prefeitura quer criar cursos e aconselhamento gratuito para casais, com a meta de reduzir os divórcios. Quem critica diz que o poder público não deveria tratar o divórcio como um problema a ser combatido. Quem defende diz que casamentos estáveis fazem bem aos filhos e à comunidade.",
+        statement: "Eu apoiaria usar dinheiro público nesse programa.",
       },
     ],
   },
@@ -620,17 +642,17 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-08",
-        title: "Revisão de textos sobre figuras históricas",
+        id: "cos-08-2a",
+        title: "Placas sobre heróis da cidade",
         situation:
-          "Um museu da cidade quer revisar placas que apresentam algumas figuras históricas apenas como heróis, acrescentando informações sobre a participação delas na escravidão e em episódios de violência.",
-        statement: "Eu apoiaria a revisão dos textos do museu.",
+          "Um museu quer revisar as placas que apresentam figuras históricas da cidade apenas como heróis, acrescentando que algumas mantiveram pessoas escravizadas e participaram de ataques contra povos indígenas. Quem apoia diz que a história completa precisa ser contada. Quem critica diz que julgar o passado com os valores de hoje apaga o contexto da época.",
+        statement: "Eu apoiaria a revisão das placas.",
       },
       {
-        id: "cos-08b",
-        title: "Troca do nome de uma rua ligada à escravidão",
+        id: "cos-08-2b",
+        title: "Troca do nome de uma rua",
         situation:
-          "Uma rua central tem o nome de um político do século XIX que comercializava pessoas escravizadas. Moradores propõem dar à rua o nome de uma educadora negra da cidade; outros dizem que o nome atual faz parte da história local.",
+          "Uma rua central homenageia um político do século XIX que enriqueceu com o tráfico de pessoas escravizadas. Parte dos moradores quer manter o nome: diz que trocá-lo não muda o passado, que a rua se chama assim há 150 anos e que a mudança traz custos para moradores e comerciantes. Outra parte propõe homenagear uma professora negra da cidade, dizendo que uma rua não deveria celebrar quem lucrou com a escravidão.",
         statement: "Eu apoiaria trocar o nome da rua.",
       },
     ],
@@ -642,18 +664,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-09",
-        title: "Educação sexual só no ensino médio e com autorização",
+        id: "cos-09-2a",
+        title: "Educação sexual com autorização dos pais",
         situation:
-          "Pais e professores discutem quando tratar de educação sexual na escola. Uma proposta deixa o tema apenas para o ensino médio e somente para estudantes com autorização dos responsáveis.",
-        statement: "Eu apoiaria essa regra.",
+          "Uma proposta permite tratar de educação sexual na escola apenas no ensino médio e só com os estudantes que tiverem autorização escrita dos responsáveis. Quem defende diz que cabe às famílias decidir quando e como falar do assunto. Quem critica diz que essas aulas ajudam crianças a reconhecer abusos e que justamente quem mais precisa pode ficar sem elas.",
+        statement: "Eu apoiaria essa regra para a educação sexual.",
       },
       {
-        id: "cos-09b",
-        title: "Cenas de nudez na TV aberta só depois das 23h",
+        id: "cos-09-2b",
+        title: "Nudez na TV aberta antes das 23h",
         situation:
-          "Uma proposta proíbe que a TV aberta exiba cenas de nudez e de uso de drogas antes das 23h, para proteger crianças e adolescentes. As emissoras dizem que já informam a classificação indicativa de cada programa.",
-        statement: "Eu apoiaria essa proibição.",
+          "Uma proposta proíbe cenas de nudez e de uso de drogas na TV aberta antes das 23h. Quem critica diz que já existe classificação indicativa e que cabe aos pais, e não ao governo, controlar o que os filhos assistem. Quem defende diz que muitas crianças veem TV sem supervisão e precisam de proteção.",
+        statement: "Eu apoiaria proibir essas cenas antes das 23h.",
       },
     ],
   },
@@ -664,18 +686,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "cos-10",
-        title: "Uniforme escolar à escolha de cada estudante",
+        id: "cos-10-2a",
+        title: "Uniforme escolar sem divisão por gênero",
         situation:
-          "Uma escola tem uniformes diferentes por gênero: saia para meninas e calça para meninos. A direção propõe que cada estudante escolha entre as peças disponíveis.",
-        statement: "Eu apoiaria deixar a escolha do uniforme para cada estudante.",
+          "Uma escola tem uniforme com saia para as meninas e calça para os meninos. A direção propõe que cada estudante escolha qualquer peça. Para quem apoia, a regra atual impõe papéis de gênero e incomoda parte dos estudantes. Para quem é contra, o uniforme atual funciona bem e a mudança abre uma discussão que deveria ficar com as famílias.",
+        statement: "Eu apoiaria deixar cada estudante escolher as peças do uniforme.",
       },
       {
-        id: "cos-10b",
+        id: "cos-10-2b",
         title: "Brinquedos sem divisão entre meninos e meninas",
         situation:
-          "Uma escola de educação infantil decide não separar brinquedos e atividades em “de menino” e “de menina”. Parte das famílias concorda; outra parte prefere a separação.",
-        statement: "Eu apoiaria essa decisão da escola.",
+          "Uma escola de educação infantil decide deixar de separar brinquedos e atividades em “de menino” e “de menina”. Parte das famílias é contra, dizendo que a escola não deveria interferir no modo como cada família educa os filhos sobre ser menino ou menina. Outra parte apoia, dizendo que as crianças devem poder brincar do que gostam.",
+        statement: "Eu apoiaria a decisão da escola.",
       },
     ],
   },
@@ -688,16 +710,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-01",
-        title: "Moradores decidem parte do orçamento",
-        situation: "Uma prefeitura propõe que os moradores decidam diretamente, em assembleias por bairro, como usar uma parte do orçamento de obras.",
-        statement: "Eu apoiaria que os moradores decidissem diretamente essa parte do orçamento.",
+        id: "par-01-2a",
+        title: "Moradores decidem parte das obras",
+        situation:
+          "Uma prefeitura propõe que 20% do dinheiro de obras seja decidido pelos moradores, em assembleias nos bairros. Quem apoia diz que quem vive no bairro sabe melhor o que falta ali. Quem critica diz que poucas pessoas vão às assembleias e que grupos organizados acabariam decidindo por todos.",
+        statement: "Eu apoiaria que os moradores decidissem diretamente essa parte das obras.",
       },
       {
-        id: "par-01b",
+        id: "par-01-2b",
         title: "Votação pela internet para escolher obras",
-        situation: "Um governo estadual propõe que os moradores de cada região escolham, em votação pela internet, quais obras serão feitas com uma parte do orçamento.",
-        statement: "Eu apoiaria que os moradores escolhessem essas obras por votação direta.",
+        situation:
+          "Um governo estadual propõe que os moradores de cada região escolham, por votação pela internet, quais obras serão feitas com parte do orçamento. Quem critica diz que obras pouco visíveis, como as de esgoto, perderiam para as mais populares e que técnicos e deputados planejam melhor. Quem defende diz que a decisão ficaria mais próxima da população.",
+        statement: "Eu apoiaria escolher essas obras por votação dos moradores.",
       },
     ],
   },
@@ -708,18 +732,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-02",
-        title: "Decisões técnicas protegidas de pressões políticas",
+        id: "par-02-2a",
+        title: "Mandato fixo para quem define os juros",
         situation:
-          "Algumas decisões, como a definição da taxa básica de juros, ficam com uma equipe técnica que tem mandato fixo e não pode ser demitida a qualquer momento pelo governo.",
-        statement: "Eu prefiro que decisões desse tipo fiquem com equipes técnicas protegidas de pressões políticas.",
+          "A taxa básica de juros é definida por uma diretoria técnica com mandato fixo, que o presidente da República não pode demitir. Quem defende diz que isso evita que os juros sejam baixados por interesse eleitoral, o que gera inflação. Quem critica diz que uma decisão que afeta os empregos e as dívidas de todos deveria ficar com quem foi eleito.",
+        statement: "Decisões como essa devem ficar com uma diretoria técnica de mandato fixo.",
       },
       {
-        id: "par-02b",
-        title: "Diretores de escola escolhidos por seleção técnica",
+        id: "par-02-2b",
+        title: "Diretor de escola: prova ou eleição",
         situation:
-          "Os diretores das escolas estaduais podem ser escolhidos por uma seleção técnica, com prova e análise de currículo, ou por eleição entre professores, funcionários, estudantes e famílias.",
-        statement: "Os diretores deveriam ser escolhidos pela seleção técnica, e não por eleição na comunidade escolar.",
+          "Os diretores das escolas estaduais podem ser escolhidos por prova e análise de currículo ou por eleição entre professores, funcionários, estudantes e famílias. Quem prefere a eleição diz que o diretor precisa do apoio de quem convive com a escola todos os dias. Quem prefere a prova diz que ela seleciona quem tem preparo para administrar uma escola.",
+        statement: "Os diretores deveriam ser escolhidos por prova e análise de currículo, e não por eleição.",
       },
     ],
   },
@@ -730,16 +754,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-03",
-        title: "Votação para retirar um prefeito do cargo",
-        situation: "Uma proposta permite que eleitores convoquem, com assinaturas, uma nova votação para decidir se um prefeito deve deixar o cargo antes do fim do mandato.",
-        statement: "Eu apoiaria criar essa possibilidade.",
+        id: "par-03-2a",
+        title: "Votação para tirar o prefeito do cargo",
+        situation:
+          "Uma proposta permite que, com assinaturas de 10% dos eleitores, a cidade faça uma votação para decidir se o prefeito deve deixar o cargo antes do fim do mandato. Quem defende diz que o eleitor deve poder corrigir uma escolha ruim sem esperar quatro anos. Quem critica diz que a cidade viveria em campanha permanente e que os derrotados na eleição usariam o mecanismo para tentar reverter o resultado.",
+        statement: "Eu apoiaria criar esse tipo de votação.",
       },
       {
-        id: "par-03b",
-        title: "Votação para revogar uma lei municipal",
-        situation: "Uma proposta permite que eleitores convoquem, com assinaturas, uma votação para decidir se uma lei aprovada pela Câmara Municipal deve ser revogada.",
-        statement: "Eu apoiaria que os eleitores pudessem convocar essa votação para revogar leis municipais.",
+        id: "par-03-2b",
+        title: "Votação para derrubar uma lei municipal",
+        situation:
+          "Uma proposta permite que os eleitores, com assinaturas, convoquem uma votação para derrubar uma lei aprovada pela Câmara Municipal. Quem critica diz que leis necessárias, mas impopulares, como aumentos de tarifa, seriam derrubadas e que os vereadores deixariam de assumir responsabilidades. Quem defende diz que a população teria a palavra final sobre as leis que a afetam.",
+        statement: "Eu apoiaria que os eleitores pudessem convocar essa votação.",
       },
     ],
   },
@@ -750,17 +776,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-04",
-        title: "Reforma complexa decidida pelo Congresso",
-        situation: "O governo quer mudar as regras da aposentadoria. Uma opção é deixar a decisão para o Congresso; outra é convocar um plebiscito para que os eleitores decidam.",
-        statement: "Mudanças complexas como essa devem ser decididas pelos representantes eleitos, e não por plebiscito.",
+        id: "par-04-2a",
+        title: "Aposentadoria: Congresso ou plebiscito",
+        situation:
+          "O governo quer mudar as regras da aposentadoria. Uma opção é deixar a decisão com o Congresso; outra é fazer um plebiscito. Quem prefere o Congresso diz que o tema tem muitos detalhes técnicos e exige negociação. Quem prefere o plebiscito diz que uma mudança que afeta a vida de todos deveria ser decidida diretamente pelos eleitores.",
+        statement: "A mudança deveria ser decidida pelo Congresso, e não por plebiscito.",
       },
       {
-        id: "par-04b",
-        title: "Plano diretor decidido pela Câmara",
+        id: "par-04-2b",
+        title: "Plano diretor: Câmara ou consulta popular",
         situation:
-          "O plano diretor, que define onde e como a cidade pode crescer, tem centenas de regras. Uma opção é aprová-lo na Câmara Municipal, depois de audiências públicas; outra é submeter os pontos principais a uma consulta popular.",
-        statement: "O plano diretor deve ser decidido pela Câmara, depois das audiências, sem consulta popular.",
+          "O plano diretor define onde a cidade pode crescer e quantos andares os prédios podem ter. Uma opção é aprová-lo na Câmara, depois de audiências públicas; outra é submeter os pontos principais a uma consulta popular. Quem prefere a consulta diz que os moradores devem decidir como a cidade vai mudar. Quem prefere a Câmara diz que o plano tem centenas de regras ligadas entre si.",
+        statement: "O plano diretor deveria ser decidido pela Câmara, sem consulta popular.",
       },
     ],
   },
@@ -771,16 +798,17 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-05",
-        title: "Gestão de escolas e postos de saúde pelos municípios",
-        situation: "Um estado propõe transferir aos municípios a gestão de escolas e postos de saúde que hoje administra, junto com os recursos correspondentes.",
-        statement: "Eu apoiaria transferir essa gestão para os municípios.",
+        id: "par-05-2a",
+        title: "Escolas e postos de saúde para os municípios",
+        situation:
+          "Um estado propõe passar aos municípios a gestão das escolas e dos postos de saúde que hoje administra, junto com o dinheiro para mantê-los. Quem defende diz que a prefeitura está mais perto e conhece melhor as necessidades locais. Quem critica diz que municípios pequenos não têm equipe para isso e que a qualidade ficaria desigual entre as cidades.",
+        statement: "Eu apoiaria passar essa gestão aos municípios.",
       },
       {
-        id: "par-05b",
+        id: "par-05-2b",
         title: "Subprefeituras com orçamento próprio",
         situation:
-          "Em uma cidade grande, as decisões sobre limpeza, praças e pequenas obras ficam concentradas na sede da prefeitura. Uma proposta cria subprefeituras regionais com orçamento próprio para cuidar desses serviços.",
+          "Em uma cidade grande, as decisões sobre limpeza, praças e pequenas obras ficam na sede da prefeitura. A proposta cria subprefeituras com orçamento próprio em cada região. Quem critica diz que a medida cria cargos e custos e que as subprefeituras podem virar moeda de troca política. Quem defende diz que os problemas seriam resolvidos mais perto de quem convive com eles.",
         statement: "Eu apoiaria criar as subprefeituras com orçamento próprio.",
       },
     ],
@@ -792,18 +820,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-06",
+        id: "par-06-2a",
         title: "Desempenho mínimo para partidos",
         situation:
-          "Partidos precisam de um desempenho mínimo nas eleições para ter acesso a recursos públicos e a tempo de propaganda. Essa exigência reduz o número de partidos, mas dificulta a vida dos menores.",
-        statement: "Eu concordo com essa exigência, mesmo que ela dificulte a continuidade de partidos pequenos.",
+          "Partidos que não alcançam uma votação mínima perdem acesso ao fundo partidário e ao tempo de propaganda. Quem defende diz que a regra reduz o número de partidos e facilita formar maiorias para governar. Quem critica diz que ela dificulta o surgimento de novas ideias e deixa os eleitores de partidos pequenos sem representação.",
+        statement: "A exigência de desempenho mínimo deveria ser mantida.",
       },
       {
-        id: "par-06b",
+        id: "par-06-2b",
         title: "Mais assinaturas para criar partidos",
         situation:
-          "Para criar um partido, é preciso reunir assinaturas de eleitores em vários estados. Uma proposta aumenta esse número mínimo, para reduzir a quantidade de partidos.",
-        statement: "Eu apoiaria aumentar a exigência, mesmo que fique mais difícil criar partidos novos.",
+          "Para criar um partido, é preciso reunir assinaturas de eleitores em vários estados. A proposta aumenta esse mínimo. Quem critica diz que novos movimentos teriam mais dificuldade para disputar eleições com os partidos já estabelecidos. Quem defende diz que haveria menos partidos sem eleitores reais, criados para negociar tempo de TV e recursos.",
+        statement: "Eu apoiaria aumentar o número mínimo de assinaturas.",
       },
     ],
   },
@@ -814,17 +842,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-07",
-        title: "Poder de veto para conselho de saúde",
-        situation: "Um conselho municipal de saúde, formado por usuários, trabalhadores e gestores, quer ter poder de veto sobre algumas decisões da secretaria de saúde.",
+        id: "par-07-2a",
+        title: "Poder de veto para o conselho de saúde",
+        situation:
+          "Um conselho municipal de saúde, formado por usuários, trabalhadores e gestores, quer poder vetar o fechamento de postos e a terceirização de serviços. Quem apoia diz que quem usa o serviço deve ter voz real nas decisões. Quem critica diz que quem responde pelos resultados é o prefeito eleito, que não poderia ser travado por um conselho que não passou pelas urnas.",
         statement: "Eu apoiaria dar esse poder de veto ao conselho.",
       },
       {
-        id: "par-07b",
-        title: "Conselhos escolares decidem a verba de manutenção",
+        id: "par-07-2b",
+        title: "Conselhos escolares decidem a verba",
         situation:
-          "Uma rede estadual de ensino propõe que os conselhos escolares, formados por famílias, estudantes, professores e funcionários, decidam como gastar a verba de manutenção de cada escola, hoje definida pela secretaria.",
-        statement: "Eu apoiaria dar essa decisão aos conselhos escolares.",
+          "A secretaria de educação define como cada escola gasta a verba de manutenção. A proposta passa a decisão aos conselhos escolares, formados por famílias, estudantes, professores e funcionários. Quem critica diz que os conselhos não têm preparo para compras públicas e que o controle dos gastos ficaria mais difícil. Quem defende diz que quem está na escola sabe o que é mais urgente.",
+        statement: "Eu apoiaria passar essa decisão aos conselhos escolares.",
       },
     ],
   },
@@ -835,16 +864,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-08",
-        title: "Tribunais podem anular leis",
-        situation: "Um tribunal pode anular uma lei aprovada pelo Legislativo quando considera que ela contraria a Constituição.",
-        statement: "É importante que os tribunais tenham esse poder, mesmo quando a maioria dos parlamentares discorda.",
+        id: "par-08-2a",
+        title: "Supremo anula lei aprovada pelo Congresso",
+        situation:
+          "O Congresso aprova, por ampla maioria, uma lei que o Supremo Tribunal Federal considera contrária à Constituição e anula. Para uns, os tribunais devem poder barrar leis que violam a Constituição, mesmo contra a maioria. Para outros, juízes que não foram eleitos não deveriam derrubar o que os representantes do povo decidiram.",
+        statement: "É importante que os tribunais possam anular leis aprovadas pela maioria.",
       },
       {
-        id: "par-08b",
-        title: "Tribunal de contas pode suspender obras",
-        situation: "Um tribunal de contas suspende uma obra aprovada pelo governo e pela Assembleia Legislativa, por indícios de superfaturamento, até que a análise termine.",
-        statement: "É importante que o tribunal de contas possa suspender a obra, mesmo contra a decisão do governo e dos deputados.",
+        id: "par-08-2b",
+        title: "Tribunal de contas suspende uma obra",
+        situation:
+          "Um tribunal de contas suspende uma obra aprovada pelo governo e pela Assembleia, por suspeita de preço acima do mercado, até o fim de uma análise que pode levar meses. Quem critica diz que um órgão técnico não deveria paralisar uma decisão de representantes eleitos e que obras paradas também custam caro. Quem defende diz que a suspensão evita prejuízos que depois não se recuperam.",
+        statement: "É importante que o tribunal de contas possa suspender a obra.",
       },
     ],
   },
@@ -855,17 +886,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-09",
+        id: "par-09-2a",
         title: "Prazo para votar projetos de iniciativa popular",
-        situation: "Cidadãos podem apresentar projetos de lei com assinaturas, mas o Legislativo não tem prazo para votá-los. Uma proposta obriga a votação em até seis meses.",
-        statement: "Eu apoiaria esse prazo obrigatório.",
+        situation:
+          "Cidadãos podem apresentar projetos de lei com assinaturas, mas o Congresso pode deixá-los parados por anos. A proposta obriga a votação em seis meses; vencido o prazo, nenhum outro projeto é votado antes dele. Quem apoia diz que a vontade de milhões de eleitores não pode ser ignorada. Quem critica diz que o Congresso perderia o controle da própria agenda e seria travado por projetos mal preparados.",
+        statement: "Eu apoiaria o prazo obrigatório de seis meses.",
       },
       {
-        id: "par-09b",
-        title: "Debate obrigatório das petições dos moradores",
+        id: "par-09-2b",
+        title: "Debate obrigatório de petições",
         situation:
-          "Uma Câmara Municipal recebe petições dos moradores pela internet, mas não é obrigada a analisá-las. Uma proposta obriga os vereadores a debater em plenário toda petição que reunir 5 mil assinaturas.",
-        statement: "Eu apoiaria essa obrigação.",
+          "Uma Câmara Municipal recebe petições pela internet, mas não é obrigada a analisá-las. A proposta obriga os vereadores a debater em plenário toda petição com 5 mil assinaturas. Quem critica diz que as sessões seriam tomadas por campanhas organizadas nas redes, deixando outros assuntos de lado. Quem defende diz que os moradores ganhariam um canal direto para pautar a Câmara.",
+        statement: "Eu apoiaria tornar esse debate obrigatório.",
       },
     ],
   },
@@ -876,18 +908,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "par-10",
-        title: "Linhas de ônibus decididas por órgãos técnicos e Câmara",
+        id: "par-10-2a",
+        title: "Consulta popular sobre linhas de ônibus",
         situation:
-          "Em uma cidade, mudanças nas linhas de ônibus são decididas pela Câmara Municipal e por órgãos técnicos, a partir de estudos. Um grupo pede consulta popular a cada mudança.",
-        statement: "As mudanças devem continuar sendo decididas pela Câmara e pelos órgãos técnicos, sem consulta popular a cada caso.",
+          "Em uma cidade, técnicos da prefeitura definem as linhas de ônibus a partir de pesquisas sobre os trajetos dos passageiros. Moradores querem consulta popular no bairro a cada mudança. Quem prefere os técnicos diz que a rede funciona como um todo e que consultas bairro a bairro a desequilibrariam. Quem prefere a consulta diz que os técnicos não conhecem a rotina de quem depende do ônibus.",
+        statement: "As mudanças nas linhas devem continuar com os técnicos, sem consulta popular.",
       },
       {
-        id: "par-10b",
-        title: "Local de hospital escolhido por técnicos",
+        id: "par-10-2b",
+        title: "Local de um hospital: técnicos ou votação",
         situation:
-          "Um estado vai construir um hospital regional. A secretaria de saúde escolheu o local com base em estudos de acesso e de demanda; um grupo de moradores quer que a escolha seja feita por votação nas cidades da região.",
-        statement: "A escolha deve ficar com a secretaria, a partir dos estudos, sem votação.",
+          "Um estado vai construir um hospital regional. Os técnicos da saúde escolheram o local pelo acesso e pela demanda; moradores de outras cidades da região querem escolher o local por votação. Quem defende a votação diz que a população deve ter a palavra final sobre uma obra paga por todos. Quem defende a escolha técnica diz que o hospital deve ficar onde atende mais gente.",
+        statement: "O local deve ser definido pelos técnicos, sem votação.",
       },
     ],
   },
@@ -900,18 +932,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-01",
-        title: "Mina com controles de contaminação",
+        id: "soc-01-2a",
+        title: "Mina perto de uma cidade pequena",
         situation:
-          "Uma mineradora quer abrir uma mina perto de uma pequena cidade, com promessa de empregos e arrecadação. Estudos indicam risco de contaminação de um rio, que pode ser reduzido com controles.",
-        statement: "Eu apoiaria a abertura da mina com os controles propostos.",
+          "Uma mineradora quer abrir uma mina perto de uma cidade de 20 mil habitantes, com 1.500 empregos e uma arrecadação que dobraria o orçamento da prefeitura. Estudos apontam risco de contaminação do rio que abastece a cidade, que a empresa promete controlar. Quem apoia diz que a cidade não pode recusar essa chance de crescer. Quem é contra diz que, se algo der errado, o rio não se recupera.",
+        statement: "Eu apoiaria a abertura da mina.",
       },
       {
-        id: "soc-01b",
+        id: "soc-01-2b",
         title: "Fábrica de celulose que usa a água de um rio",
         situation:
-          "Uma empresa quer instalar uma fábrica de papel e celulose em uma cidade pequena, com centenas de empregos. A fábrica usaria muita água de um rio que também abastece agricultores da região; a empresa promete tratar a água e devolvê-la ao rio.",
-        statement: "Eu apoiaria a instalação da fábrica com essas condições.",
+          "Uma empresa quer instalar uma fábrica de celulose em uma cidade pequena, com 800 empregos. A fábrica usaria um terço da água de um rio que também abastece os agricultores da região e promete tratá-la e devolvê-la. Quem é contra diz que, em anos de seca, faltaria água para as lavouras e para os moradores. Quem apoia diz que a região precisa de indústria e de empregos.",
+        statement: "Eu apoiaria a instalação da fábrica.",
       },
     ],
   },
@@ -922,17 +954,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-02",
-        title: "Ampliação de área de proteção ambiental",
-        situation: "Um município pode ampliar uma área de proteção ambiental. A medida limitaria a expansão de lavouras e de novos loteamentos na região.",
+        id: "soc-02-2a",
+        title: "Ampliação de uma área de proteção ambiental",
+        situation:
+          "Um município pode ampliar uma área de proteção ambiental que guarda nascentes. A medida proibiria novas lavouras e loteamentos em 15% do território. Quem apoia diz que, sem as nascentes, faltará água para todos no futuro. Quem é contra diz que produtores perderiam renda e que a cidade deixaria de crescer.",
         statement: "Eu apoiaria ampliar a área de proteção.",
       },
       {
-        id: "soc-02b",
-        title: "Proibição de construções em área de manguezal",
+        id: "soc-02-2b",
+        title: "Construções em um manguezal",
         situation:
-          "Uma cidade litorânea pode proibir novas construções em uma área de manguezal. A medida impediria a instalação de uma marina e de um hotel que gerariam empregos.",
-        statement: "Eu apoiaria proibir as novas construções no manguezal.",
+          "Uma cidade litorânea pode proibir novas construções em um manguezal, o que impediria uma marina e um hotel com 400 empregos. Quem é contra a proibição diz que a cidade tem desemprego alto e que o projeto ocuparia só uma parte da área. Quem apoia diz que o manguezal é berçário de peixes e protege a costa contra enchentes.",
+        statement: "Eu apoiaria proibir as construções no manguezal.",
       },
     ],
   },
@@ -943,17 +976,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-03",
+        id: "soc-03-2a",
         title: "Licenciamento mais rápido para obras estratégicas",
-        situation: "O licenciamento ambiental de obras como estradas e portos pode levar anos. Uma proposta reduz prazos e etapas de análise para obras consideradas estratégicas.",
-        statement: "Eu apoiaria simplificar o licenciamento dessas obras, mesmo com menos etapas de análise.",
+        situation:
+          "O licenciamento ambiental de estradas, ferrovias e portos pode levar anos. A proposta corta prazos e etapas da análise para as obras que o governo considerar estratégicas. Quem defende diz que a demora encarece as obras e atrasa o desenvolvimento. Quem critica diz que menos análise significa mais risco de danos que poderiam ter sido evitados.",
+        statement: "Eu apoiaria reduzir os prazos e as etapas do licenciamento dessas obras.",
       },
       {
-        id: "soc-03b",
+        id: "soc-03-2b",
         title: "Licença ambiental por autodeclaração",
         situation:
-          "Uma proposta permite que empreendimentos de médio porte, como granjas e pequenas indústrias, obtenham licença ambiental com uma declaração do próprio empresário, sem análise prévia do órgão ambiental. A fiscalização seria feita depois.",
-        statement: "Eu apoiaria a licença por autodeclaração, mesmo sem a análise prévia.",
+          "A proposta permite que granjas e pequenas indústrias obtenham a licença ambiental com uma declaração do próprio dono, deixando a fiscalização para depois. Quem critica diz que os problemas só seriam descobertos depois do dano e que a fiscalização já não dá conta hoje. Quem defende diz que o órgão ambiental poderia concentrar esforços nos grandes empreendimentos.",
+        statement: "Eu apoiaria a licença por autodeclaração para esses empreendimentos.",
       },
     ],
   },
@@ -964,18 +998,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-04",
-        title: "Demarcação de terra indígena com indenização",
+        id: "soc-04-2a",
+        title: "Demarcação de terra indígena",
         situation:
-          "Estudos oficiais reconhecem que uma área hoje ocupada por fazendas produtivas é de ocupação tradicional de uma comunidade indígena. A demarcação exigiria a saída dos fazendeiros, com indenização.",
-        statement: "Eu apoiaria a demarcação da área, com indenização aos fazendeiros.",
+          "Estudos oficiais concluem que uma área com fazendas produtivas é de ocupação tradicional de um povo indígena. A demarcação exigiria a saída dos fazendeiros, com indenização. Quem apoia diz que a Constituição garante essas terras aos povos indígenas. Quem critica diz que as famílias de fazendeiros estão ali há gerações, com títulos de propriedade dados pelo próprio governo.",
+        statement: "Eu apoiaria a demarcação da área.",
       },
       {
-        id: "soc-04b",
-        title: "Titulação de território quilombola com indenização",
+        id: "soc-04-2b",
+        title: "Território quilombola",
         situation:
-          "Estudos oficiais reconhecem que uma comunidade quilombola vive há gerações em uma área hoje usada em parte por uma empresa de reflorestamento. A titulação do território exigiria a saída da empresa, com indenização.",
-        statement: "Eu apoiaria a titulação do território para a comunidade, com indenização à empresa.",
+          "Estudos oficiais reconhecem que uma comunidade quilombola vive há gerações em uma área hoje usada em parte por uma empresa de reflorestamento. A titulação do território exigiria a saída da empresa, com indenização. Quem é contra diz que a empresa comprou a área legalmente e gera empregos na região. Quem apoia diz que a comunidade tem direito à terra que ocupa há gerações.",
+        statement: "Eu apoiaria a titulação do território para a comunidade.",
       },
     ],
   },
@@ -986,17 +1020,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-05",
-        title: "Exploração de petróleo perto de região sensível",
-        situation: "Foi encontrado petróleo no mar perto de uma região ambientalmente sensível. A exploração pode gerar receitas públicas e empregos, mas há risco de vazamentos.",
-        statement: "Eu apoiaria a exploração com regras de segurança, por causa das receitas e dos empregos.",
+        id: "soc-05-2a",
+        title: "Petróleo perto da foz de um rio",
+        situation:
+          "Foi encontrado petróleo no mar, perto da foz de um grande rio, em uma região de grande diversidade de espécies. A exploração renderia bilhões em royalties para educação e saúde. Quem apoia diz que o país não pode abrir mão dessa riqueza e que há tecnologia para evitar acidentes. Quem é contra diz que um vazamento naquela região causaria danos irreversíveis.",
+        statement: "Eu apoiaria a exploração do petróleo nessa região.",
       },
       {
-        id: "soc-05b",
-        title: "Ampliação de porto perto de recifes de coral",
+        id: "soc-05-2b",
+        title: "Ampliação de porto perto de recifes",
         situation:
-          "Um estado quer ampliar um porto para exportar mais grãos, o que geraria empregos e arrecadação. A obra exigiria dragar uma área próxima a recifes de coral usados pela pesca artesanal.",
-        statement: "Eu apoiaria a ampliação do porto, com medidas de compensação ambiental.",
+          "Um estado quer ampliar um porto para exportar mais grãos, com novos empregos e mais arrecadação. A obra exigiria dragar uma área perto de recifes de coral usados pela pesca artesanal. Quem é contra diz que a dragagem pode destruir os recifes e o sustento de centenas de pescadores. Quem apoia diz que o porto é essencial para a economia do estado.",
+        statement: "Eu apoiaria ampliar o porto.",
       },
     ],
   },
@@ -1007,17 +1042,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-06",
-        title: "Tributo sobre combustíveis fósseis",
-        situation: "Uma proposta cria um tributo sobre combustíveis fósseis para financiar transporte público e energia de fontes renováveis. O preço da gasolina aumentaria.",
-        statement: "Eu apoiaria o tributo, mesmo com o aumento do preço da gasolina.",
+        id: "soc-06-2a",
+        title: "Imposto sobre gasolina e diesel",
+        situation:
+          "Uma proposta cria um imposto sobre gasolina e diesel para financiar ônibus e energia renovável. O preço da gasolina subiria cerca de 10%. Quem defende diz que poluir precisa custar mais e que a arrecadação melhoraria o transporte coletivo. Quem critica diz que o aumento pesaria mais para motoristas de aplicativo, caminhoneiros e quem mora longe do trabalho.",
+        statement: "Eu apoiaria criar o imposto sobre gasolina e diesel.",
       },
       {
-        id: "soc-06b",
-        title: "Taxa para carros no centro nos horários de pico",
+        id: "soc-06-2b",
+        title: "Pedágio urbano no centro",
         situation:
-          "Uma cidade grande propõe cobrar uma taxa diária dos carros que entram no centro nos horários de pico, para reduzir a poluição e financiar ônibus. Quem depende do carro para trabalhar teria um gasto extra.",
-        statement: "Eu apoiaria a taxa, mesmo com o gasto extra para quem usa carro.",
+          "Uma cidade grande propõe cobrar uma taxa diária dos carros que entram no centro nos horários de pico, para reduzir a poluição e financiar ônibus. Quem critica diz que quem depende do carro para trabalhar pagaria mais, enquanto quem tem dinheiro continuaria circulando. Quem defende diz que os congestionamentos e a poluição diminuiriam.",
+        statement: "Eu apoiaria a cobrança da taxa.",
       },
     ],
   },
@@ -1028,18 +1064,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-07",
-        title: "Hidrelétrica que alaga área de floresta",
+        id: "soc-07-2a",
+        title: "Hidrelétrica que alaga floresta",
         situation:
-          "Para baratear a energia, o governo pode construir uma hidrelétrica que alagaria uma área de floresta e exigiria a mudança de famílias ribeirinhas para outro local.",
-        statement: "Eu apoiaria a construção da hidrelétrica, com indenização às famílias.",
+          "O governo pode construir uma hidrelétrica que baratearia a energia para milhões de pessoas. A represa alagaria uma área de floresta e obrigaria 3 mil famílias ribeirinhas a se mudar, com indenização. Quem apoia diz que a energia é limpa e necessária para o país crescer. Quem é contra diz que a floresta não volta e que as famílias perderiam seu modo de vida.",
+        statement: "Eu apoiaria construir a hidrelétrica.",
       },
       {
-        id: "soc-07b",
-        title: "Parque eólico em dunas usadas por pescadores",
+        id: "soc-07-2b",
+        title: "Parque eólico em dunas de pescadores",
         situation:
-          "Uma empresa quer instalar um parque de energia eólica em dunas onde vivem comunidades de pescadores. A energia é renovável e geraria arrecadação, mas as comunidades perderiam o acesso a parte do território.",
-        statement: "Eu apoiaria a instalação do parque, com compensações às comunidades.",
+          "Uma empresa quer instalar torres de energia eólica em dunas onde vivem comunidades de pescadores. Quem é contra diz que as comunidades perderiam acesso a parte do território e que as obras alterariam as dunas. Quem apoia diz que o país precisa de energia renovável, que o município ganharia arrecadação e que a empresa pagaria compensações.",
+        statement: "Eu apoiaria a instalação do parque eólico.",
       },
     ],
   },
@@ -1050,16 +1086,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-08",
-        title: "Proibição de sacolas plásticas descartáveis",
-        situation: "Uma cidade quer proibir sacolas plásticas descartáveis nos supermercados. Comerciantes e consumidores teriam custos com alternativas.",
+        id: "soc-08-2a",
+        title: "Proibição de descartáveis de plástico",
+        situation:
+          "Uma cidade quer proibir copos, talheres e embalagens plásticas descartáveis em restaurantes e entregas. Quem apoia diz que esse plástico entope bueiros e acaba nos rios e no mar. Quem é contra diz que as alternativas custam mais e que o aumento recairia sobre pequenos restaurantes e consumidores.",
         statement: "Eu apoiaria a proibição.",
       },
       {
-        id: "soc-08b",
-        title: "Separação obrigatória do lixo reciclável",
-        situation: "Uma cidade quer obrigar os moradores a separar o lixo reciclável, com multa para quem continuar sem separar depois de receber avisos.",
-        statement: "Eu apoiaria a obrigação, com multa depois dos avisos.",
+        id: "soc-08-2b",
+        title: "Multa para quem não separa o lixo",
+        situation:
+          "Uma cidade quer obrigar os moradores a separar o lixo reciclável, com multa para quem descumprir depois de dois avisos. Quem é contra diz que a prefeitura deveria primeiro garantir coleta seletiva em todos os bairros e que a multa pesaria mais para quem tem menos tempo e espaço em casa. Quem apoia diz que, sem obrigação, a reciclagem não avança.",
+        statement: "Eu apoiaria a obrigação de separar o lixo, com multa.",
       },
     ],
   },
@@ -1070,17 +1108,18 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-09",
-        title: "Prazo máximo para análise de novos agrotóxicos",
-        situation: "Produtores rurais pedem prazos máximos para que os órgãos responsáveis analisem pedidos de autorização de novos agrotóxicos, hoje sem prazo definido.",
-        statement: "Eu apoiaria prazos máximos para essa análise, para que os produtores tenham acesso mais rápido a novos produtos.",
+        id: "soc-09-2a",
+        title: "Prazo máximo para aprovar agrotóxicos",
+        situation:
+          "Pedidos de autorização de novos agrotóxicos levam anos para ser analisados. Produtores querem um prazo máximo: se a análise não terminar a tempo, o produto ganha registro provisório. Quem defende diz que produtos mais modernos e menos tóxicos ficam parados na fila. Quem critica diz que produtos seriam liberados sem uma avaliação completa dos riscos à saúde.",
+        statement: "Eu apoiaria o prazo máximo com registro provisório.",
       },
       {
-        id: "soc-09b",
-        title: "Pulverização aérea de agrotóxicos perto de comunidades",
+        id: "soc-09-2b",
+        title: "Pulverização aérea perto de casas",
         situation:
-          "Um estado proíbe a pulverização de agrotóxicos por aviões perto de comunidades e de rios. Produtores pedem que a aplicação seja liberada com distâncias mínimas menores, por ser mais barata e rápida.",
-        statement: "Eu apoiaria liberar a pulverização aérea com distâncias menores, para reduzir os custos da produção.",
+          "Um estado proíbe pulverizar agrotóxicos por avião a menos de 500 metros de casas e rios. Produtores pedem que a distância caia para 250 metros. Quem é contra diz que o vento leva o produto para casas, escolas e nascentes próximas. Quem defende a mudança diz que a aplicação por avião é mais barata e rápida e que as regras de segurança evitam que o produto se espalhe.",
+        statement: "Eu apoiaria reduzir a distância mínima para 250 metros.",
       },
     ],
   },
@@ -1091,29 +1130,32 @@ export const QUESTION_SLOTS: QuestionSlot[] = [
     weight: 1,
     versions: [
       {
-        id: "soc-10",
-        title: "Reaproveitamento de água e áreas verdes em prédios novos",
-        situation: "Um município pode exigir que novos prédios tenham sistemas de reaproveitamento de água da chuva e áreas verdes. A exigência encarece a construção.",
-        statement: "Eu apoiaria a exigência, mesmo encarecendo os imóveis novos.",
+        id: "soc-10-2a",
+        title: "Exigências ambientais para prédios novos",
+        situation:
+          "Um município pode exigir que todo prédio novo tenha reaproveitamento da água da chuva, telhado verde e área de solo que absorve a água. Quem apoia diz que isso reduz enchentes e o calor na cidade. Quem critica diz que cada apartamento ficaria até 5% mais caro, o que afasta a casa própria de quem ganha menos.",
+        statement: "Eu apoiaria essas exigências para os prédios novos.",
       },
       {
-        id: "soc-10b",
-        title: "Mais áreas verdes em novos loteamentos",
+        id: "soc-10-2b",
+        title: "Área verde em novos loteamentos",
         situation:
-          "Um município pode exigir que novos loteamentos reservem mais espaço para árvores e para solo que absorve a água da chuva, o que reduz enchentes. A exigência diminui o número de lotes à venda e encarece cada um.",
-        statement: "Eu apoiaria a exigência, mesmo encarecendo os lotes.",
+          "Um município pode exigir que novos loteamentos reservem 30% da área para árvores e solo que absorve a chuva. Quem é contra diz que haveria menos lotes à venda e que cada um ficaria mais caro. Quem apoia diz que os bairros ficariam mais frescos e sofreriam menos com enchentes.",
+        statement: "Eu apoiaria exigir 30% de área verde nos novos loteamentos.",
       },
     ],
   },
 ];
 
+/** Situations of the current bank: new attempts draw from these. */
 export const QUESTIONS: Question[] = QUESTION_SLOTS.flatMap(({ versions, ...slot }) => versions.map((version) => ({ ...version, ...slot })));
 
-export const QUESTION_BY_ID = new Map(QUESTIONS.map((q) => [q.id, q]));
+/** Current and retired situations, so attempts and results always show the text that was answered. */
+export const QUESTION_BY_ID = new Map([...QUESTIONS, ...RETIRED_QUESTIONS].map((q) => [q.id, q]));
 
-// Attempts saved before the draw existed have no ids: they used the first
-// version of every theme, in this order.
-const FIRST_VERSION_IDS = QUESTION_SLOTS.map((slot) => slot.versions[0].id);
+// Attempts saved before the draw existed have no ids: they used the original
+// version of every theme (now among the retired situations), in this order.
+const PRE_DRAW_IDS = RETIRED_QUESTIONS.filter((q) => q.id === q.slot).map((q) => q.id);
 
 function shuffle<T>(items: T[], random: () => number): T[] {
   const result = [...items];
@@ -1137,12 +1179,12 @@ export function drawQuestionIds(random: () => number = Math.random): string[] {
   );
 }
 
-/** Ids shown in an attempt, in order (attempts saved before the draw used the first versions). */
+/** Ids shown in an attempt, in order (attempts saved before the draw used the original situations). */
 export function attemptQuestionIds(questionIds: string[]): string[] {
-  return questionIds.length ? questionIds : FIRST_VERSION_IDS;
+  return questionIds.length ? questionIds : PRE_DRAW_IDS;
 }
 
-/** Questions of an attempt, in order; null when one of them is no longer in the bank. */
+/** Questions of an attempt, in order; null when one of them is unknown. */
 export function attemptQuestions(questionIds: string[]): Question[] | null {
   const questions = attemptQuestionIds(questionIds).map((id) => QUESTION_BY_ID.get(id));
   return questions.every((question): question is Question => question !== undefined) ? questions : null;
