@@ -31,6 +31,9 @@ export default defineRailway((ctx) => {
       BETTER_AUTH_SECRET: ctx.shared.BETTER_AUTH_SECRET,
       OPENAI_API_KEY: ctx.shared.OPENAI_API_KEY,
       OPENAI_MODEL: "gpt-6.2-sol",
+      // The automatic search of official news runs inside this service, at 07:00 and 19:00
+      // (Brasília) by default, and needs OPENAI_API_KEY to create events. Optional settings:
+      // EVENTS_FETCH_HOURS, EVENTS_FETCH_MAX and EVENTS_AUTO_FETCH=off (see README).
       // E-mail (SMTP): Railway only allows outbound SMTP on the Pro plan.
       MAIL_FROM: ctx.shared.MAIL_FROM,
       SMTP_HOST: ctx.shared.SMTP_HOST,

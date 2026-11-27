@@ -1,6 +1,7 @@
 // Consent texts are versioned: changing the purpose requires a new version.
 
-export const TERMS_VERSION = "termos-2026-11-v2";
+// v3: acontecimentos da busca automática podem ser publicados antes da revisão humana (Termos, seção 3).
+export const TERMS_VERSION = "termos-2026-11-v3";
 export const TERMS_PURPOSE =
   "Aceite dos Termos de uso e da Política de privacidade da Polis: criação e manutenção da conta, registro do progresso de aprendizado e participação nos fóruns.";
 

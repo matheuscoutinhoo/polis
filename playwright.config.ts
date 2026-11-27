@@ -39,6 +39,8 @@ export default defineConfig({
       DEV_MAIL_DIR: ".e2e-mail",
       OPENAI_API_KEY: "",
       SMTP_HOST: "",
+      // The scheduled search of official news would reach external feeds during the tests.
+      EVENTS_AUTO_FETCH: "off",
     },
   },
 });

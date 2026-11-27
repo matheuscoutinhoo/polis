@@ -54,6 +54,8 @@ export default async function AdminEventPage({ params }: { params: Params }) {
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={event.status === "PUBLISHED" ? "mint" : event.status === "IN_REVIEW" ? "warning" : "neutral"}>{EVENT_STATUS_LABEL[event.status]}</Badge>
           {event.isDemo ? <Badge tone="sand">Demonstração — não entra no feed</Badge> : null}
+          {event.origin === "AUTOMATIC" ? <Badge tone="blue">Criado pela busca automática</Badge> : null}
+          {event.autoPublished && event.status === "PUBLISHED" ? <Badge tone="warning">Publicado sem revisão humana</Badge> : null}
           {event.aiAssisted ? <Badge tone="lilac">Conteúdo com apoio de IA</Badge> : null}
         </div>
         <h1 className="text-h1 font-semibold">{event.title}</h1>
@@ -120,7 +122,7 @@ export default async function AdminEventPage({ params }: { params: Params }) {
               </details>
             ) : null}
             <div className="mt-4 border-t border-line-soft pt-4">
-              <PublishEventForm eventId={event.id} publishable={check.publishable && !event.isDemo} />
+              <PublishEventForm eventId={event.id} publishable={check.publishable && !event.isDemo} autoPublished={event.autoPublished && event.status === "PUBLISHED"} />
             </div>
             {event.status === "PUBLISHED" ? (
               <form action={unpublishEventAction} className="mt-4 flex flex-col gap-2 border-t border-line-soft pt-4">

@@ -15,16 +15,22 @@ export default async function NewTopicPage({ params, searchParams }: { params: P
   const forum = await db.forum.findFirst({ where: { slug, status: "VISIBLE" }, select: { id: true, slug: true, title: true, eventId: true } });
   if (!forum) notFound();
   const user = await getContentUser();
+  const defaultEventId = query.acontecimento ?? forum.eventId ?? undefined;
+  // The automatic search adds events every day: the list offers the most recent ones plus the event the page was opened from.
+  const eventWhere = { status: "PUBLISHED" as const, isDemo: false };
   const [lessons, events] = await Promise.all([
     db.lesson.findMany({
       where: { status: "PUBLISHED", module: { status: "PUBLISHED" } },
       orderBy: [{ module: { number: "asc" } }, { number: "asc" }],
       select: { id: true, title: true, module: { select: { title: true } } },
     }),
-    db.event.findMany({ where: { status: "PUBLISHED", isDemo: false }, orderBy: { eventDate: "desc" }, select: { id: true, title: true } }),
+    db.event.findMany({ where: eventWhere, orderBy: { eventDate: "desc" }, take: 60, select: { id: true, title: true } }),
   ]);
+  if (defaultEventId && !events.some((e) => e.id === defaultEventId)) {
+    const opened = await db.event.findFirst({ where: { ...eventWhere, id: defaultEventId }, select: { id: true, title: true } });
+    if (opened) events.unshift(opened);
+  }
   const path = `/comunidade/${forum.slug}/novo-topico`;
-  const defaultEventId = query.acontecimento ?? forum.eventId ?? undefined;
 
   return (
     <div className="page-frame py-8 md:py-12">

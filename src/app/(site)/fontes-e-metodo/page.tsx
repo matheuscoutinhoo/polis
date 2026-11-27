@@ -95,8 +95,9 @@ function EditorialPolicy() {
           <strong>Lacunas declaradas.</strong> Quando o acervo não cobre um tema, a Polis registra a lacuna em vez de preencher com conhecimento não referenciado.
         </li>
         <li>
-          <strong>Revisão humana.</strong> Lições e acontecimentos são revisados por administradores antes da publicação e mostram a data da última revisão. Sinalizações de erro
-          entram na fila de revisão.
+          <strong>Revisão humana.</strong> Lições e acontecimentos preparados pela equipe são revisados por administradores antes da publicação e mostram a data da última
+          revisão. Acontecimentos da busca automática podem ser publicados antes dessa revisão, depois de verificações automáticas de fonte, e a página de cada um informa isso.
+          Sinalizações de erro entram na fila de revisão.
         </li>
       </ul>
     </section>
@@ -396,8 +397,8 @@ export default async function SourcesAndMethodPage() {
           <H2 id="ia">Uso de inteligência artificial</H2>
           <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-body">
             <li>
-              A IA (API da OpenAI, chamada apenas pelo servidor) é usada em dois pontos: responder dúvidas sobre uma lição ou um acontecimento, e preparar rascunhos de
-              acontecimentos para revisão humana.
+              A IA (API da OpenAI, chamada apenas pelo servidor) é usada em dois pontos: responder dúvidas sobre uma lição ou um acontecimento, e preparar a análise de
+              acontecimentos a partir de fontes aprovadas.
             </li>
             <li>
               Não enviamos nome, e-mail, identificadores de conta, respostas do questionário nem afinidades. A IA não decide o resultado do questionário nem a ordem da trilha.
@@ -407,7 +408,12 @@ export default async function SourcesAndMethodPage() {
               existente; referências inválidas, números ausentes das fontes e recomendações de voto ou de corrente bloqueiam ou removem a resposta.
             </li>
             <li>Textos de fontes e perguntas de usuários são tratados como dados, nunca como instruções. Respostas da IA são sempre identificadas como tal.</li>
-            <li>Rascunhos de acontecimentos nunca são publicados automaticamente: uma pessoa administradora revisa fatos, fontes e linguagem antes de publicar.</li>
+            <li>
+              Duas vezes por dia, uma busca automática lê as notícias oficiais da Agência Senado e da Agência Câmara e seleciona decisões (aprovações, sanções, vetos). A IA
+              prepara a análise só com o texto da notícia; ela é publicada sem revisão prévia apenas se passar no portão de evidências e em verificações extras: fato central
+              confirmado, nenhum número ou data ausente da notícia, nenhuma referência inventada e nenhuma recomendação. O que não passa fica como rascunho para revisão humana, e
+              a página informa quando a análise ainda não foi revisada por uma pessoa.
+            </li>
             <li>Há limite diário de perguntas por pessoa e limite geral. Se a IA estiver indisponível, lições, acontecimentos e trilhas continuam funcionando.</li>
             <li>
               A Polis mantém uma bateria de avaliação com pedidos de recomendação de voto, pessoas com posições opostas, alegações falsas, promessas sem resultado, ausência de

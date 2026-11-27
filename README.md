@@ -2,7 +2,7 @@
 
 Plataforma web de educação política para pessoas sem conhecimento prévio. A Polis explica instituições, ideias, correntes e acontecimentos brasileiros com **fontes oficiais aprovadas** e diferentes perspectivas, apresentadas com os mesmos critérios. Ela **explica, mas não conduz**: não recomenda voto, partido, candidato, movimento ou corrente.
 
-Este repositório contém o MVP completo: contas e privacidade, questionário de 50 situações sorteadas de um banco de 100, com cálculo determinístico, trilha de aprendizado com gamificação simples, acontecimentos explicados com fontes e apoio de IA (OpenAI, somente no servidor), fóruns com moderação e uma área administrativa mínima.
+Este repositório contém o MVP completo: contas e privacidade, questionário de 50 situações sorteadas de um banco de 100, com cálculo determinístico, trilha de aprendizado com gamificação simples, acontecimentos explicados com fontes e apoio de IA (OpenAI, somente no servidor), alimentados duas vezes por dia por uma busca automática de notícias oficiais, fóruns com moderação e uma área administrativa mínima.
 
 - [Visão geral da arquitetura](#arquitetura)
 - [Execução local](#execução-local)
@@ -36,7 +36,7 @@ src/
     diagnostic/        banco de 100 situações (50 sorteadas por tentativa), escala, pontuação, perfis de referência, serviço
     learning/          lições (esquema e validação editorial), trilha (estratégias), progresso e XP
     sources/           política de URLs de editores aprovados, cadastro e revisão de fontes
-    events/            estrutura da análise, portão de publicação, consultas públicas e administrativas
+    events/            estrutura da análise, portão de publicação, consultas públicas e administrativas, busca automática de notícias (ingest/)
     ai/                adaptador OpenAI, instruções, pacote de evidências, verificação de referências
     community/         fóruns, tópicos, comentários, denúncias
     admin/             moderação e registro de decisões
@@ -74,6 +74,7 @@ npm run dev                     # http://localhost:3000
 - **E-mails em desenvolvimento**: sem `SMTP_HOST`, confirmação de conta e recuperação de senha são gravadas em `.dev-mail/outbox.jsonl`; copie o link de lá.
 - **Primeiro administrador**: crie a conta em `/criar-conta` e rode `npm run admin:promote -- seu@email.org` (`--revoke` remove o papel). Nenhuma credencial fica no código.
 - **IA**: sem `OPENAI_API_KEY`, perguntas e rascunhos com IA exibem uma mensagem clara de indisponibilidade; todo o resto funciona.
+- **Busca automática de acontecimentos**: em desenvolvimento o agendamento fica desligado (`EVENTS_AUTO_FETCH=on` liga). Para testar, use `npm run events:fetch -- --simulado` (lê os feeds e mostra o que seria importado, sem gravar) ou “Buscar agora” em `/admin/acontecimentos`.
 
 ### Scripts
 
@@ -90,6 +91,7 @@ npm run dev                     # http://localhost:3000
 | `npm run check:catalog` | validação do catálogo de fontes e dos acontecimentos (URLs, trechos, portão de publicação) |
 | `npm run docs:catalog` | gera `docs/catalogo-de-fontes.md` |
 | `npm run admin:promote -- email` | concede o papel de administrador a uma conta existente |
+| `npm run events:fetch` | executa agora uma busca de notícias oficiais, como a agendada (`-- --simulado` só lê e mostra o que seria importado) |
 | `npm run ai:eval` | bateria de avaliação da IA (requer `OPENAI_API_KEY`; `-- --simulado` testa só o script) |
 
 ## Testes e verificações
@@ -109,6 +111,7 @@ Cobertura proporcional ao risco:
 - **XP idempotente**: requisições simultâneas e repetidas não duplicam pontos (índice único + inserções idempotentes).
 - **Recuperação de acesso**: aceite dos termos obrigatório no cadastro, token de redefinição de uso único, mesma resposta para e-mail cadastrado ou não, sessões encerradas após a troca.
 - **IA**: referências inválidas, números ausentes das evidências, recomendações e instruções embutidas (unitários com provedor falso).
+- **Busca automática de acontecimentos**: leitura dos feeds do Senado (texto) e da Câmara (HTML), seleção de decisões (agendas, debates, declarações e áudios ficam de fora), temas, números de projetos e leis, horários das buscas no fuso de Brasília e recuperação de horário perdido, verificações extras antes de publicar; com banco e provedor falso: publicação quando tudo passa, rascunho com o motivo quando não passa, nada criado sem IA, notícia repetida não duplica e uma busca por vez.
 - **Fluxos ponta a ponta** (Playwright): cadastro → confirmação → consentimento → 50 respostas com pausa → resultado com a trilha em fluxo → pré-visualização da outra ordem da trilha antes de salvar → lição → XP sem duplicação → refazer o questionário → histórico e comparação → resultado anterior → exclusão das respostas; fórum → tópico → comentário → denúncia → moderação com motivo; cadastro de fonte oficial → aprovação com motivo registrado; visitante sem conta vê avisos no lugar das listas e prévias nas páginas de conteúdo, sem receber o que fica oculto; conta nova é levada ao questionário antes do conteúdo; telas principais a 360 px sem rolagem horizontal.
 
 ## Deploy no Railway
@@ -127,7 +130,7 @@ A configuração está em [`.railway/railway.ts`](.railway/railway.ts) (Infraest
 2. No painel do projeto, abra **Settings → Shared Variables**, escolha o ambiente `production` e crie:
    - `BETTER_AUTH_SECRET` (obrigatória, 32+ caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`
    - `MAIL_FROM` (ex.: `Polis <nao-responda@seu-dominio.org>`), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` e `SMTP_PASSWORD` (o envio só funciona no plano Pro)
-   - opcionais: `OPENAI_API_KEY` (sem ela a IA fica indisponível com aviso claro) e `CONTACT_EMAIL` (exibido na política de privacidade)
+   - opcionais: `OPENAI_API_KEY` (sem ela a IA fica indisponível com aviso claro e a busca automática de acontecimentos não cria nada) e `CONTACT_EMAIL` (exibido na política de privacidade)
 
    Variáveis não criadas chegam vazias ao app, que as trata como "não configuradas".
 3. Revise e aplique a configuração: `railway config plan` e `railway config apply`. Isso cria o PostgreSQL e o serviço `polis`.
@@ -147,6 +150,7 @@ Para atualizar, rode `railway up --service polis` de novo (ou faça push, se con
 
 - *Healthcheck failed* no deploy: procure nos logs (`railway logs --service polis`) o evento `health.auth_misconfigured`. Ele indica qual variável está inválida (`BETTER_AUTH_URL` sem domínio gerado ou `BETTER_AUTH_SECRET` ausente/curta). Corrija e publique de novo; a versão anterior continua no ar.
 - E-mails não chegam: procure `mail.provider_error` nos logs. `ETIMEDOUT` ou `ECONNECTION` indicam SMTP bloqueado (planos sem SMTP de saída) ou host/porta incorretos; `EAUTH` indica usuário ou senha recusados pelo servidor SMTP.
+- Acontecimentos novos não aparecem: confira em `/admin/acontecimentos` o painel “Busca automática” (cada busca lista o que foi publicado, deixado como rascunho, ignorado e por quê) e, nos logs, `events.ingest.scheduler_started` e `events.ingest.finished`. Sem `OPENAI_API_KEY`, as buscas aparecem como “Sem IA: nada criado”.
 
 O healthcheck responde `200` com o estado do banco e se autenticação, IA e e-mail estão configurados (sem detalhes sensíveis). Responde `503` se o banco estiver indisponível ou se `BETTER_AUTH_URL`/`BETTER_AUTH_SECRET` forem inválidas. Os logs são JSON estruturado e ocultam campos como e-mail, senha, tokens, respostas e textos digitados.
 
@@ -194,6 +198,17 @@ Fluxo editorial: a administração cria o rascunho, **vincula fontes aprovadas**
 
 **Bateria de avaliação** (`npm run ai:eval`): pedido de voto/convencimento, a mesma dúvida de posições opostas, alegação falsa com fonte verificável, fonte com apenas uma estimativa/promessa, impacto sem evidência, URL não aprovada, documento com instruções embutidas e rascunho com fonte declaratória. Gera relatório em `ai-eval-reports/` com verificações automáticas e campos para **revisão humana**. Essas avaliações reduzem riscos e não garantem neutralidade absoluta.
 
+**Busca automática** (`modules/events/ingest/`): duas vezes por dia (07:00 e 19:00, horário de Brasília), o próprio servidor web lê os feeds RSS oficiais da **Agência Senado** e da **Agência Câmara de Notícias** (os feeds do STF e do Planalto foram avaliados e não trazem notícias utilizáveis).
+
+1. **Seleção**: entram só matérias com decisão no título (sanção, lei publicada, veto, votação em plenário, aprovação ou rejeição em comissão, decisão judicial), publicadas nas últimas 36 horas e com texto suficiente; agendas, debates, audiências, declarações, áudios e vídeos ficam de fora. As mais relevantes vêm primeiro.
+2. **Sem repetição**: notícia já importada (mesmo endereço), mesmo projeto ou lei citado nos últimos 4 dias ou título muito parecido nos últimos 10 dias não gera outro acontecimento; etapas posteriores de um mesmo projeto viram acontecimentos novos.
+3. **Fonte**: cada notícia vira uma fonte aprovada do editor já aprovado (endereço conferido pela mesma política de URLs), com os parágrafos como trechos, a condição de reutilização da agência e o alcance (“declarações não são fatos verificados”).
+4. **Análise**: a IA redige o acontecimento só com esses trechos; temas por palavras-chave.
+5. **Publicação**: só se passar no portão de publicação e em verificações extras: fato central confirmado, nenhum número ou data ausente da notícia, nenhuma referência inventada, nenhuma recomendação e no máximo dois itens sem relação clara com os trechos. Até 3 publicações por busca (`EVENTS_FETCH_MAX`). O que não passa fica como **rascunho**, com o motivo nas notas editoriais. A página pública informa que a análise ainda não foi revisada por uma pessoa até que alguém registre a revisão (“Confirmar revisão”).
+6. **Registro**: cada busca fica em `event_ingestion_runs`, com a decisão sobre cada notícia, e aparece no painel “Busca automática” de `/admin/acontecimentos`, que também tem o botão **Buscar agora**. Uma trava no banco garante uma busca por vez, mesmo com várias instâncias; um horário perdido (servidor fora do ar) é recuperado quando o servidor volta, e buscas com falha são repetidas até três vezes por horário.
+
+Configuração: `EVENTS_FETCH_HOURS` (padrão `7,19`), `EVENTS_FETCH_TIMEZONE` (padrão `America/Sao_Paulo`), `EVENTS_FETCH_MAX` (padrão 3), `EVENTS_FETCH_WINDOW_HOURS` (padrão 36) e `EVENTS_AUTO_FETCH` (`off` desliga o agendamento; `on` liga em desenvolvimento). Sem `OPENAI_API_KEY`, a busca registra as notícias encontradas e não cria nada. Para usar um Cron do Railway em vez do agendamento interno, crie um serviço com o mesmo repositório, comando `npm run events:fetch` e agenda `0 10,22 * * *` (UTC), e defina `EVENTS_AUTO_FETCH=off` no serviço web.
+
 ## Comunidade e moderação
 
 Fóruns sobre correntes, ideias e acontecimentos (título, descrição, categoria, regras), tópicos e comentários em texto simples (sem HTML; renderização escapada), edição e exclusão do próprio conteúdo, seguir/deixar de seguir, busca e filtros, paginação. Publicar exige e-mail confirmado. Publicações são identificadas como **conteúdo de participantes, não verificado pela Polis**. Denúncias (ameaças, assédio, dados pessoais, discurso de ódio, spam) entram na fila administrativa; decisões — arquivar, remover, encerrar tópico, suspender publicação — exigem motivo e ficam registradas. A moderação analisa condutas, não opiniões, e não acessa respostas do questionário. Há limites de frequência para criar fóruns, tópicos, comentários e denúncias.
@@ -204,7 +219,7 @@ Fóruns sobre correntes, ideias e acontecimentos (título, descrição, categori
 - A pessoa exporta todos os seus dados em JSON, apaga um resultado do histórico (`/conta/resultados`) ou todas as respostas do questionário e exclui a conta em `/conta/privacidade`. Na exclusão, escolhe manter os textos publicados sem vínculo (“Participante removido”) ou apagá-los.
 - Sessões e senhas gerenciadas pelo Better Auth (cookies `httpOnly`, seguros em HTTPS; proteção de origem/CSRF), senha mínima de 10 caracteres, recuperação com token de uso único e expiração de 1 hora, sem revelar se o e-mail existe; limites de tentativa persistentes no PostgreSQL.
 - Autorização no servidor em todas as ações (sessão, propriedade do registro e papel de administrador). Validação com Zod e limites de tamanho; consultas parametrizadas pelo Prisma.
-- Fontes só de editores aprovados, por domínio exato e caminho (HTTPS, sem IP, credenciais ou portas não padrão). A aplicação não busca URLs enviadas por usuários.
+- Fontes só de editores aprovados, por domínio exato e caminho (HTTPS, sem IP, credenciais ou portas não padrão). A aplicação não busca URLs enviadas por usuários; a busca automática lê apenas os feeds fixos em `modules/events/ingest/feeds.ts` e confere cada link pela mesma política antes de usá-lo.
 - Páginas privadas não são cacheadas; cabeçalhos de segurança configurados em `next.config.ts`.
 
 ## Acesso sem conta e questionário obrigatório
@@ -254,4 +269,5 @@ Os **Termos de uso** (`/termos`) e a **Política de privacidade** (`/privacidade
 - **E-mail**: o envio por SMTP está implementado, mas **não foi testado com um servidor real**. Os testes simulam o transporte SMTP; em desenvolvimento e nos testes, os e-mails vão para a caixa local.
 - **Railway**: a configuração está pronta. O build de produção foi verificado sem acesso ao banco, como acontece no build do Railway, e o `.railway/railway.ts` foi avaliado com o mesmo script da CLI 5.75. Nenhum recurso foi criado nem houve deploy.
 - O modelo padrão `gpt-6.2-sol` pode ser trocado por `OPENAI_MODEL`; confira a disponibilidade na sua conta.
-- Fora do escopo do MVP: MFA, app nativo, pagamentos, mensagens privadas, chat em tempo real, notificações push, ranking público e coleta automática de notícias.
+- **Busca automática**: depende dos feeds RSS das agências do Senado e da Câmara. O feed do Senado traz só os 15 itens mais recentes, a maioria áudios e vídeos, então parte das matérias do Senado pode passar entre duas buscas. A seleção é lexical (palavras do título) e pode deixar de fora decisões relevantes ou incluir decisões menores; a IA não foi executada contra a API real neste ambiente, então a taxa de publicação automática ainda precisa ser observada em produção.
+- Fora do escopo do MVP: MFA, app nativo, pagamentos, mensagens privadas, chat em tempo real, notificações push e ranking público.

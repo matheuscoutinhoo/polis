@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { mailConfigured } from "@/lib/mailer";
 import { aiConfigured } from "@/modules/ai/provider";
+import { readIngestionSettings } from "@/modules/events/ingest/schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export async function GET() {
     auth: invalidAuthSettings.length ? "misconfigured" : "configured",
     ai: aiConfigured() ? "configured" : "not_configured",
     mail: mailConfigured() ? "configured" : "not_configured",
+    eventsFetch: readIngestionSettings().enabled ? "scheduled" : "off",
     responseTimeMs: Date.now() - started,
     time: new Date().toISOString(),
   };

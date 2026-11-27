@@ -22,6 +22,30 @@ export const EVENT_STATUS_LABEL: Record<string, string> = {
   ARCHIVED: "Arquivado",
 };
 
+export const INGESTION_STATUS_LABEL: Record<string, string> = {
+  RUNNING: "Em andamento",
+  SUCCESS: "Concluída",
+  PARTIAL: "Concluída com falhas",
+  FAILED: "Falhou",
+  SKIPPED: "Sem IA: nada criado",
+};
+
+export const INGESTION_TRIGGER_LABEL: Record<string, string> = {
+  SCHEDULE: "Agendada",
+  MANUAL: "Manual",
+  CLI: "Linha de comando",
+};
+
+export const INGESTION_DECISION_LABEL: Record<string, string> = {
+  published: "Publicado",
+  draft: "Rascunho para revisão",
+  error: "Erro",
+  found: "Encontrada",
+  limit: "Fora do limite",
+  duplicate: "Já coberta",
+  ignored: "Ignorada",
+};
+
 export const FLAG_REASON_LABEL: Record<string, string> = {
   FACTUAL_ERROR: "Erro factual",
   INADEQUATE_SOURCE: "Fonte inadequada",

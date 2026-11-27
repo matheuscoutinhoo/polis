@@ -434,6 +434,12 @@ enum EventStatus {
   ARCHIVED
 }
 
+enum EventOrigin {
+  EDITORIAL
+  // Created by the scheduled search of official news (modules/events/ingest).
+  AUTOMATIC
+}
+
 model Event {
   id             String      @id @default(cuid())
   slug           String      @unique
@@ -447,6 +453,9 @@ model Event {
   aiAssisted     Boolean     @default(false)
   aiReport       Json?
   editorNotes    String?
+  origin         EventOrigin @default(EDITORIAL)
+  // True while the current publication comes from the automatic checks, before any human review.
+  autoPublished  Boolean     @default(false)
   publishedAt    DateTime?
   lastReviewedAt DateTime?
   reviewedBy     String?
@@ -497,6 +506,42 @@ model AiGeneration {
 
   @@index([createdAt])
   @@map("ai_generations")
+}
+
+enum IngestionTrigger {
+  SCHEDULE
+  MANUAL
+  CLI
+}
+
+enum IngestionStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+  SKIPPED
+}
+
+// Each search of official news that feeds the events (scheduled, manual or CLI).
+model EventIngestionRun {
+  id         String           @id @default(cuid())
+  trigger    IngestionTrigger
+  status     IngestionStatus  @default(RUNNING)
+  // "running" while the search is active: the unique index allows one search at a time.
+  lockKey    String?          @unique
+  startedAt  DateTime         @default(now())
+  finishedAt DateTime?
+  checked    Int              @default(0)
+  candidates Int              @default(0)
+  created    Int              @default(0)
+  published  Int              @default(0)
+  drafts     Int              @default(0)
+  summary    String?
+  // Decision for each news item and errors per feed (titles and links only).
+  details    Json?
+
+  @@index([startedAt])
+  @@map("event_ingestion_runs")
 }
 
 enum FlagTarget {

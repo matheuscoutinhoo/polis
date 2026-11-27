@@ -27,8 +27,10 @@ export function buildDraftInput(
 
 /**
  * Generates an AI draft for an event from the approved sources attached to it.
- * The draft is never published automatically: it is stored for editorial
- * review with a report of removed items, invalid references and warnings.
+ * The draft is stored with a report of removed items, invalid references and
+ * warnings. Editors publish after review; the automatic search of official news
+ * (modules/events/ingest) publishes only drafts that pass the publication gate
+ * and its extra checks, and marks them as not reviewed by a person.
  */
 export async function generateEventDraft(eventId: string): Promise<DraftResult> {
   const event = await db.event.findUnique({

@@ -45,7 +45,11 @@ export default function TermsPage() {
 
         <Section id="conteudo" title="3. Conteúdo educativo">
           <ul className="flex list-disc flex-col gap-1.5 pl-5">
-            <li>Lições e acontecimentos são revisados por pessoas e indicam fontes, datas e limites. Mesmo assim, podem conter erros: use “Sinalizar problema”.</li>
+            <li>
+              Lições e acontecimentos preparados pela equipe são revisados por pessoas e indicam fontes, datas e limites. Acontecimentos da busca automática de notícias oficiais
+              podem ser publicados após verificações automáticas, antes da revisão humana, e isso é informado na página. Em todos os casos pode haver erros: use “Sinalizar
+              problema”.
+            </li>
             <li>Uma fonte oficial informa o que o órgão publicou; isso não significa endosso nem neutralidade garantida.</li>
             <li>O questionário de afinidades é uma modelagem editorial, não um teste científico validado nem um diagnóstico de identidade política.</li>
             <li>

@@ -3,9 +3,11 @@ import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { formatDateTime } from "@/lib/format";
 import { db } from "@/lib/db";
-import { ACTION_LABEL } from "@/modules/admin/labels";
+import { ACTION_LABEL, INGESTION_STATUS_LABEL } from "@/modules/admin/labels";
 import { adminDashboardCounts, aiUsageLast24h, recentModerationLog } from "@/modules/admin/moderation";
 import { aiConfigured } from "@/modules/ai/provider";
+import { readIngestionSettings } from "@/modules/events/ingest/schedule";
+import { listRecentIngestionRuns } from "@/modules/events/ingest/service";
 import { mailConfigured } from "@/lib/mailer";
 
 export const metadata: Metadata = { title: "Painel" };
@@ -24,9 +26,10 @@ function Stat({ href, icon, label, value, hint }: { href: string; icon: IconName
 }
 
 export default async function AdminDashboardPage() {
-  const [counts, log, aiLast24h] = await Promise.all([adminDashboardCounts(), recentModerationLog(15), aiUsageLast24h()]);
+  const [counts, log, aiLast24h, [lastRun]] = await Promise.all([adminDashboardCounts(), recentModerationLog(15), aiUsageLast24h(), listRecentIngestionRuns(1)]);
   const actors = await db.user.findMany({ where: { id: { in: log.map((l) => l.actorId).filter((v): v is string => Boolean(v)) } }, select: { id: true, name: true } });
   const actorName = new Map(actors.map((a) => [a.id, a.name]));
+  const ingestion = readIngestionSettings();
 
   return (
     <div className="flex flex-col gap-8">
@@ -63,6 +66,17 @@ export default async function AdminDashboardPage() {
             {mailConfigured()
               ? "configurado (SMTP)."
               : "não configurado — em desenvolvimento, as mensagens vão para .dev-mail/outbox.jsonl; em produção, confirmação de e-mail e recuperação de senha não são enviadas."}
+          </li>
+          <li>
+            <span className="font-semibold">Busca automática de notícias:</span>{" "}
+            {ingestion.enabled
+              ? `agendada às ${new Intl.ListFormat("pt-BR", { type: "conjunction" }).format(ingestion.hours.map((h) => `${String(h).padStart(2, "0")}h`))}`
+              : "agendamento desativado neste servidor"}
+            {lastRun ? ` · última em ${formatDateTime(lastRun.startedAt)}: ${INGESTION_STATUS_LABEL[lastRun.status] ?? lastRun.status}` : " · nenhuma busca registrada"}
+            {" · "}
+            <Link href="/admin/acontecimentos#busca-automatica" className="text-link">
+              detalhes
+            </Link>
           </li>
         </ul>
       </section>

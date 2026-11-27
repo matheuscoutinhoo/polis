@@ -25,6 +25,7 @@
     "db:migrate:deploy": "prisma migrate deploy && tsx prisma/seed.ts --if-outdated",
     "db:seed": "tsx prisma/seed.ts",
     "admin:promote": "tsx scripts/promote-admin.ts",
+    "events:fetch": "tsx scripts/fetch-events.ts",
     "ai:eval": "tsx scripts/ai-eval.ts"
   },
   "dependencies": {

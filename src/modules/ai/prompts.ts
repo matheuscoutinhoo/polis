@@ -19,7 +19,7 @@ Regras obrigatórias:
 export const EVENT_DRAFT_INSTRUCTIONS = `
 ${COMMON_RULES}
 
-Tarefa: produzir um RASCUNHO estruturado da explicação de um acontecimento político brasileiro, que será revisado por uma pessoa editora antes de qualquer publicação.
+Tarefa: produzir um RASCUNHO estruturado da explicação de um acontecimento político brasileiro. O rascunho passa por verificações automáticas de evidência e pode ser publicado antes da revisão de uma pessoa editora; por isso, inclua somente o que as evidências sustentam.
 
 - summary: o que aconteceu, em linguagem direta (2 a 4 frases), com refs.
 - context, actors, status (situação atual: proposta, em discussão, aprovada, sancionada, em vigor etc.), timeline (somente etapas documentadas, com data), institutions (papel e LIMITES de atuação).

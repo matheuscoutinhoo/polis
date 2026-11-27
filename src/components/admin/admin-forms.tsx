@@ -13,6 +13,7 @@ import {
   resolveFlagAction,
   resolveReportAction,
   reviewSourceAction,
+  runIngestionNowAction,
   type AdminState,
 } from "@/modules/admin/actions";
 import { EVENT_THEMES } from "@/modules/events/themes";
@@ -216,11 +217,14 @@ export function CreateEventForm() {
   );
 }
 
-export function PublishEventForm({ eventId, publishable }: { eventId: string; publishable: boolean }) {
+export function PublishEventForm({ eventId, publishable, autoPublished = false }: { eventId: string; publishable: boolean; autoPublished?: boolean }) {
   const [state, action] = useActionState(publishEventAction, INITIAL);
   return (
     <form action={action} className="flex flex-col gap-3">
       <Result state={state} />
+      {autoPublished ? (
+        <p className="text-meta text-warning">Publicado pela busca automática, sem revisão humana. Depois de revisar, registre abaixo para confirmar a publicação.</p>
+      ) : null}
       <input type="hidden" name="eventId" value={eventId} />
       <TextArea
         id="publish-reason"
@@ -234,10 +238,22 @@ export function PublishEventForm({ eventId, publishable }: { eventId: string; pu
       />
       <div>
         <SubmitButton pendingLabel="Publicando..." disabled={!publishable}>
-          Publicar
+          {autoPublished ? "Confirmar revisão" : "Publicar"}
         </SubmitButton>
       </div>
       {!publishable ? <p className="text-meta text-ink-soft">Resolva os bloqueios da verificação para publicar.</p> : null}
+    </form>
+  );
+}
+
+export function RunIngestionForm({ running }: { running: boolean }) {
+  const [state, action] = useActionState(runIngestionNowAction, INITIAL);
+  return (
+    <form action={action} className="flex flex-col items-start gap-3 md:items-end">
+      <SubmitButton variant="secondary" icon="search" iconPosition="start" pendingLabel="Iniciando..." disabled={running}>
+        {running ? "Busca em andamento" : "Buscar agora"}
+      </SubmitButton>
+      <Result state={state} />
     </form>
   );
 }

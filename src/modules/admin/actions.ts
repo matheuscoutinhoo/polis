@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { ZodError, z } from "zod";
+import { logger } from "@/lib/logger";
 import { requireAdmin } from "@/lib/session";
 import { generateEventDraft, type DraftResult } from "@/modules/ai/event-draft";
 import { eventContentSchema } from "@/modules/events/content";
+import { executeIngestionRun, startIngestionRun } from "@/modules/events/ingest/service";
 import {
   attachSourceToEvent,
   createEventDraft,
@@ -175,6 +178,22 @@ export async function unlinkLessonAction(formData: FormData) {
   const eventId = String(formData.get("eventId") ?? "");
   await unlinkLessonFromEvent(eventId, String(formData.get("lessonId") ?? ""));
   revalidatePath(`/admin/acontecimentos/${eventId}`);
+}
+
+/** Starts a search of official news now; it runs after the response (it can take minutes). */
+export async function runIngestionNowAction(): Promise<AdminState> {
+  await requireAdmin();
+  const run = await startIngestionRun("MANUAL");
+  if (!run) return { ok: false, error: "Já existe uma busca em andamento. Aguarde alguns minutos e atualize a página." };
+  after(async () => {
+    try {
+      await executeIngestionRun(run.id, { trigger: "MANUAL" });
+    } catch (error) {
+      logger.error("events.ingest.manual_failed", { error: error instanceof Error ? error : undefined });
+    }
+  });
+  revalidatePath("/admin/acontecimentos");
+  return { ok: true, message: "Busca iniciada. Ela leva alguns minutos: atualize a página para acompanhar o resultado." };
 }
 
 // Moderation ------------------------------------------------------------------

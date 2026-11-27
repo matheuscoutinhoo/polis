@@ -69,11 +69,15 @@ export default async function EventPage({ params }: { params: Params }) {
         </div>
         <div>
           <dt className="font-semibold text-ink">Última revisão</dt>
-          <dd>{event.lastReviewedAt ? formatDate(event.lastReviewedAt) : formatDate(event.updatedAt)}</dd>
+          <dd>{event.autoPublished ? "Ainda não revisada pela equipe" : formatDate(event.lastReviewedAt ?? event.updatedAt)}</dd>
         </div>
       </dl>
     </>
   );
+  // Auto-published analyses say so: they passed automatic evidence checks, not a human review.
+  const origin = event.autoPublished
+    ? "Análise preparada com apoio de IA a partir de notícia oficial e publicada após verificações automáticas de fonte, ainda sem revisão da equipe editorial."
+    : "Análise revisada pela equipe editorial antes da publicação.";
   const aiNote = event.aiAssisted ? (
     <p>
       <AiAssistedNote />
@@ -87,7 +91,7 @@ export default async function EventPage({ params }: { params: Params }) {
         <div className="mx-auto max-w-[880px]">
           {header}
           <p className="mt-3 text-meta text-ink-soft">
-            Análise revisada pela equipe editorial antes da publicação, com base em {plural(sources.length, "fonte oficial", "fontes oficiais")}.
+            {origin} Base: {plural(sources.length, "fonte oficial", "fontes oficiais")}.
           </p>
 
           <Section id="o-que-aconteceu" number="01" title="O que aconteceu">
@@ -118,7 +122,7 @@ export default async function EventPage({ params }: { params: Params }) {
     <article className="page-frame py-8 md:py-12">
       <div className="mx-auto max-w-[880px]">
         {header}
-        <p className="mt-3 text-meta text-ink-soft">Análise revisada pela equipe editorial antes da publicação. Origem: fontes oficiais listadas ao final.</p>
+        <p className="mt-3 text-meta text-ink-soft">{origin} Origem: fontes oficiais listadas ao final.</p>
 
         <Section id="o-que-aconteceu" number="01" title="O que aconteceu">
           <p className="text-reading">

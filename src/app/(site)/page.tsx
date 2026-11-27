@@ -135,7 +135,7 @@ async function ExploreByTopic() {
 }
 
 async function RecentEvents() {
-  const events = (await listPublishedEvents()).slice(0, 3);
+  const events = await listPublishedEvents({ take: 3 });
   if (events.length === 0) return null;
   return (
     <section aria-labelledby="acontecimentos-recentes" className="mt-12">
